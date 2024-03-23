@@ -3,93 +3,68 @@
 
 #include <iostream>
 
-typedef int_fast16_t CheckerValue;
-typedef int_fast16_t StructuresValue;
+typedef u_int8_t CheckerCodex;
+typedef u_int8_t StructuresCodex;
+typedef u_int8_t MoveCodex;
+typedef u_int8_t KingPosCodex;
+typedef u_int8_t CheckerCountCodex;
 
 // Table dimensions -> always 9
 const int DIM(9);
 
+// Dead king position value
+const KingPosCodex KDEADPOSITION(255);
+
+
 // ENUM FOR CHECKERS VALUES
-enum CHECKER : CheckerValue
+enum CHECKER : CheckerCodex
 {
     EMPTY = 0,
-    WHITE = 1,
-    KING = 8,
-    BLACK = -1
+    BLACK = 1,
+    WHITE = 2,
+    KING = 3
 };
 
-enum Structure : StructuresValue {
+// ENUM FOR board structures VALUES
+enum STRUCTURE : StructuresCodex {
     NOTHING = 0,
     ESCAPE = 1,
     CAMPS = 2,
     CASTLE = 3
 };
 
-const Structure TablutStructure[DIM][DIM]
-{
-    {Structure.NOTHING,Structure.ESCAPE,Structure.ESCAPE,Structure.CAMPS,Structure.CAMPS,Structure.CAMPS,Structure.ESCAPE,Structure.ESCAPE,Structure.NOTHING},
-    {} // CONTINUARE QDA QUA
-}
+// ALIASES for structure and checker enum
+typedef STRUCTURE S;
+typedef CHECKER C;
 
-// Matrix representing KING ESCAOE TILES -> white win
+
+
+// Matrix representing all tiles types
 /*--0 1 2 3 4 5 6 7 8
  |
- 0  - X X - - - X X -
- 1  X - - - - - - - X
- 2  X - - - - - - - X
- 3  - - - - - - - - -
- 4  - - - - - - - - -
- 5  - - - - - - - - -
- 6  X - - - - - - - X
- 7  X - - - - - - - X
- 8  - X X - - - X X -
+ 0  - E E C C C E E -
+ 1  E - - - C - - - E
+ 2  E - - - - - - - E
+ 3  C - - - - - - - C
+ 4  C C - - T - - C C
+ 5  C - - - - - - - C
+ 6  E - - - - - - - E
+ 7  E - - - C - - - E
+ 8  - E E C C C E E -
 
 */
-const TablutValue kingEscapePosition[16]
+const S tablutStructure[DIM][DIM]
 {
-    1,2,6,7,10,20,60,70,18,28,68,78,81,82,86,87
+    {S::NOTHING,S::ESCAPE,S::ESCAPE,S::CAMPS,S::CAMPS,S::CAMPS,S::ESCAPE,S::ESCAPE,S::NOTHING},
+    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
+    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
+    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
+    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::CASTLE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
+    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
+    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
+    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
+    {S::NOTHING,S::ESCAPE,S::ESCAPE,S::CAMPS,S::CAMPS,S::CAMPS,S::ESCAPE,S::ESCAPE,S::NOTHING},
 };
-
-
-// Matrix representing CAMP TILES -> starter positions of black
-/*--0 1 2 3 4 5 6 7 8
- |
- 0  - - - X X X - - -
- 1  - - - - X - - - -
- 2  - - - - - - - - -
- 3  X - - - - - - - X
- 4  X X - - - - - X X
- 5  X - - - - - - - X
- 6  - - - - - - - - -
- 7  - - - - X - - - -
- 8  - - - X X X - - -
-
-*/
-const TablutValue campsPosition[16]
-{
-    3,4,5,14,30,40,41,50,38,47,48,58,74,83,84,85
-};
-
-// Matrix representing of THRONE TILE -> starter positions of white king
-/*--0 1 2 3 4 5 6 7 8
- |
- 0  - - - - - - - - -
- 1  - - - - - - - - -
- 2  - - - - - - - - -
- 3  - - - - - - - - -
- 4  - - - - X - - - -
- 5  - - - - - - - - -
- 6  - - - - - - - - -
- 7  - - - - - - - - -
- 8  - - - - - - - - -
-
-*/
-const TablutValue thronePosition[1]
-{
-    44
-};
-
-
 
 class Tablut
 {
@@ -97,19 +72,74 @@ class Tablut
         Tablut();
         ~Tablut();
 
-        // Board game
-        TablutValue board[DIM][DIM];
+        bool isWhiteTurn;
+        
+        MoveCodex x;
+        MoveCodex y;
+
+        CheckerCountCodex whiteCheckersCount;
+        CheckerCountCodex blackCheckersCount;
+
+        KingPosCodex kingX;
+        KingPosCodex kingY; 
+
+        CHECKER board[DIM][DIM]; // Board game
 
         void print();
 
-        // Update table by one checker
-        static Tablut update(Tablut &t, const TablutValue from_x, const TablutValue from_y, const TablutValue to_x, const TablutValue to_y);
+        Tablut next(const MoveCodex from_x, const MoveCodex from_y, 
+                            const MoveCodex to_x, const MoveCodex to_y);       // Update table by one checker
+        static Tablut fromJson(const std::string &json);                       // Constructor from json
+        static Tablut newGame();                                               // Tablut with starting position set
 
-        // Constructor from json
-        static Tablut fromJson(const std::string &json);
 
-        // Tablut with starting position set
-        static Tablut newGame();
+        inline CHECKER * getLeftChecker(MoveCodex by = 1U) {
+            return &board[x][y - by];
+        }
+
+        inline CHECKER * getRightChecker(MoveCodex by = 1U) {
+            return &board[x][y + by];
+        }
+
+        inline CHECKER * getUpChecker(MoveCodex by = 1U) {
+            return &board[x - by][y];
+        }
+
+        inline CHECKER * getDownChecker(MoveCodex by = 1U) {
+            return &board[x + by][y];
+        }
+
+        inline bool kingIsInThrone() {
+            return kingX == 4 && kingY == 4;
+        }
+
+        inline bool isKingSurrounded() {
+            return board[4][3] == C::BLACK || board[4][5] == C::BLACK || board[3][4] == C::BLACK || board[5][4] == C::BLACK;
+        }
+
+        inline bool kingNearThrone() {
+            return board[4][3] == C::KING || board[4][5] == C::KING || board[3][4] == C::KING || board[5][4] == C::KING;
+        }
+
+        inline void killChecker(CHECKER& c) {
+            if (c == C::WHITE) {
+                c = C::EMPTY;
+                whiteCheckersCount--;
+                return;
+            }
+            if (c == C::BLACK) {
+                blackCheckersCount--;
+                return;
+            }
+            if (c == C::KING) {
+                kingX = KDEADPOSITION;
+                kingY = KDEADPOSITION;
+            }
+        }
+
+        inline void switchTurn() {
+            isWhiteTurn = !isWhiteTurn;
+        }
 };
 
 
