@@ -2,19 +2,20 @@
 #define TABLUT_H
 
 #include <iostream>
+#include <array>
+#include <map>
 
 typedef u_int8_t CheckerCodex;
-typedef u_int8_t StructuresCodex;
-typedef u_int8_t MoveCodex;
-typedef u_int8_t KingPosCodex;
+typedef CheckerCodex StructuresCodex;
+
+typedef int8_t Pos;
 typedef u_int8_t CheckerCountCodex;
 
 // Table dimensions -> always 9
-const int DIM(9);
+const Pos DIM(9);
 
 // Dead king position value
-const KingPosCodex KDEADPOSITION(255);
-
+const Pos KDEADPOSITION(20);
 
 // ENUM FOR CHECKERS VALUES
 enum CHECKER : CheckerCodex
@@ -26,7 +27,8 @@ enum CHECKER : CheckerCodex
 };
 
 // ENUM FOR board structures VALUES
-enum STRUCTURE : StructuresCodex {
+enum STRUCTURE : StructuresCodex
+{
     NOTHING = 0,
     ESCAPE = 1,
     CAMPS = 2,
@@ -36,8 +38,6 @@ enum STRUCTURE : StructuresCodex {
 // ALIASES for structure and checker enum
 typedef STRUCTURE S;
 typedef CHECKER C;
-
-
 
 // Matrix representing all tiles types
 /*--0 1 2 3 4 5 6 7 8
@@ -53,94 +53,117 @@ typedef CHECKER C;
  8  - E E C C C E E -
 
 */
-const S tablutStructure[DIM][DIM]
-{
-    {S::NOTHING,S::ESCAPE,S::ESCAPE,S::CAMPS,S::CAMPS,S::CAMPS,S::ESCAPE,S::ESCAPE,S::NOTHING},
-    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
-    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
-    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
-    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::CASTLE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
-    {S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS},
-    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
-    {S::ESCAPE,S::NOTHING,S::NOTHING,S::NOTHING,S::CAMPS,S::NOTHING,S::NOTHING,S::NOTHING,S::ESCAPE},
-    {S::NOTHING,S::ESCAPE,S::ESCAPE,S::CAMPS,S::CAMPS,S::CAMPS,S::ESCAPE,S::ESCAPE,S::NOTHING},
-};
+typedef std::array<std::array<STRUCTURE, DIM>, DIM> TablutStructure;
+typedef std::array<std::array<CHECKER, DIM>, DIM> Board;
+
+const TablutStructure tablutStructure{{
+    {S::NOTHING, S::ESCAPE, S::ESCAPE, S::CAMPS, S::CAMPS, S::CAMPS, S::ESCAPE, S::ESCAPE, S::NOTHING},
+    {S::ESCAPE, S::NOTHING, S::NOTHING, S::NOTHING, S::CAMPS, S::NOTHING, S::NOTHING, S::NOTHING, S::ESCAPE},
+    {S::ESCAPE, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::ESCAPE},
+    {S::CAMPS, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::CAMPS},
+    {S::CAMPS, S::CAMPS, S::NOTHING, S::NOTHING, S::CASTLE, S::NOTHING, S::NOTHING, S::CAMPS, S::CAMPS},
+    {S::CAMPS, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::CAMPS},
+    {S::ESCAPE, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::NOTHING, S::ESCAPE},
+    {S::ESCAPE, S::NOTHING, S::NOTHING, S::NOTHING, S::CAMPS, S::NOTHING, S::NOTHING, S::NOTHING, S::ESCAPE},
+    {S::NOTHING, S::ESCAPE, S::ESCAPE, S::CAMPS, S::CAMPS, S::CAMPS, S::ESCAPE, S::ESCAPE, S::NOTHING},
+}};
 
 class Tablut
 {
-    public:
-        Tablut();
-        ~Tablut();
+public:
+    Tablut();
+    ~Tablut();
+    Tablut(const Tablut& copy);
 
-        bool isWhiteTurn;
-        
-        MoveCodex x;
-        MoveCodex y;
+    // Tells if is White or Black turn
+    bool isWhiteTurn;
 
-        CheckerCountCodex whiteCheckersCount;
-        CheckerCountCodex blackCheckersCount;
+    // New position of the moved piece
+    Pos x;
+    Pos y;
 
-        KingPosCodex kingX;
-        KingPosCodex kingY; 
+    // Old position of the moved piece
+    Pos old_x;
+    Pos old_y;
 
-        CHECKER board[DIM][DIM]; // Board game
+    // Total number of white and black checkers alive on board
+    CheckerCountCodex whiteCheckersCount;
+    CheckerCountCodex blackCheckersCount;
 
-        void print();
+    // King position during game
+    Pos kingX;
+    Pos kingY;
 
-        Tablut next(const MoveCodex from_x, const MoveCodex from_y, 
-                            const MoveCodex to_x, const MoveCodex to_y);       // Update table by one checker
-        static Tablut fromJson(const std::string &json);                       // Constructor from json
-        static Tablut newGame();                                               // Tablut with starting position set
+    // Board game
+    Board board;
 
+    void print();
 
-        inline CHECKER * getLeftChecker(MoveCodex by = 1U) {
-            return &board[x][y - by];
+    // Update table by one checker
+    Tablut next(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y);
+
+    static Tablut fromJson(const std::string &json); // Constructor from json
+    static Tablut newGame();                         // Tablut with starting position set
+
+    inline CHECKER *getLeftChecker(Pos by = 1U)
+    {
+        return &board[x][y - by];
+    }
+
+    inline CHECKER *getRightChecker(Pos by = 1U)
+    {
+        return &board[x][y + by];
+    }
+
+    inline CHECKER *getUpChecker(Pos by = 1U)
+    {
+        return &board[x - by][y];
+    }
+
+    inline CHECKER *getDownChecker(Pos by = 1U)
+    {
+        return &board[x + by][y];
+    }
+
+    inline bool kingIsInThrone()
+    {
+        return kingX == 4 && kingY == 4;
+    }
+
+    inline bool isKingSurrounded()
+    {
+        return board[4][3] == C::BLACK || board[4][5] == C::BLACK || board[3][4] == C::BLACK || board[5][4] == C::BLACK;
+    }
+
+    inline bool kingNearThrone()
+    {
+        return board[4][3] == C::KING || board[4][5] == C::KING || board[3][4] == C::KING || board[5][4] == C::KING;
+    }
+
+    inline void killChecker(CHECKER &c)
+    {
+        if (c == C::WHITE)
+        {
+            c = C::EMPTY;
+            whiteCheckersCount--;
+            return;
         }
-
-        inline CHECKER * getRightChecker(MoveCodex by = 1U) {
-            return &board[x][y + by];
+        if (c == C::BLACK)
+        {
+            blackCheckersCount--;
+            return;
         }
-
-        inline CHECKER * getUpChecker(MoveCodex by = 1U) {
-            return &board[x - by][y];
+        if (c == C::KING)
+        {
+            kingX = KDEADPOSITION;
+            kingY = KDEADPOSITION;
         }
+    }
 
-        inline CHECKER * getDownChecker(MoveCodex by = 1U) {
-            return &board[x + by][y];
-        }
-
-        inline bool kingIsInThrone() {
-            return kingX == 4 && kingY == 4;
-        }
-
-        inline bool isKingSurrounded() {
-            return board[4][3] == C::BLACK || board[4][5] == C::BLACK || board[3][4] == C::BLACK || board[5][4] == C::BLACK;
-        }
-
-        inline bool kingNearThrone() {
-            return board[4][3] == C::KING || board[4][5] == C::KING || board[3][4] == C::KING || board[5][4] == C::KING;
-        }
-
-        inline void killChecker(CHECKER& c) {
-            if (c == C::WHITE) {
-                c = C::EMPTY;
-                whiteCheckersCount--;
-                return;
-            }
-            if (c == C::BLACK) {
-                blackCheckersCount--;
-                return;
-            }
-            if (c == C::KING) {
-                kingX = KDEADPOSITION;
-                kingY = KDEADPOSITION;
-            }
-        }
-
-        inline void switchTurn() {
-            isWhiteTurn = !isWhiteTurn;
-        }
+    inline void switchTurn()
+    {
+        isWhiteTurn = !isWhiteTurn;
+    }
 };
-
 
 #endif
