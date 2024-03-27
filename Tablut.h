@@ -5,14 +5,23 @@
 #include <array>
 #include <map>
 
-typedef u_int8_t CheckerCodex;
+typedef u_int16_t CheckerCodex;
 typedef CheckerCodex StructuresCodex;
+typedef CheckerCodex WinCodex;
 
-typedef int8_t Pos;
-typedef u_int8_t CheckerCountCodex;
+typedef int16_t Pos;
+typedef u_int16_t CheckerCountCodex;
 
 // Table dimensions -> always 9
 const Pos DIM(9);
+const Pos LAST_ROW(DIM - 1);
+const Pos SEC_LAST_ROW(DIM - 2);
+const Pos LAST_COL(DIM - 1);
+const Pos SEC_LAST_COL(DIM - 2);
+const Pos FIRST_ROW(1);
+const Pos SECOND_ROW(2);
+const Pos FIRST_COL(1);
+const Pos SECOND_COL(2);
 
 // Dead king position value
 const Pos KDEADPOSITION(20);
@@ -33,6 +42,13 @@ enum STRUCTURE : StructuresCodex
     ESCAPE = 1,
     CAMPS = 2,
     CASTLE = 3
+};
+
+enum WIN : WinCodex
+{
+    NONE = 0,
+    WHITEWIN = 1,
+    BLACKWIN = 2
 };
 
 // ALIASES for structure and checker enum
@@ -73,7 +89,7 @@ class Tablut
 public:
     Tablut();
     ~Tablut();
-    Tablut(const Tablut& copy);
+    Tablut(const Tablut &startFrom);
 
     // Tells if is White or Black turn
     bool isWhiteTurn;
@@ -94,6 +110,10 @@ public:
     Pos kingX;
     Pos kingY;
 
+    // Kills recap in this round
+    std::array<std::array<Pos, 2>, 4> killFeed;
+    int killFeedIndex;
+
     // Board game
     Board board;
 
@@ -105,24 +125,44 @@ public:
     static Tablut fromJson(const std::string &json); // Constructor from json
     static Tablut newGame();                         // Tablut with starting position set
 
-    inline CHECKER *getLeftChecker(Pos by = 1U)
-    {
-        return &board[x][y - by];
+    inline bool isGameOver() {
+        return isWinState() != WIN::NONE;
     }
 
-    inline CHECKER *getRightChecker(Pos by = 1U)
+    // Tell if someone win or not
+    inline WIN isWinState()
     {
-        return &board[x][y + by];
+        if (kingX == KDEADPOSITION)
+        {
+            return WIN::BLACKWIN;
+        }
+
+        if (tablutStructure[kingX][kingY] == S::ESCAPE)
+        {
+            return WIN::WHITEWIN;
+        }
+
+        return WIN::NONE;
     }
 
-    inline CHECKER *getUpChecker(Pos by = 1U)
+    inline CHECKER getLeftChecker(Pos by = 1)
     {
-        return &board[x - by][y];
+        return board[x][y - by];
     }
 
-    inline CHECKER *getDownChecker(Pos by = 1U)
+    inline CHECKER getRightChecker(Pos by = 1)
     {
-        return &board[x + by][y];
+        return board[x][y + by];
+    }
+
+    inline CHECKER getUpChecker(Pos by = 1)
+    {
+        return board[x - by][y];
+    }
+
+    inline CHECKER getDownChecker(Pos by = 1)
+    {
+        return board[x + by][y];
     }
 
     inline bool kingIsInThrone()
@@ -140,24 +180,133 @@ public:
         return board[4][3] == C::KING || board[4][5] == C::KING || board[3][4] == C::KING || board[5][4] == C::KING;
     }
 
-    inline void killChecker(CHECKER &c)
+    inline void killChecker(Pos x, Pos y)
     {
-        if (c == C::WHITE)
+        CHECKER &target = board[x][y];
+
+        if (target == C::EMPTY)
         {
-            c = C::EMPTY;
-            whiteCheckersCount--;
             return;
         }
-        if (c == C::BLACK)
+
+        if (target == C::WHITE)
         {
-            blackCheckersCount--;
+            target = C::EMPTY;
+            whiteCheckersCount = whiteCheckersCount - 1U;
+            killFeed[killFeedIndex] = {x, y};
+            killFeedIndex++;
             return;
         }
-        if (c == C::KING)
+
+        if (target == C::BLACK)
         {
+            target = C::EMPTY;
+            blackCheckersCount = blackCheckersCount - 1U;
+            killFeed[killFeedIndex] = {x, y};
+            killFeedIndex++;
+            return;
+        }
+
+        if (target == C::KING && checkIfKingDead())
+        {
+            target = C::EMPTY;
             kingX = KDEADPOSITION;
             kingY = KDEADPOSITION;
+            killFeed[killFeedIndex] = {x, y};
+            killFeedIndex++;
         }
+    }
+
+    inline bool checkIfKingDead()
+    {
+        // KING IN THRONE OR NEAR TRONE EAT
+
+        // King in throne and black surounded throne -> WHITE LOSE
+        if (kingIsInThrone() && isKingSurrounded())
+            return true;
+
+        // King near throne so can be killed by 3 black checkers surounding him
+        u_int8_t surroundCount = 0U; // Number of black defenders surrounding king
+        bool castleCounted = false;  // Tell if castle as been counted or not
+        bool kill = true;            // Tell if kill requirement hasn't been satisfied
+
+        // Left CHECK
+        if (board[kingX][kingY - 1] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (tablutStructure[kingX][kingY - 1] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            kill = false;
+        }
+
+        // Right CHECK
+        if (kill && board[kingX][kingY + 1] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[kingX][kingY + 1] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            kill = false;
+        }
+
+        // Up CHECK
+        if (kill && board[kingX - 1][kingY] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[kingX - 1][kingY] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            kill = false;
+        }
+
+        // Down CHECK
+        if (kill && board[kingX + 1][kingY] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[kingX + 1][kingY] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            kill = false;
+        }
+
+        return kill && surroundCount == 3 && castleCounted;
+    }
+
+    inline void killLeft()
+    {
+        killChecker(x, y - 1);
+    }
+
+    inline void killRight()
+    {
+        killChecker(x, y + 1);
+    }
+
+    inline void killUp()
+    {
+        killChecker(x - 1, y);
+    }
+
+    inline void killDown()
+    {
+        killChecker(x + 1, y);
     }
 
     inline void switchTurn()

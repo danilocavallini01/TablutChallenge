@@ -7,27 +7,33 @@
 Tablut::Tablut() {}
 Tablut::~Tablut() {}
 
-Tablut::Tablut(const Tablut &copy)
+/*
+    Constructor that copy only necessary elements to the new Tablut
+*/
+Tablut::Tablut(const Tablut &startFrom)
 {
-    isWhiteTurn = copy.isWhiteTurn;
+    isWhiteTurn = startFrom.isWhiteTurn;
 
-    whiteCheckersCount = copy.whiteCheckersCount;
-    blackCheckersCount = copy.blackCheckersCount;
+    x = startFrom.x;
+    y = startFrom.y;
 
-    x = copy.x;
-    y = copy.y;
+    old_x = startFrom.old_x;
+    old_y = startFrom.old_y;
 
-    old_x = copy.old_x;
-    old_y = copy.old_y;
+    whiteCheckersCount = startFrom.whiteCheckersCount;
+    blackCheckersCount = startFrom.blackCheckersCount;
 
-    kingX = copy.kingX;
-    kingY = copy.kingY;
+    kingX = startFrom.kingX;
+    kingY = startFrom.kingY;
+
+    killFeed = startFrom.killFeed;
+    killFeedIndex = startFrom.killFeedIndex;
 
     for (Pos x = 0; x < 9; x++)
     {
         for (Pos y = 0; y < 9; y++)
         {
-            board[x][y] = copy.board[x][y];
+            board[x][y] = startFrom.board[x][y];
         }
     }
 }
@@ -49,14 +55,17 @@ Tablut Tablut::newGame()
     t.whiteCheckersCount = 8U;
     t.blackCheckersCount = 16U;
 
-    t.x = 0U;
-    t.y = 0U;
+    t.x = 0;
+    t.y = 0;
 
-    t.old_x = 0U;
-    t.old_y = 0U;
+    t.old_x = 0;
+    t.old_y = 0;
 
-    t.kingX = 4U;
-    t.kingY = 4U;
+    t.kingX = 4;
+    t.kingY = 4;
+
+    t.killFeed = {};
+    t.killFeedIndex = 0;
 
     // Setting all black defenders
     t.board[0][3] = C::BLACK;
@@ -98,14 +107,7 @@ void Tablut::print()
               << "   ";
     for (int y = 0; y < 9; y++)
     {
-        if (y == Tablut::y)
-        {
-            std::cout << " X ";
-        }
-        else
-        {
-            std::cout << " " << y << " ";
-        }
+        std::cout << " " << y << " ";
     }
     std::cout << std::endl
               << "   ";
@@ -126,8 +128,10 @@ void Tablut::print()
                 if (x == Tablut::x && y == Tablut::y)
                 {
                     std::cout << "\033[1;42m K \033[0m";
-                } else {
-                    std::cout << " B ";
+                }
+                else
+                {
+                    std::cout << "\033[1;93m K \033[0m";
                 }
             }
             else if (board[x][y] == C::BLACK)
@@ -135,8 +139,18 @@ void Tablut::print()
                 if (x == Tablut::x && y == Tablut::y)
                 {
                     std::cout << "\033[1;42m B \033[0m";
-                } else {
-                    std::cout << " B ";
+                }
+                else if (tablutStructure[x][y] == S::CAMPS)
+                {
+                    std::cout << "\033[1;100m B \033[0m";
+                }
+                else if (tablutStructure[x][y] == S::ESCAPE)
+                {
+                    std::cout << "\033[1;106m B \033[0m";
+                }
+                else
+                {
+                    std::cout << "\033[1;97m B \033[0m";
                 }
             }
             else if (board[x][y] == C::WHITE)
@@ -145,15 +159,32 @@ void Tablut::print()
                 {
                     std::cout << "\033[1;42m W \033[0m";
                 }
+                else if (tablutStructure[x][y] == S::CAMPS)
+                {
+                    std::cout << "\033[1;100m W \033[0m";
+                }
+                else if (tablutStructure[x][y] == S::ESCAPE)
+                {
+                    std::cout << "\033[1;106m W \033[0m";
+                }
                 else
                 {
-                    std::cout << " W ";
+                    std::cout << "\033[1;97m W \033[0m";
                 }
             }
             else
             {
-                if ( x == Tablut::old_x && y == Tablut::old_y ) {
+                if (x == Tablut::old_x && y == Tablut::old_y)
+                {
                     std::cout << "\033[1;41m - \033[0m";
+                }
+                else if (tablutStructure[x][y] == S::CAMPS)
+                {
+                    std::cout << "\033[1;100m - \033[0m";
+                }
+                else if (tablutStructure[x][y] == S::ESCAPE)
+                {
+                    std::cout << "\033[1;106m - \033[0m";
                 }
                 else
                 {
@@ -164,16 +195,31 @@ void Tablut::print()
         std::cout << std::endl;
     }
     std::cout << (isWhiteTurn ? "BLACK MOVED -> NOW WHITE MOVE" : "WHITE MOVED -> NOW BLACK MOVE") << std::endl;
+
+    if (killFeedIndex > 0)
+    {
+        std::cout << "----KILL FEED----" << std::endl;
+
+        for (int i = 0; i < killFeedIndex; i++)
+        {
+            std::array<Pos, 2> line{killFeed[i]};
+            std::cout << "  kill in pos: " << int(line[0]) << "-" << int(line[1]) << std::endl;
+        }
+
+        std::cout << "----KILL FEED----" << std::endl;
+    }
+
     std::cout << "whiteCheckers: " << unsigned(whiteCheckersCount) << std::endl;
-    std::cout << "blackPosition: " << unsigned(blackCheckersCount) << std::endl;
-    std::cout << "kingPosition: " << unsigned(kingX) << "-" << unsigned(kingY) << std::endl;
-    std::cout << "checkerMovedTo: " << unsigned(x) << "-" << unsigned(y) << std::endl;
-    std::cout << "checkerMovedFrom: " << unsigned(old_x) << "-" << unsigned(old_y) << std::endl;
+    std::cout << "blackCheckers: " << unsigned(blackCheckersCount) << std::endl;
+    std::cout << "kingPosition: " << int(kingX) << "-" << int(kingY) << std::endl;
+    std::cout << "checkerMovedTo: " << int(x) << "-" << int(y) << std::endl;
+    std::cout << "checkerMovedFrom: " << int(old_x) << "-" << int(old_y) << std::endl;
 }
 
 Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y)
 {
-    Tablut next = *this;
+
+    Tablut next = Tablut(*this);
 
     next.board[to_x][to_y] = next.board[from_x][from_y]; // Update checker position
     next.board[from_x][from_y] = C::EMPTY;               // Remove checker from its past position
@@ -185,186 +231,123 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
     next.x = to_x;
     next.y = to_y;
 
-    CHECKER *leftChecker = next.getLeftChecker();
-    CHECKER *rightChecker = next.getRightChecker();
-    CHECKER *upChecker = next.getUpChecker();
-    CHECKER *downChecker = next.getDownChecker();
+    // Reset kill feed of previous round
+    killFeedIndex = 0;
+
+    CHECKER leftChecker = next.getLeftChecker();
+    CHECKER rightChecker = next.getRightChecker();
+    CHECKER upChecker = next.getUpChecker();
+    CHECKER downChecker = next.getDownChecker();
 
     // WHITE TURN
     if (next.isWhiteTurn)
     {
         // UPDATE KING POSITION
-        if (next.board[x][y] == C::KING)
+        if (next.board[next.x][next.y] == C::KING)
         {
-            next.kingX = x;
-            next.kingY = y;
+            next.kingX = next.x;
+            next.kingY = next.y;
         }
 
+        // NORMAL WHITE EATS
+
+        // Opposite structure to check if black checker are surrounded by a structure in any direction
+        STRUCTURE oppositeStructure;
+
         // LEFT eat
-        if (*leftChecker == C::BLACK && *next.getLeftChecker(2U) == C::WHITE)
-            killChecker(*leftChecker);
+        if (next.y > FIRST_COL && leftChecker == C::BLACK)
+        {
+            oppositeStructure = tablutStructure[x][y - 1];
+            if (next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1U)
+            {
+                next.killLeft();
+            }
+        }
 
         // RIGHT eat
-        if (*rightChecker == C::BLACK && *next.getRightChecker(2U) == C::WHITE)
-            killChecker(*rightChecker);
+        if (next.y < LAST_COL && rightChecker == C::BLACK && (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U))
+        {
+            oppositeStructure = tablutStructure[x][y + 1];
+            if (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U)
+            {
+                next.killRight();
+            }
+        }
 
         // UP eat
-        if (*upChecker == C::BLACK && *next.getUpChecker(2U) == C::WHITE)
-            killChecker(*upChecker);
+        if (next.x < LAST_ROW && upChecker == C::BLACK && (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U))
+        {
+            oppositeStructure = tablutStructure[x - 1][y];
+            if (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U)
+            {
+                next.killUp();
+            }
+        }
 
         // DOWN eat
-        if (*downChecker == C::BLACK && *next.getDownChecker(2U) == C::WHITE)
-            killChecker(*downChecker);
+        if (next.x > FIRST_ROW && downChecker == C::BLACK && (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U))
+        {
+            oppositeStructure = tablutStructure[x + 1][y];
+            if (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U)
+            {
+                next.killDown();
+            }
+        }
     }
 
     // BLACK TURN
     else
     {
-        // KING IN THRONE OR NEAR TRONE EAT
-
-        // King in throne and black surounded throne -> WHITE LOSE
-        if (next.kingIsInThrone() && next.isKingSurrounded())
-        {
-            next.killChecker(next.board[4][4]);
-        }
-
-        // King near throne so can be killed by 3 black checkers surounding him
-        if (next.kingNearThrone())
-        {
-
-            u_int8_t surroundCount = 0U; // Number of black defenders surrounding king
-            bool castleCounted = false;  // Tell if castle as been counted or not
-            bool kill = true;            // Tell if kill requirement hasn't been satisfied
-
-            // Left CHECK
-            if (next.board[next.kingX][next.kingY - 1U] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (tablutStructure[next.kingX][next.kingY - 1U] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                kill = false;
-            }
-
-            // Right CHECK
-            if (kill && next.board[next.kingX][next.kingY + 1U] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[next.kingX][next.kingY + 1U] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                kill = false;
-            }
-
-            // Up CHECK
-            if (kill && next.board[next.kingX - 1U][next.kingY] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[next.kingX - 1U][next.kingY] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                kill = false;
-            }
-
-            // Down CHECK
-            if (kill && next.board[next.kingX + 1U][next.kingY] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[next.kingX + 1U][next.kingY] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                kill = false;
-            }
-
-            if (kill && surroundCount == 3 && castleCounted)
-            {
-                next.killChecker(next.board[next.kingX][next.kingY]);
-            }
-        }
-
         // NORMAL EATS
 
-        // LEFT eat ( KING OR SOLDIER ( > 1))
-        if (*leftChecker > 1)
-        {
-            STRUCTURE oppositeStructure = tablutStructure[to_x][to_y - 2];
+        // Opposite structure to check if white checker are surrounded by a structure in any direction
+        STRUCTURE oppositeStructure;
 
-            // eat if nor   l eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (*next.getLeftChecker(2U) == C::BLACK || oppositeStructure == S::CAMPS)
+        // LEFT eat ( KING OR SOLDIER ( > 1))
+        if (next.y > FIRST_COL && leftChecker > 1U)
+        {
+            oppositeStructure = tablutStructure[next.x][next.y - 2];
+
+            // eat if normall eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
+            if (next.getLeftChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
             {
-                next.killChecker(*leftChecker);
-            }
-            // eat if white checker and there's a camp on the oppositeSide
-            else if (*leftChecker == C::WHITE && oppositeStructure == S::CAMPS)
-            {
-                next.killChecker(*leftChecker);
+                next.killLeft();
             }
         }
 
         // RIGHT eat
-        if (*rightChecker > 1)
+        if (next.y < LAST_COL && rightChecker > 1U)
         {
-            STRUCTURE oppositeStructure = tablutStructure[to_x][to_y + 2];
+            oppositeStructure = tablutStructure[next.x][next.y + 2];
 
             // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (*next.getRightChecker(2U) == C::BLACK || oppositeStructure == S::CAMPS)
+            if (next.getRightChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
             {
-                next.killChecker(*rightChecker);
-            }
-            // eat if white checker and there's a camp on the oppositeSide
-            else if (*rightChecker == C::WHITE && oppositeStructure == S::CAMPS)
-            {
-                next.killChecker(*rightChecker);
+                next.killRight();
             }
         }
 
         // UP eat
-        if (*upChecker > 1)
+        if (next.x > FIRST_ROW && upChecker > 1U)
         {
-            STRUCTURE oppositeStructure = tablutStructure[to_x - 2][to_y];
+            oppositeStructure = tablutStructure[next.x - 2][next.y];
 
             // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (*next.getUpChecker(2U) == C::BLACK || oppositeStructure == S::CAMPS)
+            if (next.getUpChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
             {
-                next.killChecker(*upChecker);
-            }
-            // eat if white checker and there's a camp on the oppositeSide
-            else if (*upChecker == C::WHITE && oppositeStructure == S::CAMPS)
-            {
-                next.killChecker(*upChecker);
+                next.killUp();
             }
         }
 
         // DOWN eat
-        if (*downChecker > 1)
+        if (next.x > LAST_ROW && downChecker > 1U)
         {
-            STRUCTURE oppositeStructure = tablutStructure[to_x + 2][to_y];
+            oppositeStructure = tablutStructure[next.x + 2][next.y];
 
             // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (*next.getUpChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            if (next.getUpChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
             {
-                next.killChecker(*downChecker);
-            }
-            // eat if white checker and there's a camp on the oppositeSide
-            else if (*upChecker == C::WHITE && oppositeStructure == S::CAMPS)
-            {
-                next.killChecker(*downChecker);
+                next.killDown();
             }
         }
     }
