@@ -1,12 +1,11 @@
 #include "Heuristic.h"
 
+#include "Tablut.h"
+#include <vector>
+
 Heuristic::Heuristic()
 {
-    weights = {};
-    weights[0] = 2;
-    weights[1] = 1;
-    weights[2] = 10;
-    weights[3] = 2;
+    weights = fixedWeights;
 }
 Heuristic::~Heuristic() {}
 
@@ -26,9 +25,9 @@ int Heuristic::evaluate(Tablut &t)
     return weights[0] * t.blackCheckersCount + weights[1] * t.whiteCheckersCount + weights[2] * kingPos(t) + weights[3] * t.killFeedIndex * (t.isWhiteTurn ? 1 : -1);
 }
 
-int Heuristic::kingPos(Tablut &t)
+int Heuristic::kingPos(const Tablut &t)
 {
-    return 6 - kingPosHeuristic[t.kingX][t.kingY];
+    return 9 - kingPosHeuristic[t.kingX][t.kingY];
 }
 
 /*
@@ -37,18 +36,11 @@ int Heuristic::kingPos(Tablut &t)
 
 void Heuristic::sortMoves(std::vector<Tablut> &moves)
 {
-    std::sort(moves.begin(), moves.end(), Heuristic::compare);
+    std::sort(moves.begin(), moves.end(), [](const Tablut &l, const Tablut &r)
+              { return Heuristic::evaluateS(l) < Heuristic::evaluateS(r); });
 }
 
-int Heuristic::evaluateS(Tablut & t)
+int Heuristic::evaluateS(const Tablut &t)
 {
-    return 2 * t.blackCheckersCount + 1 * t.whiteCheckersCount + 10 * 6 - kingPosHeuristic[t.kingX][t.kingY] + 2 * t.killFeedIndex * (t.isWhiteTurn ? 1 : -1);
-}
-
-bool Heuristic::compare(Tablut & t1, Tablut & t2)
-{
-    int score1;
-    int score2;
-
-    return evaluateS(t1) - evaluateS(t2);
+    return fixedWeights[0] * t.blackCheckersCount + fixedWeights[1] * t.whiteCheckersCount + fixedWeights[2] * kingPos(t) + fixedWeights[3] * t.killFeedIndex * (t.isWhiteTurn ? 1 : -1);
 }

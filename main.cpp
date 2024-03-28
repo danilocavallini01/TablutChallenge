@@ -11,26 +11,30 @@ int main(int argc, char *argv[])
     NegaScoutSearch searchEngine;
     Heuristic hh = Heuristic();
     int best_score;
+    int max_depth = 7;
 
     for (int i = 0; i < 200; i++)
     {
-        searchEngine = NegaScoutSearch(hh);
-        best_score = searchEngine.NegaScout(t, 4, BOTTOM_SCORE, TOP_SCORE);
-        std::cout << "score = " << best_score << std::endl;
+        searchEngine = NegaScoutSearch();
+        best_score = searchEngine.NegaScout(t, max_depth, BOTTOM_SCORE, TOP_SCORE);
+        std::cout << "targetScore = " << best_score << std::endl;
 
         MoveGenerator::generateLegalMoves(t, moves);
 
+        t = moves[0];
+
         for (int i = 0; i < moves.size(); i++)
         {
-            std::cout << "score" << i << " = " << hh.evaluate(moves[i]) << std::endl;
+            std::cout << i << "->" << hh.evaluate(moves[i])<<"|";
             if (hh.evaluate(moves[i]) == best_score)
             {
                 t = moves[i];
-                break;
             }
         }
 
+        std::cout << std::endl << "########################" << std::endl;
         t.print();
+        std::cout << "########################" << std::endl;
 
         if (t.isGameOver())
         {

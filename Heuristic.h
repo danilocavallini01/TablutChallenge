@@ -1,7 +1,10 @@
 #ifndef HEURISTIC
 #define HEURISTIC
 
+#pragma once
+
 #include "Tablut.h"
+
 #include <array>
 #include <vector>
 #include <algorithm>
@@ -21,7 +24,14 @@
  8  - E E C C C E E -
 
 */
-const std::array<std::array<int16_t, DIM>, DIM> kingPosHeuristic = {{
+
+class Tablut;
+
+typedef std::array<int, 5> Weights;
+
+const Weights fixedWeights = {-1, 2, 10, 1};
+
+const std::array<std::array<int16_t, 9>, 9> kingPosHeuristic = {{
     {1, 0, 0, 9, 9, 9, 0, 0, 1},
     {0, 1, 1, 2, 9, 2, 1, 1, 0},
     {0, 1, 2, 3, 4, 3, 2, 1, 0},
@@ -36,17 +46,16 @@ const std::array<std::array<int16_t, DIM>, DIM> kingPosHeuristic = {{
 class Heuristic
 {
 public:
-    std::array<int, 5> weights;
+    Weights weights;
 
     Heuristic();
     ~Heuristic();
 
     int evaluate(Tablut &t);
-    static int kingPos(Tablut &t);
+    static int kingPos(const Tablut &t);
 
     void sortMoves(std::vector<Tablut> &moves);
-    static int evaluateS(Tablut & t);
-    static bool compare(Tablut & t1, Tablut & t2);
+    static int evaluateS(const Tablut &t);
 };
 
 #endif

@@ -1,21 +1,28 @@
+#include <cstring>
+
 #include "NegaScoutSearch.h"
 #include "Heuristic.h"
 #include "MoveGenerator.h"
 
-#include <cstring>
-
-NegaScoutSearch::NegaScoutSearch() {
+NegaScoutSearch::NegaScoutSearch()
+{
     heuristic = Heuristic();
+    zobrist = Zobrist();
+    history = TranspositionTable();
 }
-NegaScoutSearch::~NegaScoutSearch() {};
+
+NegaScoutSearch::~NegaScoutSearch(){};
 
 int NegaScoutSearch::NegaScout(Tablut t, int depth, int alpha, int beta)
 {
     int score;
-    int n;
-    int cur;
+    int b;
+    int v;
     std::vector<Tablut> moves;
     Tablut move;
+
+    ZobristKey hash = zobrist.hash(t);
+    // history.get(hash);
 
     if (depth == 0 || t.isGameOver())
     {
@@ -23,39 +30,35 @@ int NegaScoutSearch::NegaScout(Tablut t, int depth, int alpha, int beta)
     }
 
     score = BOTTOM_SCORE;
-    n = beta;
+    b = beta;
 
     MoveGenerator::generateLegalMoves(t, moves);
-    //heuristic.sortMoves(moves);
+    heuristic.sortMoves(moves);
 
     for (int i = 0; i < moves.size(); i++)
     {
         move = moves[i];
-        cur = -NegaScoutSearch::NegaScout(move, depth - 1, -n, -alpha);
+        v = -NegaScoutSearch::NegaScout(move, depth - 1, -b, -alpha);
 
-        if (cur > score)
+        if (v > alpha && v < beta && i > 0)
         {
-            if (n == beta || depth <= 2)
-            {
-                score = cur;
-            }
-            else
-            {
-                score = -NegaScoutSearch::NegaScout(move, depth - 1, -beta, -cur);
-            }
+            v = -NegaScoutSearch::NegaScout(move, depth - 1, -beta, -v);
         }
 
-        if (score > alpha)
+        if (v > score)
         {
-            alpha = score;
+            score = v;
+            bestmove[depth] = move;
         }
+
+        alpha = std::max(alpha, v);
 
         if (alpha >= beta)
         {
             return alpha;
         }
 
-        n = alpha + 1;
+        b = alpha + 1;
     }
 
     return score;

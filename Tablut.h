@@ -1,6 +1,10 @@
 #ifndef TABLUT_H
 #define TABLUT_H
 
+#pragma once
+
+#include "Heuristic.h"
+
 #include <iostream>
 #include <array>
 #include <map>
@@ -125,7 +129,8 @@ public:
     static Tablut fromJson(const std::string &json); // Constructor from json
     static Tablut newGame();                         // Tablut with starting position set
 
-    inline bool isGameOver() {
+    inline bool isGameOver()
+    {
         return isWinState() != WIN::NONE;
     }
 
