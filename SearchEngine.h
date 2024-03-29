@@ -1,5 +1,5 @@
-#ifndef NEGASCOUT
-#define NEGASCOUT
+#ifndef SEARCHENGINE
+#define SEARCHENGINE
 
 #pragma once
 
@@ -14,22 +14,23 @@
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
 const int TOP_SCORE(std::numeric_limits<int>::max());
 
-class NegaScoutSearch
+class SearchEngine
 {
 private:
 public:
     Heuristic heuristic;
     Zobrist zobrist;
-    TranspositionTable history;
+    TranspositionTable transpositionTable;
 
-    std::array<Tablut,20> bestmove;
+    std::array<Tablut, 20> bestmove;
 
-    int NegaScout(Tablut t, int depth, int alpha, int beta);
+    int NegaScout(Tablut &t, int depth, int alpha, int beta);
+    int NegaMax(Tablut &t, int depth, int alpha, int beta, int color);
 
-    NegaScoutSearch();
-    ~NegaScoutSearch();
+    SearchEngine();
+    ~SearchEngine();
 
-    NegaScoutSearch(Heuristic _heuristic)
+    SearchEngine(Heuristic _heuristic)
     {
         heuristic = _heuristic;
     }

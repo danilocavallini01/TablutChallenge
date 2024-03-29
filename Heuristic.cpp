@@ -27,7 +27,7 @@ int Heuristic::evaluate(Tablut &t)
 
 int Heuristic::kingPos(const Tablut &t)
 {
-    return 9 - kingPosHeuristic[t.kingX][t.kingY];
+    return 3 - kingPosHeuristic[t.kingX][t.kingY];
 }
 
 /*

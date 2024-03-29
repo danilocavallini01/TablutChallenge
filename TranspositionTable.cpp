@@ -2,19 +2,19 @@
 
 TranspositionTable::TranspositionTable()
 {
-    map = std::unordered_map<ZobristKey, Tablut>();
+    map = std::unordered_map<ZobristKey, Entry>();
 }
 
 TranspositionTable::~TranspositionTable() {}
 
-void TranspositionTable::put(Tablut &t, ZobristKey k)
+void TranspositionTable::put(Entry &t, ZobristKey k)
 {
     map.insert({k, t});
 }
 
-std::optional<Tablut> TranspositionTable::get(ZobristKey k)
+std::optional<Entry> TranspositionTable::get(ZobristKey k)
 {
-    std::unordered_map<ZobristKey, Tablut>::iterator res = map.find(k);
+    std::unordered_map<ZobristKey, Entry>::iterator res = map.find(k);
     if (res == map.end())
     {
         return {};

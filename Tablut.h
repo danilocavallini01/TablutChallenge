@@ -121,6 +121,9 @@ public:
     // Board game
     Board board;
 
+    // Turn count
+    int turn;
+
     void print();
 
     // Update table by one checker

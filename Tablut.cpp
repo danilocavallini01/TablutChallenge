@@ -26,6 +26,8 @@ Tablut::Tablut(const Tablut &startFrom)
     kingX = startFrom.kingX;
     kingY = startFrom.kingY;
 
+    turn = startFrom.turn;
+
     killFeed = startFrom.killFeed;
     killFeedIndex = startFrom.killFeedIndex;
 
@@ -66,6 +68,8 @@ Tablut Tablut::newGame()
 
     t.killFeed = {};
     t.killFeedIndex = 0;
+
+    t.turn = 0;
 
     // Setting all black defenders
     t.board[0][3] = C::BLACK;
@@ -209,6 +213,7 @@ void Tablut::print()
         std::cout << "----KILL FEED----" << std::endl;
     }
 
+    std::cout << "TURN: " << turn << std::endl;
     std::cout << "whiteCheckers: " << unsigned(whiteCheckersCount) << std::endl;
     std::cout << "blackCheckers: " << unsigned(blackCheckersCount) << std::endl;
     std::cout << "kingPosition: " << int(kingX) << "-" << int(kingY) << std::endl;
@@ -352,6 +357,7 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
     }
 
+    next.turn++;
     next.switchTurn();
 
     return next;
