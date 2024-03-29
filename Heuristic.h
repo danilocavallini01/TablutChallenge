@@ -29,7 +29,8 @@ class Tablut;
 
 typedef std::array<int, 5> Weights;
 
-const Weights fixedWeights = {-1, 2, 5, 0};
+const Weights fixedWeights = {-1, 2, 2, 1};
+const int winWeight = 10000;
 
 const std::array<std::array<int16_t, 9>, 9> kingPosHeuristic = {{
     {1, 0, 0, 9, 9, 9, 0, 0, 1},

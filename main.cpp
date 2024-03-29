@@ -21,9 +21,6 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < 100; i++)
     {
-        std::cout << "-----------------------------------" << std::endl;
-        t.print();
-        std::cout << "-----------------------------------" << std::endl;
 
         std::cout << "########################" << std::endl;
         searchEngine = SearchEngine();
@@ -31,13 +28,14 @@ int main(int argc, char *argv[])
         std::cout << "NEGASCOUT SCORE = " << searchEngine.NegaScout(t, max_depth, BOTTOM_SCORE, TOP_SCORE) << std::endl;
 
         // PERFORMANCE _______________
+        std::cout << "TOTAL WORKER: " << searchEngine.workers << std::endl;
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine.transpositionTable._cacheHit << " ,PUTS:" << searchEngine.transpositionTable._cachePut << ", MISS: " << searchEngine.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        //searchEngine.bestmove[max_depth].print();
+        // searchEngine.bestmove[max_depth].print();
         /*
         std::cout << "########################" << std::endl;
-        
+
         begin = std::chrono::steady_clock::now();
         std::cout << "NEGAMAX SCORE: " << searchEngine2.NegaMax(t, max_depth, BOTTOM_SCORE, TOP_SCORE, 1) << std::endl;
 
@@ -60,6 +58,10 @@ int main(int argc, char *argv[])
         std::cout << std::endl
                   << std::endl
                   << std::endl;
+
+        std::cout << "-----------------------------------" << std::endl;
+        t.print();
+        std::cout << "-----------------------------------" << std::endl;
     }
 
     return EXIT_SUCCESS;

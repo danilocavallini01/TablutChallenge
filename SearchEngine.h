@@ -9,7 +9,6 @@
 #include "TranspositionTable.h"
 
 #include <limits>
-#include <vector>
 
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
 const int TOP_SCORE(std::numeric_limits<int>::max());
@@ -23,7 +22,8 @@ public:
     TranspositionTable transpositionTable;
 
     std::array<Tablut, 20> bestmove;
-
+    int workers;
+    
     int NegaScout(Tablut &t, const int depth, int alpha, int beta);
     int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
 

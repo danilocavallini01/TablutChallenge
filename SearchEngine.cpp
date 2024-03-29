@@ -3,12 +3,14 @@
 #include "SearchEngine.h"
 #include "Heuristic.h"
 #include "MoveGenerator.h"
+#include <future>
 
 SearchEngine::SearchEngine()
 {
     heuristic = Heuristic();
     zobrist = Zobrist();
     transpositionTable = TranspositionTable();
+    workers = 0;
 }
 
 SearchEngine::~SearchEngine(){};
@@ -21,6 +23,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     int v;
     std::vector<Tablut> moves;
     Tablut move;
+    std::future<int> worker;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
     const ZobristKey hash = zobrist.hash(_prev_move);
@@ -59,7 +62,12 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     }
     // --------TRANSPOSITION TABLE LOOKUP -------- END
 
-    if (_depth == 0 || _prev_move.isGameOver())
+    if (_prev_move.isGameOver())
+    {
+        return _prev_move.isWinState() == WIN::WHITEWIN ? HEURISTIC::winWeight : -HEURISTIC::winWeight;
+    }
+    
+    if (_depth == 0)
     {
         return heuristic.evaluate(_prev_move);
     }
@@ -75,9 +83,19 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
         move = moves[i];
         v = -SearchEngine::NegaScout(move, _depth - 1, -b, -_alpha);
 
+        
+       /*worker = std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(move), _depth - 1, -b, -_alpha);
+        workers++;
+
+        v = -worker.get();*/
+
         if (v > _alpha && v < _beta && i > 0)
         {
             v = -SearchEngine::NegaScout(move, _depth - 1, -_beta, -v);
+
+            /*worker = std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(move), _depth - 1, -_beta, -v);
+            workers++;
+            v = -worker.get();*/
         }
 
         if (v > score)
@@ -162,9 +180,14 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
     }
     // --------TRANSPOSITION TABLE LOOKUP -------- END
 
-    if (_depth == 0 || _prev_move.isGameOver())
+    if (_depth == 0)
     {
         return heuristic.evaluate(_prev_move);
+    }
+
+    if (_prev_move.isGameOver())
+    {
+        return _prev_move.isWinState() == WIN::WHITEWIN ? HEURISTIC::winWeight : -HEURISTIC::winWeight;
     }
 
     MoveGenerator::generateLegalMoves(_prev_move, moves);
