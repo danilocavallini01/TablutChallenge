@@ -93,7 +93,7 @@ class Tablut
 public:
     Tablut();
     ~Tablut();
-    Tablut(const Tablut &startFrom);
+    Tablut(const Tablut& startFrom);
 
     // Tells if is White or Black turn
     bool isWhiteTurn;

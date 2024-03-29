@@ -3,41 +3,17 @@
 #include <stdio.h>
 #include <iostream>
 #include <array>
+#include <cstring>
+#include <chrono>
 
 Tablut::Tablut() {}
 Tablut::~Tablut() {}
-
 /*
     Constructor that copy only necessary elements to the new Tablut
 */
 Tablut::Tablut(const Tablut &startFrom)
 {
-    isWhiteTurn = startFrom.isWhiteTurn;
-
-    x = startFrom.x;
-    y = startFrom.y;
-
-    old_x = startFrom.old_x;
-    old_y = startFrom.old_y;
-
-    whiteCheckersCount = startFrom.whiteCheckersCount;
-    blackCheckersCount = startFrom.blackCheckersCount;
-
-    kingX = startFrom.kingX;
-    kingY = startFrom.kingY;
-
-    turn = startFrom.turn;
-
-    killFeed = startFrom.killFeed;
-    killFeedIndex = startFrom.killFeedIndex;
-
-    for (Pos x = 0; x < 9; x++)
-    {
-        for (Pos y = 0; y < 9; y++)
-        {
-            board[x][y] = startFrom.board[x][y];
-        }
-    }
+    std::memcpy(this, &startFrom, sizeof startFrom);
 }
 
 Tablut Tablut::newGame()

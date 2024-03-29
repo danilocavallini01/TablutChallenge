@@ -13,7 +13,7 @@ SearchEngine::SearchEngine()
 
 SearchEngine::~SearchEngine(){};
 
-int SearchEngine::NegaScout(Tablut &_prev_move, int _depth, int _alpha, int _beta)
+int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, int _beta)
 {
     const int alphaOrigin = _alpha;
     int score;
@@ -22,7 +22,6 @@ int SearchEngine::NegaScout(Tablut &_prev_move, int _depth, int _alpha, int _bet
     std::vector<Tablut> moves;
     Tablut move;
 
-    
     // -------- TRANSPOSITION TABLE LOOKUP --------
     const ZobristKey hash = zobrist.hash(_prev_move);
     const std::optional<Entry> maybe_entry = transpositionTable.get(hash);
@@ -70,8 +69,6 @@ int SearchEngine::NegaScout(Tablut &_prev_move, int _depth, int _alpha, int _bet
 
     MoveGenerator::generateLegalMoves(_prev_move, moves);
     heuristic.sortMoves(moves);
-
-    bestmove[_depth] = moves[0];
 
     for (int i = 0; i < moves.size(); i++)
     {
@@ -121,7 +118,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, int _depth, int _alpha, int _bet
     return score;
 }
 
-int SearchEngine::NegaMax(Tablut &_prev_move, int _depth, int _alpha, int _beta, int _color)
+int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int _beta, int _color)
 {
     const int alphaOrigin = _alpha;
     int score;

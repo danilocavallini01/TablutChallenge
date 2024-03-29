@@ -24,8 +24,8 @@ public:
 
     std::array<Tablut, 20> bestmove;
 
-    int NegaScout(Tablut &t, int depth, int alpha, int beta);
-    int NegaMax(Tablut &t, int depth, int alpha, int beta, int color);
+    int NegaScout(Tablut &t, const int depth, int alpha, int beta);
+    int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
 
     SearchEngine();
     ~SearchEngine();

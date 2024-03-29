@@ -19,12 +19,6 @@ public:
 
     static inline bool canWhiteContinue(Tablut &t, const Pos to_x, const Pos to_y)
     {
-
-        if (to_x < 0 || to_x > 8 || to_y < 0 || to_y > 8)
-        {
-            return false;
-        }
-
         C targetChecker;
         S targetStructure;
 
@@ -36,12 +30,6 @@ public:
 
     static inline bool canBlackContinue(Tablut &t, const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y)
     {
-
-        if (to_x < 0 || to_x > 8 || to_y < 0 || to_y > 8)
-        {
-            return false;
-        }
-
         C targetChecker;
         S targetStructure;
 

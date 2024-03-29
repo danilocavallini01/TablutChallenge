@@ -12,12 +12,14 @@ int main(int argc, char *argv[])
     SearchEngine searchEngine2;
     Heuristic hh = Heuristic();
     int best_score;
-    int max_depth = 7;
+    const int max_depth = 7;
 
     std::chrono::steady_clock::time_point begin;
     std::chrono::steady_clock::time_point end;
 
-    for (int i = 0; i < 200; i++)
+    Zobrist z = Zobrist();
+
+    for (int i = 0; i < 100; i++)
     {
         std::cout << "-----------------------------------" << std::endl;
         t.print();
@@ -32,8 +34,8 @@ int main(int argc, char *argv[])
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine.transpositionTable._cacheHit << " ,PUTS:" << searchEngine.transpositionTable._cachePut << ", MISS: " << searchEngine.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        searchEngine.bestmove[max_depth].print();
-
+        //searchEngine.bestmove[max_depth].print();
+        /*
         std::cout << "########################" << std::endl;
         
         begin = std::chrono::steady_clock::now();
@@ -43,8 +45,8 @@ int main(int argc, char *argv[])
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine2.transpositionTable._cacheHit << " ,PUTS:" << searchEngine2.transpositionTable._cachePut << ", MISS: " << searchEngine2.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        searchEngine2.bestmove[max_depth].print();
-
+        //searchEngine2.bestmove[max_depth].print();
+        */
         if (t.isGameOver())
         {
             std::cout << "########################" << std::endl;

@@ -8,9 +8,9 @@ void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &res)
     if (t.isWhiteTurn)
     {
         // GENERATE MOVES FOR WHITE PIECES IF BLACK CHECKERS ENCOUTERED
-        for (Pos x = 0; x < 9; x++)
+        for (Pos x = 0; x < DIM; x++)
         {
-            for (Pos y = 0; y < 9; y++)
+            for (Pos y = 0; y < DIM; y++)
             {
                 if (t.board[x][y] == C::WHITE)
                 {
@@ -25,9 +25,9 @@ void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &res)
     else
     {
         // GENERATE MOVES FOR BLACK PIECES IF BLACK CHECKERS ENCOTERED
-        for (Pos x = 0; x < 9; x++)
+        for (Pos x = 0; x < DIM; x++)
         {
-            for (Pos y = 0; y < 9; y++)
+            for (Pos y = 0; y < DIM; y++)
             {
                 if (t.board[x][y] == C::BLACK)
                 {
@@ -46,7 +46,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
         Pos epsilon = 1;
 
         // Left solutions
-        while (MoveGenerator::canWhiteContinue(t, from_x, from_y - epsilon))
+        while ((from_y - epsilon) != -1 && MoveGenerator::canWhiteContinue(t, from_x, from_y - epsilon))
         {
             res.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
             epsilon++;
@@ -54,7 +54,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
 
         epsilon = 1;
         // Right solutions
-        while (MoveGenerator::canWhiteContinue(t, from_x, from_y + epsilon))
+        while ((from_y + epsilon) != 9 && MoveGenerator::canWhiteContinue(t, from_x, from_y + epsilon))
         {
             res.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
             epsilon++;
@@ -62,7 +62,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
 
         epsilon = 1;
         // Up solutions
-        while (MoveGenerator::canWhiteContinue(t, from_x - epsilon, from_y))
+        while ((from_x - epsilon) != -1 && MoveGenerator::canWhiteContinue(t, from_x - epsilon, from_y))
         {
             res.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
             epsilon++;
@@ -70,7 +70,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
 
         epsilon = 1;
         // Down solutions
-        while (MoveGenerator::canWhiteContinue(t, from_x + epsilon, from_y))
+        while ((from_x + epsilon) != 9 && MoveGenerator::canWhiteContinue(t, from_x + epsilon, from_y))
         {
             res.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
             epsilon++;
@@ -83,7 +83,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
         Pos epsilon = 1;
         
         // Left solutions
-        while (MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y - epsilon))
+        while ((from_y - epsilon) != -1 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y - epsilon))
         {
             res.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
             epsilon++;
@@ -91,7 +91,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
         epsilon = 1;
 
         // Right solutions
-        while (MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y + epsilon))
+        while ((from_y + epsilon) != 9 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y + epsilon))
         {
             res.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
             epsilon++;
@@ -99,7 +99,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
 
         epsilon = 1;
         // Up solutions
-        while (MoveGenerator::canBlackContinue(t, from_x, from_y, from_x - epsilon, from_y))
+        while ((from_x - epsilon) != -1 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x - epsilon, from_y))
         {
             res.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
             epsilon++;
@@ -107,7 +107,7 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
 
         epsilon = 1;
         // Down solutions
-        while (MoveGenerator::canBlackContinue(t, from_x, from_y, from_x + epsilon, from_y))
+        while ((from_x + epsilon) != 9 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x + epsilon, from_y))
         {
             res.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
             epsilon++;
