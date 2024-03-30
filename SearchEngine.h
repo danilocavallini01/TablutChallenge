@@ -13,27 +13,28 @@
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
 const int TOP_SCORE(std::numeric_limits<int>::max());
 
+const int MAX_THREADS = 20;
+
 class SearchEngine
 {
-private:
 public:
     Heuristic heuristic;
     Zobrist zobrist;
     TranspositionTable transpositionTable;
-
-    std::array<Tablut, 20> bestmove;
-    int workers;
     
-    int NegaScout(Tablut &t, const int depth, int alpha, int beta);
-    int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
+    int threads = 0;
+    int totalThreads = 0;
+    int maxDepth;
 
-    SearchEngine();
+    Tablut bestmove;
+
+    SearchEngine(const int maxDepth);
+    SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTables, const int maxDepth);
+
     ~SearchEngine();
 
-    SearchEngine(Heuristic _heuristic)
-    {
-        heuristic = _heuristic;
-    }
+    int NegaScout(Tablut &t, const int depth, int alpha, int beta);
+    int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
 };
 
 #endif

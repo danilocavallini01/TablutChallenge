@@ -53,10 +53,10 @@ public:
     ~Heuristic();
 
     int evaluate(Tablut &t);
-    static int kingPos(const Tablut &t);
+    static int kingPos(Tablut &t) ;
+    int compare(Tablut &t1, Tablut &t2);
 
     void sortMoves(std::vector<Tablut> &moves);
-    static int evaluateS(const Tablut &t);
 };
 
 #endif

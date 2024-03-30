@@ -60,6 +60,7 @@ public:
     inline int cacheMiss() {
         return _cachePut - _cacheHit;
     }
+
 };
 
 #endif

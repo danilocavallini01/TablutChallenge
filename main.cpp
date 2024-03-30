@@ -8,43 +8,41 @@ int main(int argc, char *argv[])
 {
     Tablut t = Tablut::newGame();
     std::vector<Tablut> moves{};
-    SearchEngine searchEngine;
-    SearchEngine searchEngine2;
-    Heuristic hh = Heuristic();
+
     int best_score;
     const int max_depth = 7;
 
     std::chrono::steady_clock::time_point begin;
     std::chrono::steady_clock::time_point end;
 
-    Zobrist z = Zobrist();
+    SearchEngine searchEngine = SearchEngine(max_depth);
+    SearchEngine searchEngine2 = SearchEngine(max_depth);
 
     for (int i = 0; i < 100; i++)
     {
 
         std::cout << "########################" << std::endl;
-        searchEngine = SearchEngine();
+
         begin = std::chrono::steady_clock::now();
         std::cout << "NEGASCOUT SCORE = " << searchEngine.NegaScout(t, max_depth, BOTTOM_SCORE, TOP_SCORE) << std::endl;
 
         // PERFORMANCE _______________
-        std::cout << "TOTAL WORKER: " << searchEngine.workers << std::endl;
+        std::cout << "TOTAL WORKER: " << searchEngine.totalThreads << std::endl;
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine.transpositionTable._cacheHit << " ,PUTS:" << searchEngine.transpositionTable._cachePut << ", MISS: " << searchEngine.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        // searchEngine.bestmove[max_depth].print();
-        /*
-        std::cout << "########################" << std::endl;
+        searchEngine.bestmove.print();
 
         begin = std::chrono::steady_clock::now();
         std::cout << "NEGAMAX SCORE: " << searchEngine2.NegaMax(t, max_depth, BOTTOM_SCORE, TOP_SCORE, 1) << std::endl;
 
         // PERFORMANCE _______________
+        std::cout << "TOTAL WORKER: " << searchEngine2.totalThreads << std::endl;
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine2.transpositionTable._cacheHit << " ,PUTS:" << searchEngine2.transpositionTable._cachePut << ", MISS: " << searchEngine2.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        //searchEngine2.bestmove[max_depth].print();
-        */
+        searchEngine2.bestmove.print();
+
         if (t.isGameOver())
         {
             std::cout << "########################" << std::endl;
@@ -53,7 +51,7 @@ int main(int argc, char *argv[])
             break;
         }
 
-        t = searchEngine.bestmove[max_depth];
+        t = searchEngine.bestmove;
 
         std::cout << std::endl
                   << std::endl
