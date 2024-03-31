@@ -4,23 +4,51 @@
 #include <cstring>
 #include <future>
 
-SearchEngine::SearchEngine(const int _maxDepth)
+SearchEngine::SearchEngine()
 {
     heuristic = Heuristic();
     zobrist = Zobrist();
     transpositionTable = TranspositionTable();
-    maxDepth = _maxDepth;
 }
 
-SearchEngine::SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTable, const int _maxDepth)
+SearchEngine::SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTable)
 {
     heuristic = _heuristic;
     zobrist = _zobrist;
     transpositionTable = _transpositionTable;
-    maxDepth = _maxDepth;
 }
 
 SearchEngine::~SearchEngine(){};
+
+Tablut SearchEngine::search(Tablut &startingPosition, const int _maxDepth)
+{
+    maxDepth = _maxDepth;
+
+    std::vector<Tablut> moves;
+    Tablut move;
+
+    int _alpha = BOTTOM_SCORE;
+    int _beta = TOP_SCORE;
+
+    MoveGenerator::generateLegalMoves(startingPosition, moves);
+    heuristic.sortMoves(moves);
+
+    const size_t size = moves.size();
+
+    std::vector<std::future<int>> results;
+
+    for (int i = 0; i < size; i++)
+    {
+        move = moves[i];
+        results.push_back();
+    }
+
+    for (auto &&result : results)
+        std::cout << result.get() << ' ';
+    std::cout << std::endl;
+
+    return moves[0];
+}
 
 int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, int _beta)
 {
@@ -102,20 +130,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
 
         if (v > _alpha && v < _beta && i > 0)
         {
-
-            if (threads <= MAX_THREADS)
-            {
-                result = std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(move), _depth - 1, -_beta, -v);
-                threads++;
-                totalThreads++;
-
-                v = -result.get();
-                threads--;
-            }
-            else
-            {
-                v = -SearchEngine::NegaScout(move, _depth - 1, -_beta, -v);
-            }
+            v = -SearchEngine::NegaScout(move, _depth - 1, -_beta, -v);
         }
 
         if (v > score)

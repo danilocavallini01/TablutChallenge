@@ -4,6 +4,7 @@
 #include "SearchEngine.h"
 #include <vector>
 #include <chrono>
+
 int main(int argc, char *argv[])
 {
     Tablut t = Tablut::newGame();
@@ -15,8 +16,8 @@ int main(int argc, char *argv[])
     std::chrono::steady_clock::time_point begin;
     std::chrono::steady_clock::time_point end;
 
-    SearchEngine searchEngine = SearchEngine(max_depth);
-    SearchEngine searchEngine2 = SearchEngine(max_depth);
+    SearchEngine searchEngine = SearchEngine();
+    SearchEngine searchEngine2 = SearchEngine();
 
     for (int i = 0; i < 100; i++)
     {
@@ -24,14 +25,15 @@ int main(int argc, char *argv[])
         std::cout << "########################" << std::endl;
 
         begin = std::chrono::steady_clock::now();
-        std::cout << "NEGASCOUT SCORE = " << searchEngine.NegaScout(t, max_depth, BOTTOM_SCORE, TOP_SCORE) << std::endl;
+        searchEngine.search(t, max_depth);
+        std::cout << "NEGASCOUT SCORE = " << std::endl;
 
         // PERFORMANCE _______________
         std::cout << "TOTAL WORKER: " << searchEngine.totalThreads << std::endl;
         std::cout << "PERFORMANCE TT-> HITS:" << searchEngine.transpositionTable._cacheHit << " ,PUTS:" << searchEngine.transpositionTable._cachePut << ", MISS: " << searchEngine.transpositionTable.cacheMiss() << std::endl;
         end = std::chrono::steady_clock::now();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        searchEngine.bestmove.print();
+        /*searchEngine.bestmove.print();
 
         begin = std::chrono::steady_clock::now();
         std::cout << "NEGAMAX SCORE: " << searchEngine2.NegaMax(t, max_depth, BOTTOM_SCORE, TOP_SCORE, 1) << std::endl;
@@ -59,7 +61,7 @@ int main(int argc, char *argv[])
 
         std::cout << "-----------------------------------" << std::endl;
         t.print();
-        std::cout << "-----------------------------------" << std::endl;
+        std::cout << "-----------------------------------" << std::endl;*/
     }
 
     return EXIT_SUCCESS;

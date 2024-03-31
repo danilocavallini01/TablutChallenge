@@ -28,11 +28,12 @@ public:
 
     Tablut bestmove;
 
-    SearchEngine(const int maxDepth);
-    SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTables, const int maxDepth);
+    SearchEngine();
+    SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTables);
 
     ~SearchEngine();
 
+    Tablut search(Tablut &startingPosition, const int _maxDepth);
     int NegaScout(Tablut &t, const int depth, int alpha, int beta);
     int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
 };
