@@ -29,7 +29,20 @@ class Tablut;
 
 typedef std::array<int, 5> Weights;
 
-const Weights fixedWeights = {-1, 2, 2, 1};
+
+/*
+    Negative values mean black advantage
+    Otherwise white advantage
+
+    weightsS
+    0 : white pieces alive count weights
+    1 : black pieces alive count weights
+    2 : king distances from escape positions
+    3 : kills white on this round weights
+    4 : kills black on this round weights
+
+*/
+const Weights fixedWeights = {1, -2, 10, 1, -1};
 const int winWeight = 10000;
 
 const std::array<std::array<int16_t, 9>, 9> kingPosHeuristic = {{
@@ -54,7 +67,7 @@ public:
 
     int evaluate(Tablut &t);
     static int kingPos(Tablut &t) ;
-    int compare(Tablut &t1, Tablut &t2);
+    bool compare(Tablut &t1, Tablut &t2);
 
     void sortMoves(std::vector<Tablut> &moves);
 };

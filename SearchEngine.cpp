@@ -20,32 +20,97 @@ SearchEngine::SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, Transpositi
 
 SearchEngine::~SearchEngine(){};
 
-Tablut SearchEngine::search(Tablut &startingPosition, const int _maxDepth)
+Tablut SearchEngine::NegaMaxSearch(Tablut &_startingPosition, const int _maxDepth, const int _color)
 {
     maxDepth = _maxDepth;
 
     std::vector<Tablut> moves;
     Tablut move;
-
-    int _alpha = BOTTOM_SCORE;
-    int _beta = TOP_SCORE;
-
-    MoveGenerator::generateLegalMoves(startingPosition, moves);
-    heuristic.sortMoves(moves);
-
-    const size_t size = moves.size();
-
     std::vector<std::future<int>> results;
 
-    for (int i = 0; i < size; i++)
+    int alpha = BOTTOM_SCORE;
+    int beta = TOP_SCORE;
+
+    score = BOTTOM_SCORE;
+
+    MoveGenerator::generateLegalMoves(_startingPosition, moves);
+    heuristic.sortMoves(moves);
+
+    int maxThread = 16;
+
+    for (int t = 0; t < moves.size(); t += maxThread)
     {
-        move = moves[i];
-        results.push_back();
+        for (int i = 0; i < maxThread && i + t < moves.size(); i++)
+        {
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaMax, std::ref(*this), std::ref(moves[i + t]), _maxDepth - 1, -beta, -alpha, -_color));
+        }
+
+        for (int i = 0; i < results.size(); i++)
+        {
+            score = std::max(score, -results[i].get());
+            alpha = std::max(alpha, score);
+
+            if (alpha >= beta)
+            {
+                return moves[i + t];
+            }
+        }
+
+        results.clear();
     }
 
-    for (auto &&result : results)
-        std::cout << result.get() << ' ';
-    std::cout << std::endl;
+    return moves[0];
+}
+
+Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDepth)
+{
+    maxDepth = _maxDepth;
+
+    std::vector<Tablut> moves;
+    Tablut move;
+    std::vector<std::future<int>> results;
+
+    int alpha = BOTTOM_SCORE;
+    int beta = TOP_SCORE;
+
+    score = BOTTOM_SCORE;
+    int b = beta;
+    int v;
+
+    MoveGenerator::generateLegalMoves(_startingPosition, moves);
+    heuristic.sortMoves(moves);
+
+    int maxThread = 16;
+
+    for (int t = 0; t < moves.size(); t += maxThread)
+    {
+        for (int i = 0; i < maxThread && i + t < moves.size(); i++)
+        {
+            move = moves[i + t];
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(move), _maxDepth - 1, -b, -alpha));
+        }
+
+        for (int i = 0; i < results.size(); i++)
+        {
+            v = -results[i].get();
+
+            if (v > score)
+            {
+                score = v;
+            }
+
+            alpha = std::max(alpha, v);
+
+            if (alpha >= beta)
+            {
+                return moves[i + t];
+            }
+
+            b = alpha + 1;
+        }
+
+        results.clear();
+    }
 
     return moves[0];
 }
@@ -56,19 +121,18 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     int score;
     int b;
     int v;
+
     std::vector<Tablut> moves;
     Tablut move;
-    std::future<int> result;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    const ZobristKey hash = zobrist.hash(_prev_move);
-    const std::optional<Entry> maybe_entry = transpositionTable.get(hash);
+    ZobristKey hash = zobrist.hash(_prev_move);
+    std::optional<Entry> maybe_entry = transpositionTable.get(hash);
 
     Entry tt_entry;
 
     if (maybe_entry.has_value())
     {
-        transpositionTable.cacheHit();
         tt_entry = maybe_entry.value();
         int tt_depth = std::get<ENTRY::DEPTH_INDEX>(tt_entry);
 
@@ -92,22 +156,13 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
 
             if (_alpha >= _beta)
             {
-                if (tt_depth == maxDepth)
-                {
-                    bestmove = std::get<ENTRY::TABLUT_BOARD_INDEX>(tt_entry);
-                }
                 return tt_score;
             }
         }
     }
     // --------TRANSPOSITION TABLE LOOKUP -------- END
 
-    if (_prev_move.isGameOver())
-    {
-        return _prev_move.isWinState() == WIN::WHITEWIN ? HEURISTIC::winWeight : -HEURISTIC::winWeight;
-    }
-
-    if (_depth == 0)
+    if (_prev_move.isGameOver() || _depth == 0)
     {
         return heuristic.evaluate(_prev_move);
     }
@@ -117,11 +172,6 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
 
     MoveGenerator::generateLegalMoves(_prev_move, moves);
     heuristic.sortMoves(moves);
-
-    if (_depth == maxDepth)
-    {
-        bestmove = moves[0];
-    }
 
     for (int i = 0; i < moves.size(); i++)
     {
@@ -136,10 +186,6 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
         if (v > score)
         {
             score = v;
-            if (_depth == maxDepth)
-            {
-                bestmove = move;
-            }
         }
 
         _alpha = std::max(_alpha, v);
@@ -155,19 +201,18 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     // -------- TRANSPOSITION TABLE PUT --------
     if (score <= alphaOrigin)
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::UPPERBOUND, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::UPPERBOUND);
     }
     else if (score >= b)
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::LOWERBOUND, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::LOWERBOUND);
     }
     else
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::EXACT, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::EXACT);
     }
 
     transpositionTable.put(tt_entry, hash);
-    transpositionTable.cachePut();
 
     // -------- TRANSPOSITION TABLE PUT -------- END
 
@@ -182,8 +227,8 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    const ZobristKey hash = zobrist.hash(_prev_move);
-    const std::optional<Entry> maybe_entry = transpositionTable.get(hash);
+    ZobristKey hash = zobrist.hash(_prev_move);
+    std::optional<Entry> maybe_entry = transpositionTable.get(hash);
 
     Entry tt_entry;
 
@@ -213,34 +258,20 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
 
             if (_alpha >= _beta)
             {
-                if (tt_depth == maxDepth)
-                {
-                    bestmove = std::get<ENTRY::TABLUT_BOARD_INDEX>(tt_entry);
-                }
                 return tt_score;
             }
         }
     }
     // --------TRANSPOSITION TABLE LOOKUP -------- END
 
-    if (_depth == 0)
+    if (_prev_move.isGameOver() || _depth == 0)
     {
         return heuristic.evaluate(_prev_move);
-    }
-
-    if (_prev_move.isGameOver())
-    {
-        return _prev_move.isWinState() == WIN::WHITEWIN ? HEURISTIC::winWeight : -HEURISTIC::winWeight;
     }
 
     MoveGenerator::generateLegalMoves(_prev_move, moves);
     heuristic.sortMoves(moves);
     score = BOTTOM_SCORE;
-
-    if (_depth == maxDepth)
-    {
-        bestmove = moves[0];
-    }
 
     for (int i = 0; i < moves.size(); i++)
     {
@@ -248,11 +279,6 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
         _alpha = std::max(_alpha, score);
         if (_alpha >= _beta)
         {
-            if (_depth == maxDepth)
-            {
-                bestmove = moves[i];
-            }
-
             break;
         }
     }
@@ -260,15 +286,15 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
     // -------- TRANSPOSITION TABLE PUT --------
     if (score <= alphaOrigin)
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::UPPERBOUND, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::UPPERBOUND);
     }
     else if (score >= _beta)
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::LOWERBOUND, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::LOWERBOUND);
     }
     else
     {
-        tt_entry = std::make_tuple(score, _depth, FLAG::EXACT, bestmove);
+        tt_entry = std::make_tuple(score, _depth, FLAG::EXACT);
     }
 
     transpositionTable.put(tt_entry, hash);

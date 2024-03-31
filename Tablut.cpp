@@ -238,38 +238,38 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         // LEFT eat
         if (next.y > FIRST_COL && leftChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[x][y - 1];
-            if (next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1U)
+            oppositeStructure = tablutStructure[next.x][next.y - 1];
+            if (tablutStructure[next.x][next.y - 1] != S::CAMPS && (next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killLeft();
             }
         }
 
         // RIGHT eat
-        if (next.y < LAST_COL && rightChecker == C::BLACK && (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U))
+        if (next.y < LAST_COL && rightChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[x][y + 1];
-            if (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U)
+            oppositeStructure = tablutStructure[next.x][next.y + 1];
+            if (tablutStructure[next.x][next.y + 1] != S::CAMPS && (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killRight();
             }
         }
 
         // UP eat
-        if (next.x < LAST_ROW && upChecker == C::BLACK && (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U))
+        if (next.x > FIRST_ROW && upChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[x - 1][y];
-            if (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U)
+            oppositeStructure = tablutStructure[next.x - 1][next.y];
+            if (tablutStructure[next.x - 1][next.y] != S::CAMPS && (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killUp();
             }
         }
 
         // DOWN eat
-        if (next.x > FIRST_ROW && downChecker == C::BLACK && (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U))
+        if (next.x < LAST_ROW && downChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[x + 1][y];
-            if (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U)
+            oppositeStructure = tablutStructure[next.x + 1][next.y];
+            if (tablutStructure[next.x + 1][next.y] != S::CAMPS && (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killDown();
             }
@@ -279,6 +279,16 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
     // BLACK TURN
     else
     {
+        if (checkIfKingDead())
+        {
+            killChecker(next.kingX, next.kingY);
+
+            next.turn++;
+            next.switchTurn();
+
+            return next;
+        }
+
         // NORMAL EATS
 
         // Opposite structure to check if white checker are surrounded by a structure in any direction

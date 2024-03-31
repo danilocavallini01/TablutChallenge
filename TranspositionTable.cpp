@@ -1,5 +1,8 @@
 #include "TranspositionTable.h"
 
+std::mutex mtx_write;
+std::mutex mtx_read;
+
 TranspositionTable::TranspositionTable()
 {
     map = std::unordered_map<ZobristKey, Entry>();
@@ -9,16 +12,18 @@ TranspositionTable::~TranspositionTable() {}
 
 void TranspositionTable::put(Entry &t, ZobristKey k)
 {
-    map.insert({k, t});
+    TranspositionTable::cachePut();
+    mtx_write.lock();
+    map.emplace(k, t);
+    mtx_write.unlock();
 }
 
-std::optional<Entry> TranspositionTable::get(ZobristKey k)
+std::optional<Entry> TranspositionTable::get(const ZobristKey k)
 {
-    std::unordered_map<ZobristKey, Entry>::iterator res = map.find(k);
-    if (res == map.end())
+    TranspositionTable::cacheHit();
+    if (auto res = map.find(k); res != map.end())
     {
-        return {};
+        return res->second;
     }
-
-    return res->second;
+    return {};
 }

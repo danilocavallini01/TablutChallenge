@@ -1,1 +1,1 @@
-/usr/bin/g++ -std=c++20 -O3 -fdiagnostics-color=always -g ./*.cpp -I . -o main && ./main
+/usr/bin/g++ -O3 -fdiagnostics-color=always -g ./*.cpp -I . -o main && ./main

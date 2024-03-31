@@ -18,23 +18,23 @@ Heuristic::~Heuristic() {}
     0 : white pieces alive count weights
     1 : black pieces alive count weights
     2 : king distances from escape positions
-    3 : kills on this round weights
-*/
+    3 : kills white on this round weights
+    4 : kills black on this round weights
 
+*/
 int Heuristic::evaluate(Tablut &t)
 {
-    return weights[0] * t.blackCheckersCount + weights[1] * t.whiteCheckersCount + weights[2] * kingPos(t) + weights[3] * t.killFeedIndex * (t.isWhiteTurn ? 1 : -1);
-}
-
-int Heuristic::kingPos(Tablut &t)
-{
-    return 6 - kingPosHeuristic[t.kingX][t.kingY];
+    if (t.isGameOver())
+    {
+        return t.isWinState() == WIN::WHITEWIN ? HEURISTIC::winWeight : -HEURISTIC::winWeight;
+    }
+    return weights[0] * t.blackCheckersCount + weights[1] * t.whiteCheckersCount + weights[2] * (3 - kingPosHeuristic[t.kingX][t.kingY]) + t.killFeedIndex * (t.isWhiteTurn ? weights[3] : weights[4]);
 }
 
 // Compare function between two Tabluts
-int Heuristic::compare(Tablut &t1, Tablut &t2)
+bool Heuristic::compare(Tablut &t1, Tablut &t2)
 {
-    return Heuristic::evaluate(t1) - Heuristic::evaluate(t2);
+    return Heuristic::evaluate(t1) < Heuristic::evaluate(t2);
 }
 
 /*
