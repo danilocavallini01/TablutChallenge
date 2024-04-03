@@ -3,7 +3,7 @@
 MoveGenerator::MoveGenerator() {}
 MoveGenerator::~MoveGenerator() {}
 
-void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &res)
+void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &nextTabluts)
 {
     if (t.isWhiteTurn)
     {
@@ -14,13 +14,13 @@ void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &res)
             {
                 if (t.board[x][y] == C::WHITE || t.board[x][y] == C::KING)
                 {
-                    MoveGenerator::getLegalMovesFrom(t, x, y, res);
+                    getLegalMovesFrom(t, x, y, nextTabluts);
                 }
             }
         }
 
         // GENERATE MOVES FOR KING
-        // MoveGenerator::getLegalMovesFrom(t, t.kingX, t.kingY, res);
+        // getLegalMovesFrom(t, t.kingX, t.kingY, nextTabluts);
     }
     else
     {
@@ -31,14 +31,23 @@ void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &res)
             {
                 if (t.board[x][y] == C::BLACK)
                 {
-                    MoveGenerator::getLegalMovesFrom(t, x, y, res);
+                    getLegalMovesFrom(t, x, y, nextTabluts);
                 }
             }
         }
     }
+
+    ZobristKey hash;
+
+    for ( auto& nextTablut: nextTabluts) {
+        hash = zobrist.hash(nextTablut);
+        
+        nextTablut.hash = hash;
+        nextTablut.pastHashes.push_back(hash);
+    }
 };
 
-void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, std::vector<Tablut> &res)
+void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, std::vector<Tablut> &nextTabluts)
 {
     // ------------ WHITE LEGAL MOVES ------------
     if (t.isWhiteTurn)
@@ -46,33 +55,33 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
         Pos epsilon = 1;
 
         // Left solutions
-        while ((from_y - epsilon) != -1 && MoveGenerator::canWhiteContinue(t, from_x, from_y - epsilon))
+        while ((from_y - epsilon) != -1 && canWhiteContinue(t, from_x, from_y - epsilon))
         {
-            res.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
             epsilon++;
         }
 
         epsilon = 1;
         // Right solutions
-        while ((from_y + epsilon) != 9 && MoveGenerator::canWhiteContinue(t, from_x, from_y + epsilon))
+        while ((from_y + epsilon) != 9 && canWhiteContinue(t, from_x, from_y + epsilon))
         {
-            res.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
             epsilon++;
         }
 
         epsilon = 1;
         // Up solutions
-        while ((from_x - epsilon) != -1 && MoveGenerator::canWhiteContinue(t, from_x - epsilon, from_y))
+        while ((from_x - epsilon) != -1 && canWhiteContinue(t, from_x - epsilon, from_y))
         {
-            res.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
             epsilon++;
         }
 
         epsilon = 1;
         // Down solutions
-        while ((from_x + epsilon) != 9 && MoveGenerator::canWhiteContinue(t, from_x + epsilon, from_y))
+        while ((from_x + epsilon) != 9 && canWhiteContinue(t, from_x + epsilon, from_y))
         {
-            res.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
             epsilon++;
         }
 
@@ -81,35 +90,35 @@ void MoveGenerator::getLegalMovesFrom(Tablut &t, Pos from_x, const Pos from_y, s
     else
     {
         Pos epsilon = 1;
-        
+
         // Left solutions
-        while ((from_y - epsilon) != -1 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y - epsilon))
+        while ((from_y - epsilon) != -1 && canBlackContinue(t, from_x, from_y, from_x, from_y - epsilon))
         {
-            res.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x, from_y - epsilon));
             epsilon++;
         }
         epsilon = 1;
 
         // Right solutions
-        while ((from_y + epsilon) != 9 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x, from_y + epsilon))
+        while ((from_y + epsilon) != 9 && canBlackContinue(t, from_x, from_y, from_x, from_y + epsilon))
         {
-            res.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x, from_y + epsilon));
             epsilon++;
         }
 
         epsilon = 1;
         // Up solutions
-        while ((from_x - epsilon) != -1 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x - epsilon, from_y))
+        while ((from_x - epsilon) != -1 && canBlackContinue(t, from_x, from_y, from_x - epsilon, from_y))
         {
-            res.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x - epsilon, from_y));
             epsilon++;
         }
 
         epsilon = 1;
         // Down solutions
-        while ((from_x + epsilon) != 9 && MoveGenerator::canBlackContinue(t, from_x, from_y, from_x + epsilon, from_y))
+        while ((from_x + epsilon) != 9 && canBlackContinue(t, from_x, from_y, from_x + epsilon, from_y))
         {
-            res.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
+            nextTabluts.push_back(t.next(from_x, from_y, from_x + epsilon, from_y));
             epsilon++;
         }
     }

@@ -1,9 +1,5 @@
 #include "Heuristic.h"
 
-#include "Tablut.h"
-#include <vector>
-#include <functional>
-
 Heuristic::Heuristic()
 {
     weights = fixedWeights;
@@ -22,7 +18,7 @@ Heuristic::~Heuristic() {}
     4 : kills black on this round weights
 
 */
-int Heuristic::evaluate(Tablut &t)
+int Heuristic::evaluate(const Tablut &t)
 {
     if (t.isGameOver())
     {
@@ -32,7 +28,7 @@ int Heuristic::evaluate(Tablut &t)
 }
 
 // Compare function between two Tabluts
-bool Heuristic::compare(Tablut &t1, Tablut &t2)
+bool Heuristic::compare(const Tablut &t1, const Tablut &t2)
 {
     return Heuristic::evaluate(t1) < Heuristic::evaluate(t2);
 }
@@ -43,5 +39,5 @@ bool Heuristic::compare(Tablut &t1, Tablut &t2)
 
 void Heuristic::sortMoves(std::vector<Tablut> &moves)
 {
-    std::sort(moves.begin(), moves.end(), std::bind(&Heuristic::compare, this, std::placeholders::_1, std::placeholders::_2));
+    std::sort(moves.begin(), moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
 }

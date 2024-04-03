@@ -4,17 +4,12 @@
 #include <cstring>
 #include <future>
 
-SearchEngine::SearchEngine()
-{
-    heuristic = Heuristic();
-    zobrist = Zobrist();
-    transpositionTable = TranspositionTable();
-}
+SearchEngine::SearchEngine() {}
 
-SearchEngine::SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTable)
+SearchEngine::SearchEngine(Heuristic &_heuristic, MoveGenerator &_moveGenerator, TranspositionTable &_transpositionTable)
 {
     heuristic = _heuristic;
-    zobrist = _zobrist;
+    moveGenerator = _moveGenerator;
     transpositionTable = _transpositionTable;
 }
 
@@ -33,10 +28,10 @@ Tablut SearchEngine::NegaMaxSearch(Tablut &_startingPosition, const int _maxDept
 
     score = BOTTOM_SCORE;
 
-    MoveGenerator::generateLegalMoves(_startingPosition, moves);
+    moveGenerator.generateLegalMoves(_startingPosition, moves);
     heuristic.sortMoves(moves);
 
-    int maxThread = 16;
+    int maxThread = int(std::thread::hardware_concurrency());
 
     for (int t = 0; t < moves.size(); t += maxThread)
     {
@@ -77,8 +72,14 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDe
     int b = beta;
     int v;
 
-    MoveGenerator::generateLegalMoves(_startingPosition, moves);
+    std::chrono::steady_clock::time_point begin;
+    std::chrono::steady_clock::time_point end;
+
+    moveGenerator.generateLegalMoves(_startingPosition, moves);
+    begin = std::chrono::steady_clock::now();
     heuristic.sortMoves(moves);
+    end = std::chrono::steady_clock::now();
+    std::cout << "SORT _____ PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "[ms]" << std::endl;
 
     int maxThread = 16;
 
@@ -126,7 +127,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    ZobristKey hash = zobrist.hash(_prev_move);
+    ZobristKey hash = _prev_move.hash;
     std::optional<Entry> maybe_entry = transpositionTable.get(hash);
 
     Entry tt_entry;
@@ -170,7 +171,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     score = BOTTOM_SCORE;
     b = _beta;
 
-    MoveGenerator::generateLegalMoves(_prev_move, moves);
+    moveGenerator.generateLegalMoves(_prev_move, moves);
     heuristic.sortMoves(moves);
 
     for (int i = 0; i < moves.size(); i++)
@@ -227,7 +228,7 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    ZobristKey hash = zobrist.hash(_prev_move);
+    ZobristKey hash = _prev_move.hash;
     std::optional<Entry> maybe_entry = transpositionTable.get(hash);
 
     Entry tt_entry;
@@ -269,7 +270,7 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
         return heuristic.evaluate(_prev_move);
     }
 
-    MoveGenerator::generateLegalMoves(_prev_move, moves);
+    moveGenerator.generateLegalMoves(_prev_move, moves);
     heuristic.sortMoves(moves);
     score = BOTTOM_SCORE;
 

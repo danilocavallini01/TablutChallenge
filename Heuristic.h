@@ -9,7 +9,11 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <vector>
+#include <functional>
 
+#include <boost/sort/spreadsort/spreadsort.hpp>
+#include <boost/bind/bind.hpp>
 // Matrix representing the distance ( in number of moves ) in every cell from the nearest camp
 /*--0 1 2 3 4 5 6 7 8
  |
@@ -65,9 +69,9 @@ public:
     Heuristic();
     ~Heuristic();
 
-    int evaluate(Tablut &t);
-    static int kingPos(Tablut &t) ;
-    bool compare(Tablut &t1, Tablut &t2);
+    int evaluate(const Tablut &t);
+    static int kingPos(const Tablut &t) ;
+    bool compare(const Tablut &t1, const Tablut &t2);
 
     void sortMoves(std::vector<Tablut> &moves);
 };

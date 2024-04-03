@@ -1,6 +1,4 @@
 #include "Zobrist.h"
-#include <random>
-#include <ctime>
 
 Zobrist::Zobrist()
 {

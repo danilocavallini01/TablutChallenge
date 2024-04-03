@@ -1,29 +1,24 @@
 #include "TranspositionTable.h"
 
-std::mutex mtx_write;
-std::mutex mtx_read;
-
 TranspositionTable::TranspositionTable()
 {
-    map = std::unordered_map<ZobristKey, Entry>();
+    map = boost::unordered::concurrent_flat_map<ZobristKey, Entry>();
 }
 
 TranspositionTable::~TranspositionTable() {}
 
 void TranspositionTable::put(Entry &t, ZobristKey k)
 {
-    TranspositionTable::cachePut();
-    mtx_write.lock();
-    map.emplace(k, t);
-    mtx_write.unlock();
+    _cachePut++;
+    map.try_emplace(k, t);
 }
 
 std::optional<Entry> TranspositionTable::get(const ZobristKey k)
 {
-    TranspositionTable::cacheHit();
-    if (auto res = map.find(k); res != map.end())
-    {
-        return res->second;
-    }
+    _cacheHit++;
+    map.visit(k, [](auto &x){
+        return x.second; 
+    });
+
     return {};
 }

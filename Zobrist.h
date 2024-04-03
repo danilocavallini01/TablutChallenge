@@ -1,8 +1,12 @@
+#pragma once
+
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
 
-#include <cstdint>
 #include "Tablut.h"
+#include <cstdint>
+#include <random>
+#include <ctime>
 
 typedef uint64_t ZobristKey;
 

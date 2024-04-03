@@ -1,19 +1,14 @@
 #include "Tablut.h"
 
-#include <stdio.h>
-#include <iostream>
-#include <array>
-#include <cstring>
-#include <chrono>
-
 Tablut::Tablut() {}
 Tablut::~Tablut() {}
+
 /*
     Constructor that copy only necessary elements to the new Tablut
 */
 Tablut::Tablut(const Tablut &startFrom)
 {
-    std::memcpy(this, &startFrom, sizeof startFrom);
+    std::memcpy(this, &startFrom, sizeof(Tablut));
 }
 
 Tablut Tablut::newGame()
@@ -78,9 +73,10 @@ Tablut Tablut::newGame()
     // Setting Throne
     t.board[4][4] = C::KING;
 
+    t.pastHashes = std::vector<ZobristKey>();
+
     return t;
 }
-
 void Tablut::print()
 {
     std::cout << std::endl

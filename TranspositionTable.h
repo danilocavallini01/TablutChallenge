@@ -1,12 +1,17 @@
+#pragma once
+
 #ifndef TRANSPOSITION_TABLE
 #define TRANSPOSITION_TABLE
 
 #include "Tablut.h"
 #include "Zobrist.h"
+
 #include <unordered_map>
 #include <optional>
 #include <mutex>
 #include <iostream>
+
+#include <boost/unordered/concurrent_flat_map.hpp>
 
 // Entry Flag enum for values EXACT,LOWEBOUND,PPERBOUND
 
@@ -36,14 +41,13 @@ typedef std::tuple<int, int, FLAG> Entry;
 class TranspositionTable
 {
 private:
-    std::unordered_map<ZobristKey, Entry> map;
+    boost::unordered::concurrent_flat_map<ZobristKey, Entry> map;
+    unsigned int _cacheHit{0};
+    unsigned int _cachePut{0};
 
 public:
     TranspositionTable();
     ~TranspositionTable();
-
-    int _cacheHit = 0;
-    int _cachePut = 0;
 
     void put(Entry &t, ZobristKey k);
     std::optional<Entry> get(const ZobristKey k);
@@ -69,7 +73,8 @@ public:
         return _cachePut + _cacheHit;
     }
 
-    inline void resetStat() {
+    inline void resetStat()
+    {
         _cacheHit = 0;
         _cachePut = 0;
     }

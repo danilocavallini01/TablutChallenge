@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/lib/",
-                "/usr/include/"
+                "/usr/include/",
+                "${HOME}/Documenti/boost_1_84_0/"
             ],
             "defines": [],
             "cStandard": "c20",

@@ -1,13 +1,20 @@
+#pragma once
+
 #ifndef TABLUT_H
 #define TABLUT_H
-
-#pragma once
 
 #include "Heuristic.h"
 
 #include <iostream>
+#include <cstdint>
 #include <array>
 #include <map>
+#include <stdio.h>
+#include <cstring>
+#include <chrono>
+#include <vector>
+
+typedef uint64_t ZobristKey;
 
 typedef u_int16_t CheckerCodex;
 typedef CheckerCodex StructuresCodex;
@@ -124,21 +131,26 @@ public:
     // Turn count
     int turn;
 
+    // Current table hash
+    ZobristKey hash;
+
+    // Past turn hashes, used to check if same game state is reached twice
+    std::vector<ZobristKey> pastHashes;
+
     void print();
 
     // Update table by one checker
     Tablut next(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y);
 
-    static Tablut fromJson(const std::string &json); // Constructor from json
+    static Tablut fromJson(const std::string &json); // Constructor from json 
     static Tablut newGame();                         // Tablut with starting position set
-
-    inline bool isGameOver()
+    inline bool isGameOver() const
     {
         return isWinState() != WIN::NONE;
     }
 
     // Tell if someone win or not
-    inline WIN isWinState()
+    inline WIN isWinState() const
     {
         if (kingX == KDEADPOSITION)
         {

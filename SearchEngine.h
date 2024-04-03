@@ -1,11 +1,11 @@
+#pragma once
+
 #ifndef SEARCHENGINE
 #define SEARCHENGINE
 
-#pragma once
-
 #include "Tablut.h"
 #include "Heuristic.h"
-#include "Zobrist.h"
+#include "MoveGenerator.h"
 #include "TranspositionTable.h"
 
 #include <limits>
@@ -20,8 +20,8 @@ class SearchEngine
 public:
     // Heuristic function: gives score to each Board position
     Heuristic heuristic;
-    // Zobrist algorithm to create HASH Key values for Transposition Table entries
-    Zobrist zobrist;
+    // MoveGenerator algorithm to create all possible tablut moves and hashes for the transposition Table
+    MoveGenerator moveGenerator;
     // Transposition table, used to store previous seen board positions so we dont re-evaluate
     TranspositionTable transpositionTable;
 
@@ -32,7 +32,7 @@ public:
     int score;
 
     SearchEngine();
-    SearchEngine(Heuristic &_heuristic, Zobrist &_zobrist, TranspositionTable &_transpositionTables);
+    SearchEngine(Heuristic &_heuristic, MoveGenerator &_moveGenerator, TranspositionTable &_transpositionTable);
 
     ~SearchEngine();
 
