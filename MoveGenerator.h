@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef MOVEGENERATOR_H
 #define MOVEGENERATOR_H
 
@@ -7,6 +5,9 @@
 #include "Zobrist.h"
 #include <vector>
 #include <cstdlib>
+
+class Tablut;
+class Zobrist;
 
 class MoveGenerator
 {

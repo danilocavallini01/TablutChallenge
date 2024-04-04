@@ -13,6 +13,9 @@
 #include <cstring>
 #include <chrono>
 #include <vector>
+#include <deque>
+
+class Heuristic;
 
 typedef uint64_t ZobristKey;
 
@@ -37,6 +40,8 @@ const Pos SECOND_COL(2);
 // Dead king position value
 const Pos KDEADPOSITION(20);
 
+const int MAX_DRAW_LOG(150);
+
 // ENUM FOR CHECKERS VALUES
 enum CHECKER : CheckerCodex
 {
@@ -59,7 +64,8 @@ enum WIN : WinCodex
 {
     NONE = 0,
     WHITEWIN = 1,
-    BLACKWIN = 2
+    BLACKWIN = 2,
+    DRAW = 3
 };
 
 // ALIASES for structure and checker enum
@@ -100,7 +106,7 @@ class Tablut
 public:
     Tablut();
     ~Tablut();
-    Tablut(const Tablut& startFrom);
+    Tablut(const Tablut &startFrom);
 
     // Tells if is White or Black turn
     bool isWhiteTurn;
@@ -122,7 +128,6 @@ public:
     Pos kingY;
 
     // Kills recap in this round
-    std::array<std::array<Pos, 2>, 4> killFeed;
     int killFeedIndex;
 
     // Board game
@@ -135,34 +140,61 @@ public:
     ZobristKey hash;
 
     // Past turn hashes, used to check if same game state is reached twice
-    std::vector<ZobristKey> pastHashes;
+    std::array<ZobristKey, MAX_DRAW_LOG> pastHashes;
+    int pastHashesIndex;
+
+    WIN gameState;
 
     void print();
 
     // Update table by one checker
     Tablut next(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y);
 
-    static Tablut fromJson(const std::string &json); // Constructor from json 
-    static Tablut newGame();                         // Tablut with starting position set
+    // Constructor from json
+    static Tablut fromJson(const std::string &json);
+
+    // Tablut with starting position set
+    static Tablut newGame();
+
     inline bool isGameOver() const
     {
-        return isWinState() != WIN::NONE;
+        return gameState != WIN::NONE;
     }
 
     // Tell if someone win or not
-    inline WIN isWinState() const
+    inline WIN checkWinState()
     {
-        if (kingX == KDEADPOSITION)
+        if (gameState != WIN::NONE)
         {
-            return WIN::BLACKWIN;
+            return gameState;
         }
 
-        if (tablutStructure[kingX][kingY] == S::ESCAPE)
+        if (checkDraw())
         {
-            return WIN::WHITEWIN;
+            gameState = WIN::DRAW;
+        }
+        else if (kingX == KDEADPOSITION)
+        {
+            gameState = WIN::BLACKWIN;
+        }
+        else if (tablutStructure[kingX][kingY] == S::ESCAPE)
+        {
+            gameState = WIN::WHITEWIN;
         }
 
-        return WIN::NONE;
+        return gameState;
+    }
+
+    inline bool checkDraw() const
+    {
+        for (int i = 0; i < pastHashesIndex - 1; i++)
+        {
+            if (hash == pastHashes[i])
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     inline CHECKER getLeftChecker(Pos by = 1)
@@ -192,7 +224,7 @@ public:
 
     inline bool isKingSurrounded()
     {
-        return board[4][3] == C::BLACK || board[4][5] == C::BLACK || board[3][4] == C::BLACK || board[5][4] == C::BLACK;
+        return board[4][3] == C::BLACK && board[4][5] == C::BLACK && board[3][4] == C::BLACK && board[5][4] == C::BLACK;
     }
 
     inline bool kingNearThrone()
@@ -213,7 +245,6 @@ public:
         {
             target = C::EMPTY;
             whiteCheckersCount = whiteCheckersCount - 1U;
-            killFeed[killFeedIndex] = {x, y};
             killFeedIndex++;
             return;
         }
@@ -222,17 +253,15 @@ public:
         {
             target = C::EMPTY;
             blackCheckersCount = blackCheckersCount - 1U;
-            killFeed[killFeedIndex] = {x, y};
             killFeedIndex++;
             return;
         }
 
-        if (target == C::KING && checkIfKingDead())
+        if (target == C::KING)
         {
             target = C::EMPTY;
             kingX = KDEADPOSITION;
             kingY = KDEADPOSITION;
-            killFeed[killFeedIndex] = {x, y};
             killFeedIndex++;
         }
     }
@@ -245,68 +274,71 @@ public:
         if (kingIsInThrone() && isKingSurrounded())
             return true;
 
-        // King near throne so can be killed by 3 black checkers surounding him
-        u_int8_t surroundCount = 0U; // Number of black defenders surrounding king
-        bool castleCounted = false;  // Tell if castle as been counted or not
-        bool kill = true;            // Tell if kill requirement hasn't been satisfied
+        if (kingNearThrone())
+        {
+            // King near throne so can be killed by 3 black checkers surounding him
+            u_int8_t surroundCount = 0U; // Number of black defenders surrounding king
+            bool castleCounted = false;  // Tell if castle as been counted or not
 
-        // Left CHECK
-        if (board[kingX][kingY - 1] == C::BLACK)
-        {
-            surroundCount++;
-        }
-        else if (tablutStructure[kingX][kingY - 1] == S::CASTLE)
-        {
-            castleCounted = true;
-        }
-        else
-        {
-            kill = false;
-        }
+            // Left CHECK
+            if (board[kingX][kingY - 1] == C::BLACK)
+            {
+                surroundCount++;
+            }
+            else if (tablutStructure[kingX][kingY - 1] == S::CASTLE)
+            {
+                castleCounted = true;
+            }
+            else
+            {
+                return false;
+            }
 
-        // Right CHECK
-        if (kill && board[kingX][kingY + 1] == C::BLACK)
-        {
-            surroundCount++;
-        }
-        else if (!castleCounted && tablutStructure[kingX][kingY + 1] == S::CASTLE)
-        {
-            castleCounted = true;
-        }
-        else
-        {
-            kill = false;
-        }
+            // Right CHECK
+            if (board[kingX][kingY + 1] == C::BLACK)
+            {
+                surroundCount++;
+            }
+            else if (!castleCounted && tablutStructure[kingX][kingY + 1] == S::CASTLE)
+            {
+                castleCounted = true;
+            }
+            else
+            {
+                return false;
+            }
 
-        // Up CHECK
-        if (kill && board[kingX - 1][kingY] == C::BLACK)
-        {
-            surroundCount++;
-        }
-        else if (!castleCounted && tablutStructure[kingX - 1][kingY] == S::CASTLE)
-        {
-            castleCounted = true;
-        }
-        else
-        {
-            kill = false;
-        }
+            // Up CHECK
+            if (board[kingX - 1][kingY] == C::BLACK)
+            {
+                surroundCount++;
+            }
+            else if (!castleCounted && tablutStructure[kingX - 1][kingY] == S::CASTLE)
+            {
+                castleCounted = true;
+            }
+            else
+            {
+                return false;
+            }
 
-        // Down CHECK
-        if (kill && board[kingX + 1][kingY] == C::BLACK)
-        {
-            surroundCount++;
-        }
-        else if (!castleCounted && tablutStructure[kingX + 1][kingY] == S::CASTLE)
-        {
-            castleCounted = true;
-        }
-        else
-        {
-            kill = false;
-        }
+            // Down CHECK
+            if (board[kingX + 1][kingY] == C::BLACK)
+            {
+                surroundCount++;
+            }
+            else if (!castleCounted && tablutStructure[kingX + 1][kingY] == S::CASTLE)
+            {
+                castleCounted = true;
+            }
+            else
+            {
+                return false;
+            }
 
-        return kill && surroundCount == 3 && castleCounted;
+            return surroundCount == 3 && castleCounted;
+        }
+        return false;
     }
 
     inline void killLeft()

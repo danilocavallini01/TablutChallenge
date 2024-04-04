@@ -14,6 +14,9 @@
 
 #include <boost/sort/spreadsort/spreadsort.hpp>
 #include <boost/bind/bind.hpp>
+
+class Tablut;
+
 // Matrix representing the distance ( in number of moves ) in every cell from the nearest camp
 /*--0 1 2 3 4 5 6 7 8
  |
@@ -28,9 +31,6 @@
  8  - E E C C C E E -
 
 */
-
-class Tablut;
-
 typedef std::array<int, 5> Weights;
 
 
@@ -46,19 +46,19 @@ typedef std::array<int, 5> Weights;
     4 : kills black on this round weights
 
 */
-const Weights fixedWeights = {1, -2, 10, 1, -1};
+const Weights fixedWeights = {2, -1, 1, 0, 0};
 const int winWeight = 10000;
 
-const std::array<std::array<int16_t, 9>, 9> kingPosHeuristic = {{
-    {1, 0, 0, 9, 9, 9, 0, 0, 1},
-    {0, 1, 1, 2, 9, 2, 1, 1, 0},
-    {0, 1, 2, 3, 4, 3, 2, 1, 0},
-    {9, 2, 3, 4, 5, 4, 3, 2, 9},
-    {9, 9, 4, 5, 6, 5, 4, 9, 9},
-    {9, 2, 3, 4, 5, 4, 3, 2, 9},
-    {0, 1, 2, 3, 4, 3, 2, 1, 0},
-    {0, 1, 1, 2, 9, 2, 1, 1, 0},
-    {1, 0, 0, 9, 9, 9, 0, 0, 1},
+const std::array<std::array<int, 9>, 9> kingPosHeuristic = {{
+    {50, 60, 60, 00, 00, 00, 60, 60, 50},
+    {60, 50, 50, 40, 00, 40, 50, 50, 60},
+    {60, 50, 40, 30, 20, 30, 40, 50, 60},
+    {00, 40, 30, 20, 10, 20, 30, 40, 00},
+    {00, 00, 20, 10, 0, 10, 20, 00, 00},
+    {00, 40, 30, 20, 10, 20, 30, 40, 00},
+    {60, 50, 40, 30, 20, 30, 40, 50, 60},
+    {60, 50, 50, 40, 00, 40, 50, 50, 60},
+    {50, 60, 60, 00, 00, 00, 60, 60, 50},
 }};
 
 class Heuristic

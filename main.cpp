@@ -4,10 +4,26 @@
 #include "SearchEngine.h"
 #include <vector>
 #include <chrono>
+#include <cstdlib>
+#include <ctime>
+
+bool checkWin(Tablut &t)
+{
+    if (t.isGameOver())
+    {
+        std::cout << "########################" << std::endl;
+        std::cout << (t.checkWinState() == WIN::BLACKWIN ? " BLACK WON " : (t.checkWinState() == WIN::WHITEWIN ? " WHITE WON " : " DRAW ")) << std::endl;
+        std::cout << "########################" << std::endl;
+
+        return true;
+    }
+    return false;
+}
 
 int main(int argc, char *argv[])
 {
     Tablut t = Tablut::newGame();
+    Tablut other;
     std::vector<Tablut> moves{};
 
     int best_score;
@@ -24,16 +40,38 @@ int main(int argc, char *argv[])
     SearchEngine searchEngine = SearchEngine();
     SearchEngine searchEngine2 = SearchEngine();
 
+    MoveGenerator moveGene = MoveGenerator();
+    Heuristic heuristic = Heuristic();
+
+    std::srand(std::time(nullptr));
+
     for (int i = 0; i < iterations; i++)
     {
-        // NEGASCOUT --------------------
-        std::cout << "########################" << std::endl;
+        /*
+        // RFIRST BY HEURISTIC
+        moveGene.generateLegalMoves(t, moves);
+        heuristic.sortMoves(moves);
 
+        t = moves[0];
+        moves = {};
+
+        // GAME CICLE
+        t.print();
+
+        // CHECK WIN
+        if (checkWin(t))
+            break;
+            */
+
+        // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
         t = searchEngine.NegaScoutSearch(t, max_depth);
         end = std::chrono::steady_clock::now();
 
-        std::cout << "NEGASCOUT SCORE = " << searchEngine.score << std::endl;
+        // GAME CICLE
+        t.print();
+
+        std::cout << " --> NEGASCOUT SCORE = " << searchEngine.score << std::endl;
         // PERFORMANCE _______________
         std::cout << searchEngine.transpositionTable << std::endl;
 
@@ -43,27 +81,23 @@ int main(int argc, char *argv[])
 
         searchEngine.transpositionTable.resetStat();
 
-        t.print();
-
-        if (t.isGameOver())
-        {
-            std::cout << "########################" << std::endl;
-            std::cout << (t.isWinState() == WIN::BLACKWIN ? " BLACK WON " : " WHITE WON ") << std::endl;
-            std::cout << "########################" << std::endl;
+        // CHECK WIN
+        if (checkWin(t))
             break;
-        }
 
-
+        std::cout << "-----------------------------------" << std::endl;
+        std::cout << "-----------------------------------" << std::endl;
 
 
         // NEGAMAX --------------------
-        std::cout << "########################" << std::endl;
-
         begin = std::chrono::steady_clock::now();
-        t = searchEngine2.NegaMaxSearch(t, max_depth, 1);
+        t = searchEngine2.NegaMaxSearch(t, 3);
         end = std::chrono::steady_clock::now();
 
-        std::cout << "NEGAMAX SCORE = " << searchEngine2.score << std::endl;
+        // GAME CICLE
+        t.print();
+
+        std::cout << " --> NEGAMAX SCORE = " << searchEngine2.score << std::endl;
         // PERFORMANCE _______________
         std::cout << searchEngine2.transpositionTable << std::endl;
 
@@ -73,39 +107,12 @@ int main(int argc, char *argv[])
 
         searchEngine2.transpositionTable.resetStat();
 
-        t.print();
-
-        if (t.isGameOver())
-        {
-            std::cout << "########################" << std::endl;
-            std::cout << (t.isWinState() == WIN::BLACKWIN ? " BLACK WON " : " WHITE WON ") << std::endl;
-            std::cout << "########################" << std::endl;
+         // CHECK WIN
+        if (checkWin(t))
             break;
-        }
-
-        /*searchEngine.bestmove.print();
-
-        begin = std::chrono::steady_clock::now();
-        std::cout << "NEGAMAX SCORE: " << searchEngine2.NegaMax(t, max_depth, BOTTOM_SCORE, TOP_SCORE, 1) << std::endl;
-
-        // PERFORMANCE _______________
-        std::cout << "TOTAL WORKER: " << searchEngine2.totalThreads << std::endl;
-        std::cout << "PERFORMANCE TT-> HITS:" << searchEngine2.transpositionTable._cacheHit << " ,PUTS:" << searchEngine2.transpositionTable._cachePut << ", MISS: " << searchEngine2.transpositionTable.cacheMiss() << std::endl;
-        end = std::chrono::steady_clock::now();
-        std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        searchEngine2.bestmove.print();
-
-
-
-        t = searchEngine.bestmove;
-
-        std::cout << std::endl
-                  << std::endl
-                  << std::endl;
 
         std::cout << "-----------------------------------" << std::endl;
-        t.print();
-        std::cout << "-----------------------------------" << std::endl;*/
+        std::cout << "-----------------------------------" << std::endl;
     }
 
     return EXIT_SUCCESS;

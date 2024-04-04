@@ -36,11 +36,11 @@ public:
 
     ~SearchEngine();
 
-    Tablut NegaMaxSearch(Tablut &_startingPosition, const int _maxDepth, const int _color);
+    Tablut NegaMaxSearch(Tablut &_startingPosition, const int _maxDepth);
     Tablut NegaScoutSearch(Tablut &_startingPosition, const int _maxDepth);
 
     int NegaScout(Tablut &t, const int depth, int alpha, int beta);
-    int NegaMax(Tablut &t, const int depth, int alpha, int beta, int color);
+    int NegaMax(Tablut &t, const int depth, int alpha, int beta);
 };
 
 #endif

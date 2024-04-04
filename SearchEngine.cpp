@@ -15,46 +15,56 @@ SearchEngine::SearchEngine(Heuristic &_heuristic, MoveGenerator &_moveGenerator,
 
 SearchEngine::~SearchEngine(){};
 
-Tablut SearchEngine::NegaMaxSearch(Tablut &_startingPosition, const int _maxDepth, const int _color)
+Tablut SearchEngine::NegaMaxSearch(Tablut &_startingPosition, const int _maxDepth)
 {
     maxDepth = _maxDepth;
+    const int _color = _startingPosition.isWhiteTurn ? 1 : -1;
 
     std::vector<Tablut> moves;
-    Tablut move;
+    Tablut bestMove;
     std::vector<std::future<int>> results;
 
     int alpha = BOTTOM_SCORE;
     int beta = TOP_SCORE;
 
     score = BOTTOM_SCORE;
+    int v;
 
     moveGenerator.generateLegalMoves(_startingPosition, moves);
     heuristic.sortMoves(moves);
 
     int maxThread = int(std::thread::hardware_concurrency());
 
+    bestMove = moves[0];
+
     for (int t = 0; t < moves.size(); t += maxThread)
     {
         for (int i = 0; i < maxThread && i + t < moves.size(); i++)
         {
-            results.push_back(std::async(std::launch::async, &SearchEngine::NegaMax, std::ref(*this), std::ref(moves[i + t]), _maxDepth - 1, -beta, -alpha, -_color));
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaMax, std::ref(*this), std::ref(moves[i + t]), _maxDepth - 1, -beta, -alpha));
         }
 
         for (int i = 0; i < results.size(); i++)
         {
-            score = std::max(score, -results[i].get());
-            alpha = std::max(alpha, score);
+            v = -results[i].get();
 
+            if (v > score)
+            {
+                bestMove = moves[i + t];
+                score = v;
+            }
+
+            alpha = std::max(alpha, score);
             if (alpha >= beta)
             {
-                return moves[i + t];
+                break;
             }
         }
 
         results.clear();
     }
 
-    return moves[0];
+    return bestMove;
 }
 
 Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDepth)
@@ -62,7 +72,7 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDe
     maxDepth = _maxDepth;
 
     std::vector<Tablut> moves;
-    Tablut move;
+    Tablut bestMove;
     std::vector<std::future<int>> results;
 
     int alpha = BOTTOM_SCORE;
@@ -72,31 +82,32 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDe
     int b = beta;
     int v;
 
-    std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point end;
-
     moveGenerator.generateLegalMoves(_startingPosition, moves);
-    begin = std::chrono::steady_clock::now();
     heuristic.sortMoves(moves);
-    end = std::chrono::steady_clock::now();
-    std::cout << "SORT _____ PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "[ms]" << std::endl;
 
-    int maxThread = 16;
+    int maxThread = int(std::thread::hardware_concurrency());
+
+    bestMove = moves[0];
 
     for (int t = 0; t < moves.size(); t += maxThread)
     {
         for (int i = 0; i < maxThread && i + t < moves.size(); i++)
         {
-            move = moves[i + t];
-            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(move), _maxDepth - 1, -b, -alpha));
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(moves[i + t]), _maxDepth - 1, -b, -alpha));
         }
 
         for (int i = 0; i < results.size(); i++)
         {
             v = -results[i].get();
 
+            if (v > alpha && v < beta && i > 0)
+            {
+                v = -SearchEngine::NegaScout(moves[i + t], _maxDepth - 1, -beta, -v);
+            }
+
             if (v > score)
             {
+                bestMove = moves[i + t];
                 score = v;
             }
 
@@ -104,7 +115,7 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDe
 
             if (alpha >= beta)
             {
-                return moves[i + t];
+                break;
             }
 
             b = alpha + 1;
@@ -113,7 +124,7 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &_startingPosition, const int _maxDe
         results.clear();
     }
 
-    return moves[0];
+    return bestMove;
 }
 
 int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, int _beta)
@@ -172,6 +183,22 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     b = _beta;
 
     moveGenerator.generateLegalMoves(_prev_move, moves);
+
+    // LOSE BY NO MOVE LEFT
+    if (moves.size() == 0)
+    {
+        if (_prev_move.isWhiteTurn)
+        {
+            _prev_move.gameState == WIN::BLACKWIN;
+        }
+        else
+        {
+            _prev_move.gameState == WIN::WHITEWIN;
+        }
+
+        return _prev_move.isWhiteTurn ? heuristic.evaluate(_prev_move) : -heuristic.evaluate(_prev_move);
+    }
+
     heuristic.sortMoves(moves);
 
     for (int i = 0; i < moves.size(); i++)
@@ -220,7 +247,7 @@ int SearchEngine::NegaScout(Tablut &_prev_move, const int _depth, int _alpha, in
     return score;
 }
 
-int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int _beta, int _color)
+int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int _beta)
 {
     const int alphaOrigin = _alpha;
     int score;
@@ -271,12 +298,28 @@ int SearchEngine::NegaMax(Tablut &_prev_move, const int _depth, int _alpha, int 
     }
 
     moveGenerator.generateLegalMoves(_prev_move, moves);
+
+     // LOSE BY NO MOVE LEFT
+    if (moves.size() == 0)
+    {
+        if (_prev_move.isWhiteTurn)
+        {
+            _prev_move.gameState == WIN::BLACKWIN;
+        }
+        else
+        {
+            _prev_move.gameState == WIN::WHITEWIN;
+        }
+
+        return _prev_move.isWhiteTurn ? heuristic.evaluate(_prev_move) : -heuristic.evaluate(_prev_move);
+    }
+    
     heuristic.sortMoves(moves);
     score = BOTTOM_SCORE;
 
     for (int i = 0; i < moves.size(); i++)
     {
-        score = std::max(score, -NegaMax(moves[i], _depth - 1, -_beta, -_alpha, -_color));
+        score = std::max(score, -NegaMax(moves[i], _depth - 1, -_beta, -_alpha));
         _alpha = std::max(_alpha, score);
         if (_alpha >= _beta)
         {

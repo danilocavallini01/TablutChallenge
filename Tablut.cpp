@@ -37,8 +37,11 @@ Tablut Tablut::newGame()
     t.kingX = 4;
     t.kingY = 4;
 
-    t.killFeed = {};
     t.killFeedIndex = 0;
+
+    t.gameState == WIN::NONE;
+
+    t.pastHashesIndex = 0;
 
     t.turn = 0;
 
@@ -73,10 +76,9 @@ Tablut Tablut::newGame()
     // Setting Throne
     t.board[4][4] = C::KING;
 
-    t.pastHashes = std::vector<ZobristKey>();
-
     return t;
 }
+
 void Tablut::print()
 {
     std::cout << std::endl
@@ -170,25 +172,16 @@ void Tablut::print()
         }
         std::cout << std::endl;
     }
-    std::cout << (isWhiteTurn ? "BLACK MOVED -> NOW WHITE MOVE" : "WHITE MOVED -> NOW BLACK MOVE") << std::endl;
 
-    if (killFeedIndex > 0)
-    {
-        std::cout << "----KILL FEED----" << std::endl;
-
-        for (int i = 0; i < killFeedIndex; i++)
-        {
-            std::array<Pos, 2> line{killFeed[i]};
-            std::cout << "  kill in pos: " << int(line[0]) << "-" << int(line[1]) << std::endl;
-        }
-
-        std::cout << "----KILL FEED----" << std::endl;
-    }
+    std::cout << std::endl << "====================" << std::endl;
+    std::cout << (isWhiteTurn ? "\033[1;47m| WHITE MOVE NOW (BLACK MOVED) |\033[0m" : "\033[1;40m| BLACK MOVE NOW (WHITE MOVED)|\033[0m" ) << std::endl;
+    std::cout << "====================" << std::endl;
 
     std::cout << "TURN: " << turn << std::endl;
     std::cout << "whiteCheckers: " << unsigned(whiteCheckersCount) << std::endl;
     std::cout << "blackCheckers: " << unsigned(blackCheckersCount) << std::endl;
     std::cout << "kingPosition: " << int(kingX) << "-" << int(kingY) << std::endl;
+    std::cout << "kills: " << killFeedIndex << std::endl;
     std::cout << "checkerMovedTo: " << int(x) << "-" << int(y) << std::endl;
     std::cout << "checkerMovedFrom: " << int(old_x) << "-" << int(old_y) << std::endl;
 }
@@ -209,7 +202,7 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
     next.y = to_y;
 
     // Reset kill feed of previous round
-    killFeedIndex = 0;
+    next.killFeedIndex = 0;
 
     CHECKER leftChecker = next.getLeftChecker();
     CHECKER rightChecker = next.getRightChecker();
@@ -220,10 +213,10 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
     if (next.isWhiteTurn)
     {
         // UPDATE KING POSITION
-        if (next.board[next.x][next.y] == C::KING)
+        if (next.board[to_x][to_y] == C::KING)
         {
-            next.kingX = next.x;
-            next.kingY = next.y;
+            next.kingX = to_x;
+            next.kingY = to_y;
         }
 
         // NORMAL WHITE EATS
@@ -232,9 +225,10 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         STRUCTURE oppositeStructure;
 
         // LEFT eat
-        if (next.y > FIRST_COL && leftChecker == C::BLACK)
+        if (next.y > SECOND_COL && leftChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[next.x][next.y - 1];
+            oppositeStructure = tablutStructure[next.x][next.y - 2];
+
             if (tablutStructure[next.x][next.y - 1] != S::CAMPS && (next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killLeft();
@@ -242,9 +236,10 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // RIGHT eat
-        if (next.y < LAST_COL && rightChecker == C::BLACK)
+        if (next.y < SEC_LAST_COL && rightChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[next.x][next.y + 1];
+            oppositeStructure = tablutStructure[next.x][next.y + 2];
+
             if (tablutStructure[next.x][next.y + 1] != S::CAMPS && (next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killRight();
@@ -252,9 +247,10 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // UP eat
-        if (next.x > FIRST_ROW && upChecker == C::BLACK)
+        if (next.x > SECOND_ROW && upChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[next.x - 1][next.y];
+            oppositeStructure = tablutStructure[next.x - 2][next.y];
+
             if (tablutStructure[next.x - 1][next.y] != S::CAMPS && (next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killUp();
@@ -262,9 +258,10 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // DOWN eat
-        if (next.x < LAST_ROW && downChecker == C::BLACK)
+        if (next.x < SEC_LAST_ROW && downChecker == C::BLACK)
         {
-            oppositeStructure = tablutStructure[next.x + 1][next.y];
+            oppositeStructure = tablutStructure[next.x + 2][next.y];
+
             if (tablutStructure[next.x + 1][next.y] != S::CAMPS && (next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U))
             {
                 next.killDown();
@@ -291,7 +288,7 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         STRUCTURE oppositeStructure;
 
         // LEFT eat ( KING OR SOLDIER ( > 1))
-        if (next.y > FIRST_COL && leftChecker > 1U)
+        if (next.y > SECOND_COL && (leftChecker == C::WHITE || leftChecker == C::KING))
         {
             oppositeStructure = tablutStructure[next.x][next.y - 2];
 
@@ -303,7 +300,7 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // RIGHT eat
-        if (next.y < LAST_COL && rightChecker > 1U)
+        if (next.y < SEC_LAST_COL && (rightChecker == C::WHITE || rightChecker == C::KING))
         {
             oppositeStructure = tablutStructure[next.x][next.y + 2];
 
@@ -315,7 +312,7 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // UP eat
-        if (next.x > FIRST_ROW && upChecker > 1U)
+        if (next.x > SECOND_ROW && (upChecker == C::WHITE || upChecker == C::KING))
         {
             oppositeStructure = tablutStructure[next.x - 2][next.y];
 
@@ -327,12 +324,12 @@ Tablut Tablut::next(const Pos from_x, const Pos from_y, const Pos to_x, const Po
         }
 
         // DOWN eat
-        if (next.x > LAST_ROW && downChecker > 1U)
+        if (next.x < SEC_LAST_ROW && (downChecker == C::WHITE || downChecker == C::KING))
         {
             oppositeStructure = tablutStructure[next.x + 2][next.y];
 
             // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (next.getUpChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            if (next.getDownChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
             {
                 next.killDown();
             }

@@ -39,11 +39,19 @@ void MoveGenerator::generateLegalMoves(Tablut &t, std::vector<Tablut> &nextTablu
 
     ZobristKey hash;
 
-    for ( auto& nextTablut: nextTabluts) {
+    for (auto &nextTablut : nextTabluts)
+    {
         hash = zobrist.hash(nextTablut);
-        
+
         nextTablut.hash = hash;
-        nextTablut.pastHashes.push_back(hash);
+        nextTablut.pastHashes[nextTablut.pastHashesIndex++] = hash;
+
+        if (nextTablut.pastHashesIndex == MAX_DRAW_LOG)
+        {
+            nextTablut.pastHashesIndex = 0;
+        }
+
+        nextTablut.checkWinState();
     }
 };
 
