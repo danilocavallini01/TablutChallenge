@@ -6,59 +6,57 @@
 #include <vector>
 #include <cstdlib>
 
+// Forward Declaration
 class Tablut;
 class Zobrist;
 
 class MoveGenerator
 {
 private:
-    Zobrist zobrist = Zobrist();
+    Zobrist _zobrist = Zobrist();
+
 public:
     MoveGenerator();
     ~MoveGenerator();
 
-    // Generate all legal moves for a Tablut depending on the current turn ( WHITE OR BLACK )
-    void generateLegalMoves(Tablut &t, std::vector<Tablut> &nextTabluts);
+    // Generate all legal moves for a Tablut depending on the current _turn ( WHITE OR BLACK )
+    void generateLegalMoves(Tablut &__t, std::vector<Tablut> &nextTabluts);
 
     // Generate all legal moves for a single Checker by scanning in all directions
-    void getLegalMovesFrom(Tablut &t, const Pos from_x, const Pos from_y, std::vector<Tablut> &nextTabluts);
+    void getLegalMovesFrom(Tablut &__t, const Pos &__fromX, const Pos &__fromY, std::vector<Tablut> &nextTabluts);
 
-    inline bool canWhiteContinue(Tablut &t, const Pos to_x, const Pos to_y)
+    // Tell if a white checker can go in that location
+    inline bool canWhiteContinue(Tablut &__t, const Pos &__toX, const Pos &__toY)
     {
-        C targetChecker;
-        S targetStructure;
+        C targetChecker = __t._board[__toX][__toY];
+        S targetStructure = tablutStructure[__toX][__toY];
 
-        targetChecker = t.board[to_x][to_y];
-        targetStructure = tablutStructure[to_x][to_y];
-
-        return targetChecker == 0U && targetStructure < 2U;
+        return targetChecker == C::EMPTY && targetStructure < 2U;
     }
 
-    inline bool canBlackContinue(Tablut &t, const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y)
+    // Tell if a white checker can go in that location
+    inline bool canBlackContinue(Tablut &__t, const Pos &__fromX, const Pos &__fromY, const Pos &__toX, const Pos &__toY)
     {
-        C targetChecker;
-        S targetStructure;
-
-        targetChecker = t.board[to_x][to_y];
-        targetStructure = tablutStructure[to_x][to_y];
+        C targetChecker = __t._board[__toX][__toY];
+        S targetStructure = tablutStructure[__toX][__toY];
 
         // Check if move is made from a camp cell to another camp cells
-        if (isInCamp(from_x, from_y) && targetStructure == S::CAMPS)
+        if (isInCamp(__fromX, __fromY) && targetStructure == S::CAMPS)
         {
-            return targetChecker == 0U && tellIfCanPassCamp(from_x, from_y, to_x, to_y);
+            return targetChecker == C::EMPTY && tellIfCanPassCamp(__fromX, __fromY, __toX, __toY);
         }
-        return targetChecker == 0U && targetStructure < 2U;
+        return targetChecker == C::EMPTY && targetStructure < 2U;
     }
 
-    inline bool isInCamp(const Pos x, const Pos y)
+    inline bool isInCamp(const Pos &__x, const Pos &__y)
     {
-        return tablutStructure[x][y] == S::CAMPS;
+        return tablutStructure[__x][__y] == S::CAMPS;
     };
 
     // Dont check if camp is a legal move cause MoveGenerator already delete illegal moves
-    inline bool tellIfCanPassCamp(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y)
+    inline bool tellIfCanPassCamp(const Pos &__fromX, const Pos &__fromY, const Pos &__toX, const Pos &__toY)
     {
-        return abs(from_x - to_x) <= 2 && abs(from_y - to_y) <= 2;
+        return abs(__fromX - __toX) <= 2 && abs(__fromY - __toY) <= 2;
     };
 };
 

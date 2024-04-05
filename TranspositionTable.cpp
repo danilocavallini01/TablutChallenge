@@ -2,23 +2,20 @@
 
 TranspositionTable::TranspositionTable()
 {
-    map = boost::unordered::concurrent_flat_map<ZobristKey, Entry>();
+    _map = boost::unordered::concurrent_flat_map<ZobristKey, Entry>();
 }
 
 TranspositionTable::~TranspositionTable() {}
 
-void TranspositionTable::put(Entry &t, ZobristKey k)
+void TranspositionTable::put(Entry &t, ZobristKey &__k)
 {
-    _cachePut++;
-    map.try_emplace(k, t);
+    _map.try_emplace(__k, t);
 }
 
-std::optional<Entry> TranspositionTable::get(const ZobristKey k)
+std::optional<Entry> TranspositionTable::get(const ZobristKey &__k)
 {
-    _cacheHit++;
-    map.visit(k, [](auto &x){
-        return x.second; 
-    });
-
-    return {};
+    std::optional<Entry> entry;
+    _map.visit(__k, [&entry](const auto &__entry)
+               { entry = __entry.second; });
+    return entry;
 }

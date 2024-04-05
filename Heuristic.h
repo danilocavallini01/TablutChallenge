@@ -1,8 +1,6 @@
 #ifndef HEURISTIC
 #define HEURISTIC
 
-#pragma once
-
 #include "Tablut.h"
 
 #include <array>
@@ -15,6 +13,7 @@
 #include <boost/sort/spreadsort/spreadsort.hpp>
 #include <boost/bind/bind.hpp>
 
+// Forward Declaration
 class Tablut;
 
 // Matrix representing the distance ( in number of moves ) in every cell from the nearest camp
@@ -31,23 +30,23 @@ class Tablut;
  8  - E E C C C E E -
 
 */
-typedef std::array<int, 5> Weights;
-
+typedef std::array<int, 6> Weights;
 
 /*
     Negative values mean black advantage
     Otherwise white advantage
 
     weightsS
-    0 : white pieces alive count weights
-    1 : black pieces alive count weights
+    0 : white pieces alive count weight
+    1 : black pieces alive count weight
     2 : king distances from escape positions
-    3 : kills white on this round weights
-    4 : kills black on this round weights
+    3 : kills white on this round weight
+    4 : kills black on this round weight
+    5 : king no space weight
 
 */
-const Weights fixedWeights = {2, -1, 1, 0, 0};
-const int winWeight = 10000;
+const Weights FIXED_WEIGHTS = {2, -1, 1, 2, -5, -15};
+const int WIN_WEIGHT = 10000;
 
 const std::array<std::array<int, 9>, 9> kingPosHeuristic = {{
     {50, 60, 60, 00, 00, 00, 60, 60, 50},
@@ -64,16 +63,18 @@ const std::array<std::array<int, 9>, 9> kingPosHeuristic = {{
 class Heuristic
 {
 public:
-    Weights weights;
+    Weights _weights;
 
     Heuristic();
     ~Heuristic();
 
-    int evaluate(const Tablut &t);
-    static int kingPos(const Tablut &t) ;
-    bool compare(const Tablut &t1, const Tablut &t2);
+    int evaluate(const Tablut &__t);
 
-    void sortMoves(std::vector<Tablut> &moves);
+    static int kingNoSpacePenality(const Tablut &__t);
+
+    bool compare(const Tablut &__t1, const Tablut &__t2);
+
+    void sortMoves(std::vector<Tablut> &__moves);
 };
 
 #endif

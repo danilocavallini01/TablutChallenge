@@ -15,16 +15,17 @@
 #include <vector>
 #include <deque>
 
+// Forward Declaration
 class Heuristic;
 
 typedef uint64_t ZobristKey;
 
-typedef u_int16_t CheckerCodex;
+typedef int16_t CheckerCodex;
 typedef CheckerCodex StructuresCodex;
 typedef CheckerCodex WinCodex;
 
 typedef int16_t Pos;
-typedef u_int16_t CheckerCountCodex;
+typedef int16_t CheckerCountCodex;
 
 // Table dimensions -> always 9
 const Pos DIM(9);
@@ -40,9 +41,10 @@ const Pos SECOND_COL(2);
 // Dead king position value
 const Pos KDEADPOSITION(20);
 
+// Max hash log extensions, used to check if position is draw(game state position reached twice)
 const int MAX_DRAW_LOG(150);
 
-// ENUM FOR CHECKERS VALUES
+// Enum for Checker values
 enum CHECKER : CheckerCodex
 {
     EMPTY = 0,
@@ -51,7 +53,7 @@ enum CHECKER : CheckerCodex
     KING = 3
 };
 
-// ENUM FOR board structures VALUES
+// ENUM FOR _board structures VALUES
 enum STRUCTURE : StructuresCodex
 {
     NOTHING = 0,
@@ -60,7 +62,8 @@ enum STRUCTURE : StructuresCodex
     CASTLE = 3
 };
 
-enum WIN : WinCodex
+// ENUM For _gameState win or lose
+enum GAME_STATE : WinCodex
 {
     NONE = 0,
     WHITEWIN = 1,
@@ -86,6 +89,7 @@ typedef CHECKER C;
  8  - E E C C C E E -
 
 */
+
 typedef std::array<std::array<STRUCTURE, DIM>, DIM> TablutStructure;
 typedef std::array<std::array<CHECKER, DIM>, DIM> Board;
 
@@ -106,90 +110,204 @@ class Tablut
 public:
     Tablut();
     ~Tablut();
-    Tablut(const Tablut &startFrom);
+    Tablut(const Tablut &__startFrom);
 
-    // Tells if is White or Black turn
-    bool isWhiteTurn;
+    // Tells if is White or Black _turn
+    bool _isWhiteTurn;
 
     // New position of the moved piece
-    Pos x;
-    Pos y;
+    Pos _x;
+    Pos _y;
 
     // Old position of the moved piece
-    Pos old_x;
-    Pos old_y;
+    Pos _oldX;
+    Pos _oldY;
 
-    // Total number of white and black checkers alive on board
-    CheckerCountCodex whiteCheckersCount;
-    CheckerCountCodex blackCheckersCount;
+    // Total number of white and black checkers alive on _board
+    CheckerCountCodex _whiteCount;
+    CheckerCountCodex _blackCount;
 
     // King position during game
-    Pos kingX;
-    Pos kingY;
+    Pos _kingX;
+    Pos _kingY;
 
     // Kills recap in this round
-    int killFeedIndex;
+    int _kills;
 
     // Board game
-    Board board;
+    Board _board;
 
     // Turn count
-    int turn;
+    int _turn;
 
     // Current table hash
     ZobristKey hash;
 
     // Past turn hashes, used to check if same game state is reached twice
-    std::array<ZobristKey, MAX_DRAW_LOG> pastHashes;
-    int pastHashesIndex;
+    std::array<ZobristKey, MAX_DRAW_LOG> _pastHashes;
+    int _pastHashesIndex;
+    
+    // Tell if game is in win or draw state
+    GAME_STATE _gameState;
 
-    WIN gameState;
-
-    void print();
-
-    // Update table by one checker
-    Tablut next(const Pos from_x, const Pos from_y, const Pos to_x, const Pos to_y);
-
-    // Constructor from json
-    static Tablut fromJson(const std::string &json);
-
-    // Tablut with starting position set
-    static Tablut newGame();
-
-    inline bool isGameOver() const
-    {
-        return gameState != WIN::NONE;
+    inline void print() {
+        std::cout << *this << std::endl;
     }
 
-    // Tell if someone win or not
-    inline WIN checkWinState()
+    friend std::ostream &operator<<(std::ostream &out, const Tablut &__tablut)
     {
-        if (gameState != WIN::NONE)
+        out << std::endl
+            << "   ";
+        for (int y = 0; y < 9; y++)
         {
-            return gameState;
+            out << " " << y << " ";
+        }
+        out << std::endl
+            << "   ";
+
+        for (int y = 0; y < 9; y++)
+        {
+            out << "___";
+        }
+        out << std::endl;
+
+        for (int x = 0; x < 9; x++)
+        {
+            out << " " << x << "|";
+            for (int y = 0; y < 9; y++)
+            {
+                if (__tablut._board[x][y] == C::KING)
+                {
+                    if (x == __tablut._x && y == __tablut._y)
+                    {
+                        out << "\033[1;42m K \033[0m";
+                    }
+                    else
+                    {
+                        out << "\033[1;93m K \033[0m";
+                    }
+                }
+                else if (__tablut._board[x][y] == C::BLACK)
+                {
+                    if (x == __tablut._x && y == __tablut._y)
+                    {
+                        out << "\033[1;42m B \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::CAMPS)
+                    {
+                        out << "\033[1;100m B \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::ESCAPE)
+                    {
+                        out << "\033[1;106m B \033[0m";
+                    }
+                    else
+                    {
+                        out << "\033[1;97m B \033[0m";
+                    }
+                }
+                else if (__tablut._board[x][y] == C::WHITE)
+                {
+                    if (x == __tablut._x && y == __tablut._y)
+                    {
+                        out << "\033[1;42m W \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::CAMPS)
+                    {
+                        out << "\033[1;100m W \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::ESCAPE)
+                    {
+                        out << "\033[1;106m W \033[0m";
+                    }
+                    else
+                    {
+                        out << "\033[1;97m W \033[0m";
+                    }
+                }
+                else
+                {
+                    if (x == __tablut._oldX && y == __tablut._oldY)
+                    {
+                        out << "\033[1;41m - \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::CAMPS)
+                    {
+                        out << "\033[1;100m - \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::ESCAPE)
+                    {
+                        out << "\033[1;106m - \033[0m";
+                    }
+                    else
+                    {
+                        out << " - ";
+                    }
+                }
+            }
+            out << std::endl;
+        }
+
+        out << std::endl
+            << "====================" << std::endl;
+        out << (__tablut._isWhiteTurn ? "\033[1;47m| WHITE MOVE NOW (BLACK MOVED) |\033[0m" : "\033[1;40m| BLACK MOVE NOW (WHITE MOVED)|\033[0m") << std::endl;
+        out << "====================" << std::endl;
+
+        out << "TURN: " << __tablut._turn << std::endl;
+        out << "whiteCheckers: " << unsigned(__tablut._whiteCount) << std::endl;
+        out << "blackCheckers: " << unsigned(__tablut._blackCount) << std::endl;
+        out << "kingPosition: " << int(__tablut._kingX) << "-" << int(__tablut._kingY) << std::endl;
+        out << "kills: " << __tablut._kills << std::endl;
+        out << "checkerMovedTo: " << int(__tablut._x) << "-" << int(__tablut._y) << std::endl;
+        out << "checkerMovedFrom: " << int(__tablut._oldX) << "-" << int(__tablut._oldY) << std::endl;
+
+        return out;
+    }
+
+    // Update table by one checker
+    Tablut next(const Pos __fromX, const Pos __fromY, const Pos __toX, const Pos __toY);
+
+    // Constructor from json
+    static Tablut fromJson(const std::string &__json);
+
+    // Tablut with starting position set
+    static Tablut getStartingPosition();
+
+    // Tell if game is Over
+    inline bool isGameOver() const
+    {
+        return _gameState != GAME_STATE::NONE;
+    }
+
+    // Tell if someone won, lost or drawed
+    inline GAME_STATE checkWinState()
+    {
+        if (_gameState != GAME_STATE::NONE)
+        {
+            return _gameState;
         }
 
         if (checkDraw())
         {
-            gameState = WIN::DRAW;
+            _gameState = GAME_STATE::DRAW;
         }
-        else if (kingX == KDEADPOSITION)
+        else if (_kingX == KDEADPOSITION)
         {
-            gameState = WIN::BLACKWIN;
+            _gameState = GAME_STATE::BLACKWIN;
         }
-        else if (tablutStructure[kingX][kingY] == S::ESCAPE)
+        else if (tablutStructure[_kingX][_kingY] == S::ESCAPE)
         {
-            gameState = WIN::WHITEWIN;
+            _gameState = GAME_STATE::WHITEWIN;
         }
 
-        return gameState;
+        return _gameState;
     }
 
     inline bool checkDraw() const
     {
-        for (int i = 0; i < pastHashesIndex - 1; i++)
+        for (int i = 0; i < _pastHashesIndex - 1; i++)
         {
-            if (hash == pastHashes[i])
+            if (hash == _pastHashes[i])
             {
                 return true;
             }
@@ -197,44 +315,45 @@ public:
         return false;
     }
 
-    inline CHECKER getLeftChecker(Pos by = 1)
+    inline CHECKER getLeftChecker(Pos __by = 1) const
     {
-        return board[x][y - by];
+        return _board[_x][_y - __by];
     }
 
-    inline CHECKER getRightChecker(Pos by = 1)
+    inline CHECKER getRightChecker(Pos __by = 1) const
     {
-        return board[x][y + by];
+        return _board[_x][_y + __by];
     }
 
-    inline CHECKER getUpChecker(Pos by = 1)
+    inline CHECKER getUpChecker(Pos __by = 1) const
     {
-        return board[x - by][y];
+        return _board[_x - __by][_y];
     }
 
-    inline CHECKER getDownChecker(Pos by = 1)
+    inline CHECKER getDownChecker(Pos __by = 1) const
     {
-        return board[x + by][y];
+        return _board[_x + __by][_y];
     }
 
-    inline bool kingIsInThrone()
+    inline bool kingIsInThrone() const
     {
-        return kingX == 4 && kingY == 4;
+        return _kingX == 4 && _kingY == 4;
     }
 
-    inline bool isKingSurrounded()
+    inline bool isKingSurrounded() const
     {
-        return board[4][3] == C::BLACK && board[4][5] == C::BLACK && board[3][4] == C::BLACK && board[5][4] == C::BLACK;
+        return _board[4][3] == C::BLACK && _board[4][5] == C::BLACK && _board[3][4] == C::BLACK && _board[5][4] == C::BLACK;
     }
 
-    inline bool kingNearThrone()
+    inline bool kingNearThrone() const
     {
-        return board[4][3] == C::KING || board[4][5] == C::KING || board[3][4] == C::KING || board[5][4] == C::KING;
+        return _board[4][3] == C::KING || _board[4][5] == C::KING || _board[3][4] == C::KING || _board[5][4] == C::KING;
     }
 
-    inline void killChecker(Pos x, Pos y)
+    // Kill checker by checking which type of checker is on the specified point, update checkersCount and killFeed variables
+    inline void killChecker(Pos __x, Pos __y)
     {
-        CHECKER &target = board[x][y];
+        CHECKER &target = _board[__x][__y];
 
         if (target == C::EMPTY)
         {
@@ -244,29 +363,28 @@ public:
         if (target == C::WHITE)
         {
             target = C::EMPTY;
-            whiteCheckersCount = whiteCheckersCount - 1U;
-            killFeedIndex++;
+            _whiteCount = _whiteCount - 1U;
+            _kills++;
             return;
         }
 
         if (target == C::BLACK)
         {
             target = C::EMPTY;
-            blackCheckersCount = blackCheckersCount - 1U;
-            killFeedIndex++;
+            _blackCount = _blackCount - 1U;
+            _kills++;
             return;
         }
 
         if (target == C::KING)
         {
             target = C::EMPTY;
-            kingX = KDEADPOSITION;
-            kingY = KDEADPOSITION;
-            killFeedIndex++;
+            _kingX = KDEADPOSITION;
+            _kingY = KDEADPOSITION;
+            _kills++;
         }
     }
-
-    inline bool checkIfKingDead()
+    inline bool checkIfKingDead() const
     {
         // KING IN THRONE OR NEAR TRONE EAT
 
@@ -281,11 +399,11 @@ public:
             bool castleCounted = false;  // Tell if castle as been counted or not
 
             // Left CHECK
-            if (board[kingX][kingY - 1] == C::BLACK)
+            if (_board[_kingX][_kingY - 1] == C::BLACK)
             {
                 surroundCount++;
             }
-            else if (tablutStructure[kingX][kingY - 1] == S::CASTLE)
+            else if (tablutStructure[_kingX][_kingY - 1] == S::CASTLE)
             {
                 castleCounted = true;
             }
@@ -295,11 +413,11 @@ public:
             }
 
             // Right CHECK
-            if (board[kingX][kingY + 1] == C::BLACK)
+            if (_board[_kingX][_kingY + 1] == C::BLACK)
             {
                 surroundCount++;
             }
-            else if (!castleCounted && tablutStructure[kingX][kingY + 1] == S::CASTLE)
+            else if (!castleCounted && tablutStructure[_kingX][_kingY + 1] == S::CASTLE)
             {
                 castleCounted = true;
             }
@@ -309,11 +427,11 @@ public:
             }
 
             // Up CHECK
-            if (board[kingX - 1][kingY] == C::BLACK)
+            if (_board[_kingX - 1][_kingY] == C::BLACK)
             {
                 surroundCount++;
             }
-            else if (!castleCounted && tablutStructure[kingX - 1][kingY] == S::CASTLE)
+            else if (!castleCounted && tablutStructure[_kingX - 1][_kingY] == S::CASTLE)
             {
                 castleCounted = true;
             }
@@ -323,11 +441,11 @@ public:
             }
 
             // Down CHECK
-            if (board[kingX + 1][kingY] == C::BLACK)
+            if (_board[_kingX + 1][_kingY] == C::BLACK)
             {
                 surroundCount++;
             }
-            else if (!castleCounted && tablutStructure[kingX + 1][kingY] == S::CASTLE)
+            else if (!castleCounted && tablutStructure[_kingX + 1][_kingY] == S::CASTLE)
             {
                 castleCounted = true;
             }
@@ -343,27 +461,27 @@ public:
 
     inline void killLeft()
     {
-        killChecker(x, y - 1);
+        killChecker(_x, _y - 1);
     }
 
     inline void killRight()
     {
-        killChecker(x, y + 1);
+        killChecker(_x, _y + 1);
     }
 
     inline void killUp()
     {
-        killChecker(x - 1, y);
+        killChecker(_x - 1, _y);
     }
 
     inline void killDown()
     {
-        killChecker(x + 1, y);
+        killChecker(_x + 1, _y);
     }
 
     inline void switchTurn()
     {
-        isWhiteTurn = !isWhiteTurn;
+        _isWhiteTurn = !_isWhiteTurn;
     }
 };
 

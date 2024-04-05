@@ -12,25 +12,27 @@ Zobrist::Zobrist()
     {
         for (int j = 0; j < 9; j++)
         {
-            table[i][j] = distribution(gen);  
+            _hashesTable[i][j] = distribution(gen);
         }
     }
 }
 
 Zobrist::~Zobrist() {}
 
-ZobristKey Zobrist::hash(const Tablut &t) const
+// Give hash by calculating XOR of all  
+ZobristKey Zobrist::hash(const Tablut &__t) const
 {
-    ZobristKey h = 0;
+    ZobristKey hashKey = 0;
+    
     for (int i = 0; i < 9; i++)
     {
         for (int j = 0; j < 9; j++)
         {
-            if (t.board[i][j] > 0) {
-                h ^= table[i][j];
+            if (__t._board[i][j] > 0)
+            {
+                hashKey ^= _hashesTable[i][j];
             }
         }
     }
-    return h;
+    return hashKey;
 }
-

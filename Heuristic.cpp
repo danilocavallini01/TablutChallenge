@@ -2,7 +2,7 @@
 
 Heuristic::Heuristic()
 {
-    weights = fixedWeights;
+    _weights = FIXED_WEIGHTS;
 }
 Heuristic::~Heuristic() {}
 
@@ -18,37 +18,63 @@ Heuristic::~Heuristic() {}
     4 : kills black on this round weights
 
 */
-int Heuristic::evaluate(const Tablut &t)
+int Heuristic::evaluate(const Tablut &__t)
 {
-    int score;
+    int _score;
 
-    if (t.isGameOver())
+    if (__t.isGameOver())
     {
-        if (t.gameState == WIN::DRAW)
+        if (__t._gameState == GAME_STATE::DRAW)
         {
             return 0;
         }
-        score = t.gameState == WIN::WHITEWIN ? HEURISTIC::winWeight - t.turn : -HEURISTIC::winWeight + t.turn;
+        _score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
     }
     else
     {
-        score = weights[0] * t.whiteCheckersCount + weights[1] * t.blackCheckersCount + weights[2] * (kingPosHeuristic[t.kingX][t.kingY]) + t.killFeedIndex * (t.isWhiteTurn ? weights[3] : weights[4]);
+        _score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * Heuristic::kingNoSpacePenality(__t);
     }
 
-    return t.isWhiteTurn ? score : -score;
+    return __t._isWhiteTurn ? _score : -_score;
+}
+
+int Heuristic::kingNoSpacePenality(const Tablut &__t)
+{
+    int kingSurrounded = 0;
+    // Left Check
+    if (__t._board[__t._kingX][__t._kingY - 1] != C::EMPTY)
+    {
+        kingSurrounded++;
+    }
+
+    // Right Check
+    if (__t._board[__t._kingX][__t._kingY + 1] != C::EMPTY)
+    {
+        kingSurrounded++;
+    }
+
+    // Down Check
+    if (__t._board[__t._kingX - 1][__t._kingY] != C::EMPTY)
+    {
+        kingSurrounded++;
+    }
+
+    // Up Check
+    if (__t._board[__t._kingX + 1][__t._kingY] != C::EMPTY)
+    {
+        kingSurrounded++;
+    }
+    return kingSurrounded;
 }
 
 // Compare function between two Tabluts
-bool Heuristic::compare(const Tablut &t1, const Tablut &t2)
+bool Heuristic::compare(const Tablut &__t1, const Tablut &__t2)
 {
-    return Heuristic::evaluate(t1) < Heuristic::evaluate(t2);
+    return Heuristic::evaluate(__t1) < Heuristic::evaluate(__t2);
 }
 
-/*
-    Sorting moves algorithm
-*/
-
-void Heuristic::sortMoves(std::vector<Tablut> &moves)
+// Sorting moves algorithm
+void Heuristic::sortMoves(std::vector<Tablut> &__moves)
 {
-    std::sort(moves.begin(), moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
+    std::sort(__moves.begin(), __moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
 }

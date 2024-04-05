@@ -12,7 +12,7 @@ bool checkWin(Tablut &t)
     if (t.isGameOver())
     {
         std::cout << "########################" << std::endl;
-        std::cout << (t.checkWinState() == WIN::BLACKWIN ? " BLACK WON " : (t.checkWinState() == WIN::WHITEWIN ? " WHITE WON " : " DRAW ")) << std::endl;
+        std::cout << (t.checkWinState() == GAME_STATE::BLACKWIN ? " BLACK WON " : (t.checkWinState() == GAME_STATE::WHITEWIN ? " WHITE WON " : " DRAW ")) << std::endl;
         std::cout << "########################" << std::endl;
 
         return true;
@@ -22,7 +22,7 @@ bool checkWin(Tablut &t)
 
 int main(int argc, char *argv[])
 {
-    Tablut t = Tablut::newGame();
+    Tablut t = Tablut::getStartingPosition();
     Tablut other;
     std::vector<Tablut> moves{};
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     SearchEngine searchEngine2 = SearchEngine();
 
     MoveGenerator moveGene = MoveGenerator();
-    Heuristic heuristic = Heuristic();
+    Heuristic _heuristic = Heuristic();
 
     std::srand(std::time(nullptr));
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         /*
         // RFIRST BY HEURISTIC
         moveGene.generateLegalMoves(t, moves);
-        heuristic.sortMoves(moves);
+        _heuristic.sortMoves(moves);
 
         t = moves[0];
         moves = {};
@@ -58,56 +58,59 @@ int main(int argc, char *argv[])
         // GAME CICLE
         t.print();
 
-        // CHECK WIN
+        // CHECK GAME_STATE
         if (checkWin(t))
             break;
             */
 
         // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
-        t = searchEngine.NegaScoutSearch(t, max_depth);
+        t = searchEngine.NegaScoutSearch(t, 7);
         end = std::chrono::steady_clock::now();
 
         // GAME CICLE
         t.print();
 
-        std::cout << " --> NEGASCOUT SCORE = " << searchEngine.score << std::endl;
+        std::cout << " --> NEGASCOUT SCORE = " << searchEngine._bestScore << std::endl;
         // PERFORMANCE _______________
-        std::cout << searchEngine.transpositionTable << std::endl;
+        std::cout << searchEngine._transpositionTable << std::endl;
 
+        std::cout << "TOTAL MOVES CHECKED: " << searchEngine._totalMoves << std::endl;
         totalTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine.transpositionTable.resetStat();
+        searchEngine._totalMoves = 0;
+        searchEngine._transpositionTable.resetStat();
 
-        // CHECK WIN
+        // CHECK GAME_STATE
         if (checkWin(t))
             break;
 
         std::cout << "-----------------------------------" << std::endl;
         std::cout << "-----------------------------------" << std::endl;
 
-
         // NEGAMAX --------------------
         begin = std::chrono::steady_clock::now();
-        t = searchEngine2.NegaMaxSearch(t, 3);
+        t = searchEngine2.NegaMaxSearch(t, 4);
         end = std::chrono::steady_clock::now();
 
         // GAME CICLE
         t.print();
 
-        std::cout << " --> NEGAMAX SCORE = " << searchEngine2.score << std::endl;
+        std::cout << " --> NEGAMAX SCORE = " << searchEngine2._bestScore << std::endl;
         // PERFORMANCE _______________
-        std::cout << searchEngine2.transpositionTable << std::endl;
+        std::cout << searchEngine2._transpositionTable << std::endl;
 
+        std::cout << "TOTAL MOVES CHECKED: " << searchEngine2._totalMoves << std::endl;
         totalTime2 += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime2) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine2.transpositionTable.resetStat();
+        searchEngine2._totalMoves = 0;
+        searchEngine2._transpositionTable.resetStat();
 
-         // CHECK WIN
+        // CHECK GAME_STATE
         if (checkWin(t))
             break;
 

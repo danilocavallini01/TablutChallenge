@@ -15,8 +15,7 @@
 
 // Entry Flag enum for values EXACT,LOWEBOUND,PPERBOUND
 
-typedef uint8_t FLAG_CODEX;
-enum FLAG : FLAG_CODEX
+enum FLAG : uint8_t
 {
     EXACT = 0U,
     LOWERBOUND = 1U,
@@ -41,7 +40,7 @@ typedef std::tuple<int, int, FLAG> Entry;
 class TranspositionTable
 {
 private:
-    boost::unordered::concurrent_flat_map<ZobristKey, Entry> map;
+    boost::unordered::concurrent_flat_map<ZobristKey, Entry> _map;
     unsigned int _cacheHit{0};
     unsigned int _cachePut{0};
 
@@ -49,8 +48,8 @@ public:
     TranspositionTable();
     ~TranspositionTable();
 
-    void put(Entry &t, ZobristKey k);
-    std::optional<Entry> get(const ZobristKey k);
+    void put(Entry &__t, ZobristKey &__k);
+    std::optional<Entry> get(const ZobristKey &__k);
 
     friend std::ostream &operator<<(std::ostream &out, const TranspositionTable &p)
     {

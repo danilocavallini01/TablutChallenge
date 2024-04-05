@@ -8,18 +8,21 @@
 #include <random>
 #include <ctime>
 
+// Forward Declaration
+class Tablut;
+
 typedef uint64_t ZobristKey;
 
 class Zobrist
 {
-public:
-    uint64_t table[DIM][DIM];
+private:
+    uint64_t _hashesTable[DIM][DIM];
 
+public:
     Zobrist();
     ~Zobrist();
 
-    uint64_t hash(const Tablut &t) const;
+    uint64_t hash(const Tablut &__t) const;
 };
-
 
 #endif
