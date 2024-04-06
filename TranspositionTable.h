@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef TRANSPOSITION_TABLE
 #define TRANSPOSITION_TABLE
 
@@ -12,6 +10,10 @@
 #include <iostream>
 
 #include <boost/unordered/concurrent_flat_map.hpp>
+
+// Forward definition
+class Tablut;
+class Zobrist;
 
 // Entry Flag enum for values EXACT,LOWEBOUND,PPERBOUND
 
@@ -57,15 +59,8 @@ public:
         return out;
     }
 
-    inline void cacheHit()
-    {
-        _cacheHit++;
-    }
-
-    inline void cachePut()
-    {
-        _cachePut++;
-    }
+    void cacheHit();
+    void cachePut();
 
     inline int cacheTotalAccess() const
     {

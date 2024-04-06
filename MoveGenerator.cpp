@@ -12,7 +12,7 @@ void MoveGenerator::generateLegalMoves(Tablut &__t, std::vector<Tablut> &__nextT
         {
             for (Pos y = 0; y < DIM; y++)
             {
-                if (__t._board[x][y] == C::WHITE || __t._board[x][y] == C::KING)
+                if (__t._board[x][y] == C::WHITE)
                 {
                     getLegalMovesFrom(__t, x, y, __nextTabluts);
                 }
@@ -20,7 +20,9 @@ void MoveGenerator::generateLegalMoves(Tablut &__t, std::vector<Tablut> &__nextT
         }
 
         // GENERATE MOVES FOR KING
-        // getLegalMovesFrom(__t, __t._kingX, __t._kingY, __nextTabluts);
+        int moveDifferences = __nextTabluts.size();
+        getLegalMovesFrom(__t, __t._kingX, __t._kingY, __nextTabluts);
+        __t.kingMovements = moveDifferences - __nextTabluts.size();
     }
     else
     {

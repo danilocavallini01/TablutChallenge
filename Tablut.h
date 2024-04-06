@@ -33,10 +33,10 @@ const Pos LAST_ROW(DIM - 1);
 const Pos SEC_LAST_ROW(DIM - 2);
 const Pos LAST_COL(DIM - 1);
 const Pos SEC_LAST_COL(DIM - 2);
-const Pos FIRST_ROW(1);
-const Pos SECOND_ROW(2);
-const Pos FIRST_COL(1);
-const Pos SECOND_COL(2);
+const Pos FIRST_ROW(0);
+const Pos SECOND_ROW(1);
+const Pos FIRST_COL(0);
+const Pos SECOND_COL(1);
 
 // Dead king position value
 const Pos KDEADPOSITION(20);
@@ -68,7 +68,8 @@ enum GAME_STATE : WinCodex
     NONE = 0,
     WHITEWIN = 1,
     BLACKWIN = 2,
-    DRAW = 3
+    WHITEDRAW = 3,
+    BLACKDRAW = 4
 };
 
 // ALIASES for structure and checker enum
@@ -146,11 +147,15 @@ public:
     // Past turn hashes, used to check if same game state is reached twice
     std::array<ZobristKey, MAX_DRAW_LOG> _pastHashes;
     int _pastHashesIndex;
-    
+
+    // How Much Movements can the king make;
+    int kingMovements;
+
     // Tell if game is in win or draw state
     GAME_STATE _gameState;
 
-    inline void print() {
+    inline void print()
+    {
         std::cout << *this << std::endl;
     }
 
@@ -229,19 +234,23 @@ public:
                 {
                     if (x == __tablut._oldX && y == __tablut._oldY)
                     {
-                        out << "\033[1;41m - \033[0m";
+                        out << "\033[1;41m   \033[0m";
                     }
                     else if (tablutStructure[x][y] == S::CAMPS)
                     {
-                        out << "\033[1;100m - \033[0m";
+                        out << "\033[1;100m   \033[0m";
                     }
                     else if (tablutStructure[x][y] == S::ESCAPE)
                     {
-                        out << "\033[1;106m - \033[0m";
+                        out << "\033[1;106m   \033[0m";
+                    }
+                    else if (tablutStructure[x][y] == S::CASTLE)
+                    {
+                        out << "\033[1;103m   \033[0m";
                     }
                     else
                     {
-                        out << " - ";
+                        out << "   ";
                     }
                 }
             }
@@ -289,7 +298,7 @@ public:
 
         if (checkDraw())
         {
-            _gameState = GAME_STATE::DRAW;
+            _gameState = _isWhiteTurn ? GAME_STATE::WHITEDRAW : GAME_STATE::BLACKDRAW;
         }
         else if (_kingX == KDEADPOSITION)
         {
@@ -384,6 +393,7 @@ public:
             _kills++;
         }
     }
+
     inline bool checkIfKingDead() const
     {
         // KING IN THRONE OR NEAR TRONE EAT

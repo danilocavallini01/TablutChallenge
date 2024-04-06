@@ -85,7 +85,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
     Tablut _next = Tablut(*this);
 
     _next._board[__toX][__toY] = _next._board[__fromX][__fromY]; // Update checker position
-    _next._board[__fromX][__fromY] = C::EMPTY;               // Remove checker from its past position
+    _next._board[__fromX][__fromY] = C::EMPTY;                   // Remove checker from its past position
 
     // Update old and new positions of the moved pieces
     _next._oldX = __fromX;
@@ -118,44 +118,44 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         STRUCTURE oppositeStructure;
 
         // LEFT eat
-        if (_next._y > SECOND_COL && leftChecker == C::BLACK)
+        if (_next._y > FIRST_COL && leftChecker == C::BLACK)
         {
             oppositeStructure = tablutStructure[_next._x][_next._y - 2];
 
-            if (tablutStructure[_next._x][_next._y - 1] != S::CAMPS && (_next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1U))
+            if (tablutStructure[_next._x][_next._y - 1] != S::CAMPS && (_next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1))
             {
                 _next.killLeft();
             }
         }
 
         // RIGHT eat
-        if (_next._y < SEC_LAST_COL && rightChecker == C::BLACK)
+        if (_next._y < LAST_COL && rightChecker == C::BLACK)
         {
             oppositeStructure = tablutStructure[_next._x][_next._y + 2];
 
-            if (tablutStructure[_next._x][_next._y + 1] != S::CAMPS && (_next.getRightChecker(2) == C::WHITE || oppositeStructure > 1U))
+            if (tablutStructure[_next._x][_next._y + 1] != S::CAMPS && (_next.getRightChecker(2) == C::WHITE || oppositeStructure > 1))
             {
                 _next.killRight();
             }
         }
 
         // UP eat
-        if (_next._x > SECOND_ROW && upChecker == C::BLACK)
+        if (_next._x > FIRST_ROW && upChecker == C::BLACK)
         {
             oppositeStructure = tablutStructure[_next._x - 2][_next._y];
 
-            if (tablutStructure[_next._x - 1][_next._y] != S::CAMPS && (_next.getUpChecker(2) == C::WHITE || oppositeStructure > 1U))
+            if (tablutStructure[_next._x - 1][_next._y] != S::CAMPS && (_next.getUpChecker(2) == C::WHITE || oppositeStructure > 1))
             {
                 _next.killUp();
             }
         }
 
         // DOWN eat
-        if (_next._x < SEC_LAST_ROW && downChecker == C::BLACK)
+        if (_next._x < LAST_ROW && downChecker == C::BLACK)
         {
             oppositeStructure = tablutStructure[_next._x + 2][_next._y];
 
-            if (tablutStructure[_next._x + 1][_next._y] != S::CAMPS && (_next.getDownChecker(2) == C::WHITE || oppositeStructure > 1U))
+            if (tablutStructure[_next._x + 1][_next._y] != S::CAMPS && (_next.getDownChecker(2) == C::WHITE || oppositeStructure > 1))
             {
                 _next.killDown();
             }
@@ -181,48 +181,48 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         STRUCTURE oppositeStructure;
 
         // LEFT eat ( KING OR SOLDIER ( > 1))
-        if (_next._y > SECOND_COL && (leftChecker == C::WHITE || leftChecker == C::KING))
+        if (_next._y > FIRST_COL && (leftChecker == C::WHITE || leftChecker == C::KING))
         {
             oppositeStructure = tablutStructure[_next._x][_next._y - 2];
 
-            // eat if normall eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (_next.getLeftChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            // eat if normall eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+            if (_next.getLeftChecker(2) == C::BLACK || oppositeStructure > 1)
             {
                 _next.killLeft();
             }
         }
 
         // RIGHT eat
-        if (_next._y < SEC_LAST_COL && (rightChecker == C::WHITE || rightChecker == C::KING))
+        if (_next._y < LAST_COL && (rightChecker == C::WHITE || rightChecker == C::KING))
         {
             oppositeStructure = tablutStructure[_next._x][_next._y + 2];
 
-            // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (_next.getRightChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+            if (_next.getRightChecker(2) == C::BLACK || oppositeStructure > 1)
             {
                 _next.killRight();
             }
         }
 
         // UP eat
-        if (_next._x > SECOND_ROW && (upChecker == C::WHITE || upChecker == C::KING))
+        if (_next._x > FIRST_ROW && (upChecker == C::WHITE || upChecker == C::KING))
         {
             oppositeStructure = tablutStructure[_next._x - 2][_next._y];
 
-            // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (_next.getUpChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+            if (_next.getUpChecker(2) == C::BLACK || oppositeStructure > 1)
             {
                 _next.killUp();
             }
         }
 
         // DOWN eat
-        if (_next._x < SEC_LAST_ROW && (downChecker == C::WHITE || downChecker == C::KING))
+        if (_next._x < LAST_ROW && (downChecker == C::WHITE || downChecker == C::KING))
         {
             oppositeStructure = tablutStructure[_next._x + 2][_next._y];
 
-            // eat if normal eat (black on opposite side) or theres a camp on the opposite side  @see STRUCTURE
-            if (_next.getDownChecker(2) == C::BLACK || oppositeStructure == S::CAMPS)
+            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+            if (_next.getDownChecker(2) == C::BLACK || oppositeStructure > 1)
             {
                 _next.killDown();
             }

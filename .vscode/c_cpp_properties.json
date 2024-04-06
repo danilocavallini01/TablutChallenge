@@ -9,7 +9,7 @@
                 "${HOME}/Documenti/boost_1_84_0/"
             ],
             "defines": [],
-            "cStandard": "c20",
+            "cStandard": "c17",
             "cppStandard": "gnu++20",
             "intelliSenseMode": "linux-gcc-x64"
         }

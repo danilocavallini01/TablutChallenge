@@ -1,8 +1,8 @@
 #include "Heuristic.h"
 
-Heuristic::Heuristic()
+Heuristic::Heuristic(Weights __weights)
 {
-    _weights = FIXED_WEIGHTS;
+    _weights = __weights;
 }
 Heuristic::~Heuristic() {}
 
@@ -11,60 +11,35 @@ Heuristic::~Heuristic() {}
     Otherwise white advantage
 
     weightsS
-    0 : white pieces alive count weights
-    1 : black pieces alive count weights
+    0 : white pieces alive count weight
+    1 : black pieces alive count weight
     2 : king distances from escape positions
-    3 : kills white on this round weights
-    4 : kills black on this round weights
-
+    3 : kills white on this round weight
+    4 : kills black on this round weight
+    5 : king no space weight
+    6 : king no space Threshold weight
 */
 int Heuristic::evaluate(const Tablut &__t)
 {
-    int _score;
+    int score;
 
     if (__t.isGameOver())
     {
-        if (__t._gameState == GAME_STATE::DRAW)
+        if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
         {
             return 0;
         }
-        _score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
+        else
+        {
+            score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
+        }
     }
     else
     {
-        _score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * Heuristic::kingNoSpacePenality(__t);
+        score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t.kingMovements - _weights[6]);
     }
 
-    return __t._isWhiteTurn ? _score : -_score;
-}
-
-int Heuristic::kingNoSpacePenality(const Tablut &__t)
-{
-    int kingSurrounded = 0;
-    // Left Check
-    if (__t._board[__t._kingX][__t._kingY - 1] != C::EMPTY)
-    {
-        kingSurrounded++;
-    }
-
-    // Right Check
-    if (__t._board[__t._kingX][__t._kingY + 1] != C::EMPTY)
-    {
-        kingSurrounded++;
-    }
-
-    // Down Check
-    if (__t._board[__t._kingX - 1][__t._kingY] != C::EMPTY)
-    {
-        kingSurrounded++;
-    }
-
-    // Up Check
-    if (__t._board[__t._kingX + 1][__t._kingY] != C::EMPTY)
-    {
-        kingSurrounded++;
-    }
-    return kingSurrounded;
+    return __t._isWhiteTurn ? score : -score;
 }
 
 // Compare function between two Tabluts

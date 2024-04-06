@@ -7,17 +7,20 @@
 #include "Heuristic.h"
 #include "MoveGenerator.h"
 #include "TranspositionTable.h"
+#include "StopWatch.h"
 
 #include <limits>
 #include <thread>
 #include <cstring>
 #include <future>
+#include <atomic>
 
 // Forward Declaration
 class Tablut;
 class Heuristic;
 class MoveGenerator;
 class TranspositionTable;
+class StopWatch;
 
 // Lowest and Highest scores for alpha and beta initialization
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
@@ -35,6 +38,8 @@ public:
     MoveGenerator _moveGenerator;
     // Transposition table, used to store previous seen _board positions so we dont re-evaluate
     TranspositionTable _transpositionTable;
+    // Timer for time limited search
+    StopWatch _stopWatch;
 
     // _maxDepth set by the last method that invoked a XXSearch() Function
     int _maxDepth;
@@ -42,19 +47,25 @@ public:
     // max score set by the last method that invoked a XXSearch() Function
     int _bestScore;
 
-    // totalMoves checked by search engine
-    int _totalMoves;
+    // best move found by last method that invoked a XXSearch() Function
+    Tablut _bestMove;
 
-    SearchEngine();
-    SearchEngine(Heuristic &__heuristic, MoveGenerator &__moveGenerator, TranspositionTable &__transpositionTable);
+    SearchEngine(Heuristic __heuristic = Heuristic(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable());
 
     ~SearchEngine();
 
+    // NEGAMAX SEARCH ALGORITHM
     Tablut NegaMaxSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
+    Tablut NegaMaxSearchTimeLimited(Tablut &__startingPosition, const int __timeLimit, const int __threads = MAX_THREADS);
+
     Tablut NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
 
+    int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
+    int NegaMaxTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
+
+    int getTotalMoves();
 };
 
 #endif

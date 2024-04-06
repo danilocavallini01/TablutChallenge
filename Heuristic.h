@@ -30,7 +30,7 @@ class Tablut;
  8  - E E C C C E E -
 
 */
-typedef std::array<int, 6> Weights;
+typedef std::array<int, 7> Weights;
 
 /*
     Negative values mean black advantage
@@ -43,10 +43,13 @@ typedef std::array<int, 6> Weights;
     3 : kills white on this round weight
     4 : kills black on this round weight
     5 : king no space weight
+    6 : king no space Threshold weight
 
 */
-const Weights FIXED_WEIGHTS = {2, -1, 1, 2, -5, -15};
+//                             0  1   2   3   4    5  6
+const Weights FIXED_WEIGHTS = {5, -2, 10, 10, -20, 5, 4, };
 const int WIN_WEIGHT = 10000;
+const int DRAW_WEIGHT = -2000;
 
 const std::array<std::array<int, 9>, 9> kingPosHeuristic = {{
     {50, 60, 60, 00, 00, 00, 60, 60, 50},
@@ -65,12 +68,10 @@ class Heuristic
 public:
     Weights _weights;
 
-    Heuristic();
+    Heuristic(Weights _weights = FIXED_WEIGHTS);
     ~Heuristic();
 
     int evaluate(const Tablut &__t);
-
-    static int kingNoSpacePenality(const Tablut &__t);
 
     bool compare(const Tablut &__t1, const Tablut &__t2);
 

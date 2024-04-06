@@ -37,8 +37,8 @@ int main(int argc, char *argv[])
     int64_t totalTime = 0;
     int64_t totalTime2 = 0;
 
-    SearchEngine searchEngine = SearchEngine();
-    SearchEngine searchEngine2 = SearchEngine();
+    SearchEngine searchEngine = SearchEngine(Heuristic());
+    SearchEngine searchEngine2 = SearchEngine(Heuristic());
 
     MoveGenerator moveGene = MoveGenerator();
     Heuristic _heuristic = Heuristic();
@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
             break;
             */
 
+        /*
         // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
         t = searchEngine.NegaScoutSearch(t, 7);
@@ -75,12 +76,11 @@ int main(int argc, char *argv[])
         // PERFORMANCE _______________
         std::cout << searchEngine._transpositionTable << std::endl;
 
-        std::cout << "TOTAL MOVES CHECKED: " << searchEngine._totalMoves << std::endl;
+        std::cout << "TOTAL MOVES CHECKED: " << searchEngine.getTotalMoves() << std::endl;
         totalTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine._totalMoves = 0;
         searchEngine._transpositionTable.resetStat();
 
         // CHECK GAME_STATE
@@ -89,32 +89,76 @@ int main(int argc, char *argv[])
 
         std::cout << "-----------------------------------" << std::endl;
         std::cout << "-----------------------------------" << std::endl;
+        */
 
-        // NEGAMAX --------------------
+        // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
-        t = searchEngine2.NegaMaxSearch(t, 4);
+        t = searchEngine.NegaScoutSearch(t, 7);
         end = std::chrono::steady_clock::now();
 
         // GAME CICLE
         t.print();
 
-        std::cout << " --> NEGAMAX SCORE = " << searchEngine2._bestScore << std::endl;
+        std::cout << " --> NEGASCOUT SCORE = " << searchEngine._bestScore << std::endl;
+        // PERFORMANCE _______________
+        std::cout << searchEngine._transpositionTable << std::endl;
+
+        std::cout << "TOTAL MOVES CHECKED: " << searchEngine.getTotalMoves() << std::endl;
+        totalTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+        std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+        std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
+
+        searchEngine._transpositionTable.resetStat();
+
+        // CHECK GAME_STATE
+        if (checkWin(t))
+            break;
+        
+
+        // NEGASCOUT --------------------
+        begin = std::chrono::steady_clock::now();
+        t = searchEngine2.NegaScoutSearch(t, 7);
+        end = std::chrono::steady_clock::now();
+
+        // GAME CICLE
+        t.print();
+
+        std::cout << " --> NEGASCOUT SCORE = " << searchEngine2._bestScore << std::endl;
         // PERFORMANCE _______________
         std::cout << searchEngine2._transpositionTable << std::endl;
 
-        std::cout << "TOTAL MOVES CHECKED: " << searchEngine2._totalMoves << std::endl;
+        std::cout << "TOTAL MOVES CHECKED: " << searchEngine2.getTotalMoves() << std::endl;
         totalTime2 += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime2) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine2._totalMoves = 0;
         searchEngine2._transpositionTable.resetStat();
 
         // CHECK GAME_STATE
         if (checkWin(t))
             break;
+        
+        /*
+        // USER DEFINED PLAY ---------
+        Pos fromX, fromY, toX, toY;
 
-        std::cout << "-----------------------------------" << std::endl;
+        std::cout << "Insert [from X] [from Y] [to X] [to Y]: ";
+        std::cin >> fromX;
+        std::cin >> fromY;
+        std::cin >> toX;
+        std::cin >> toY;
+
+        t = t.next(fromX, fromY, toX, toY);
+
+        // GAME CICLE
+        t.print();
+
+        // CHECK GAME_STATE
+        if (checkWin(t))
+            break;
+        */
+
+        std::cout << " NEW ROUND ------------------------" << std::endl;
         std::cout << "-----------------------------------" << std::endl;
     }
 

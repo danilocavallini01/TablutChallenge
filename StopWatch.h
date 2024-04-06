@@ -1,19 +1,22 @@
 #include <chrono>
-#include <atomic>
 
 class StopWatch
 {
+private:
     std::chrono::high_resolution_clock::time_point _startPoint;
     int _timeLimit;
+    bool _timeout;
 
 public:
-    StopWatch(const int __timeLimit) : _startPoint(std::chrono::high_resolution_clock::now())
-    {
-        _timeLimit = __timeLimit;
-    }
+    StopWatch(const int __timeLimit = 59500);
+    ~StopWatch();
 
-    inline bool timeout() const
-    {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(_startPoint - std::chrono::high_resolution_clock::now()).count() > _timeLimit;
-    }
+    bool isTimeouted();
+
+    void reset();
+
+    void start();
+    void setTimeLimit(const int __timeLimit);
+
+    int getTimeLimit();
 };
