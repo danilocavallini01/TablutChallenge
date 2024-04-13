@@ -1,1 +1,1 @@
-/usr/bin/g++ -O3 -fdiagnostics-color=always -I . -I $HOME/Documenti/boost_1_84_0/ -g ./*.cpp  -o main && ./main
+/usr/bin/g++ -O3 -fdiagnostics-color=always -I . -I $HOME/boost_1_84_0/  -g ./*.cpp -o main && ./main

@@ -10,9 +10,6 @@
 #include <vector>
 #include <functional>
 
-#include <boost/sort/spreadsort/spreadsort.hpp>
-#include <boost/bind/bind.hpp>
-
 // Forward Declaration
 class Tablut;
 

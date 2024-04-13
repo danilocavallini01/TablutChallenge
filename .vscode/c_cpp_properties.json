@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/usr/lib/",
                 "/usr/include/",
-                "${HOME}/Documenti/boost_1_84_0/"
+                "${HOME}/boost_1_84_0/"
             ],
             "defines": [],
             "cStandard": "c17",

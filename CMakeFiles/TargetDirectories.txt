@@ -1,0 +1,3 @@
+/home/danilo/Documents/Github/TablutChallenge/CMakeFiles/tablutChallange.dir
+/home/danilo/Documents/Github/TablutChallenge/CMakeFiles/edit_cache.dir
+/home/danilo/Documents/Github/TablutChallenge/CMakeFiles/rebuild_cache.dir

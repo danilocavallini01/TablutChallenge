@@ -11,7 +11,7 @@
                 "-I",
                 "${fileDirname}/",
                 "-I",
-                "${HOME}/Documenti/boost_1_84_0/boost/",
+                "${HOME}boost_1_84_0/boost/",
                 "-o",
                 "main"
             ],
