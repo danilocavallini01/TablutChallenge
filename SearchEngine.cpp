@@ -122,6 +122,20 @@ Tablut SearchEngine::NegaMaxSearchTimeLimited(Tablut &__startingPosition, const 
     return bestMove;
 }
 
+Tablut SearchEngine::NegaScoutSearch2(Tablut &__startingPosition, const int __maxDepth, const int __threads)
+{
+    _maxDepth = __maxDepth;
+    _totalMoves = 0;
+
+    int alpha = BOTTOM_SCORE;
+    int beta = TOP_SCORE;
+
+    _bestScore = NegaScoutParallel(__startingPosition, __maxDepth, alpha, beta);
+
+    return _bestMove;
+}
+
+
 Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth, const int __threads)
 {
     _maxDepth = __maxDepth;
@@ -182,6 +196,150 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __max
     return bestMove;
 }
 
+int SearchEngine::NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta)
+{
+    _totalMoves++;
+
+    const int alphaOrigin = __alpha;
+    int score;
+    int b;
+    int v;
+
+    bool mustBranch = true;
+    std::future<int> parallelV;
+
+    std::vector<Tablut> moves;
+    Tablut move;
+
+    // -------- TRANSPOSITION TABLE LOOKUP --------
+    ZobristKey hash = __currentMove._hash;
+    std::optional<Entry> maybe_entry = _transpositionTable.get(hash);
+
+    Entry tt_entry;
+
+    if (maybe_entry.has_value())
+    {
+        _transpositionTable.cacheHit();
+        tt_entry = maybe_entry.value();
+        int tt_depth = std::get<ENTRY::DEPTH_INDEX>(tt_entry);
+
+        if (tt_depth >= __depth)
+        {
+            FLAG tt_entry_flag = std::get<ENTRY::FLAG_INDEX>(tt_entry);
+            int tt_score = std::get<ENTRY::SCORE_INDEX>(tt_entry);
+
+            if (tt_entry_flag == FLAG::EXACT)
+            {
+                return tt_score;
+            }
+            else if (tt_entry_flag == FLAG::LOWERBOUND)
+            {
+                __alpha = std::max(__alpha, tt_score);
+            }
+            else
+            {
+                __beta = std::min(__beta, tt_score);
+            }
+
+            if (__alpha >= __beta)
+            {
+                return tt_score;
+            }
+        }
+    }
+    // --------TRANSPOSITION TABLE LOOKUP -------- END
+
+    if (__currentMove.isGameOver() || __depth == 0)
+    {
+        return _heuristic.evaluate(__currentMove);
+    }
+
+    score = BOTTOM_SCORE;
+    b = __beta;
+
+    _moveGenerator.generateLegalMoves(__currentMove, moves);
+
+    // LOSE BY NO MOVE LEFT
+    if (moves.size() == 0)
+    {
+        if (__currentMove._isWhiteTurn)
+        {
+            __currentMove._gameState == GAME_STATE::BLACKWIN;
+        }
+        else
+        {
+            __currentMove._gameState == GAME_STATE::WHITEWIN;
+        }
+
+        return _heuristic.evaluate(__currentMove);
+    }
+
+    _heuristic.sortMoves(moves);
+
+    for (int i = 0; i < moves.size(); i++)
+    {
+        move = moves[i];
+
+        // PARALLEL COMPUTING OF WORST BRANCH
+        if (mustBranch)
+        {
+            v = -std::async(std::launch::async, &SearchEngine::NegaScoutParallel, std::ref(*this), std::ref(move), __depth - 1, -b, -__alpha).get();
+            mustBranch = false;
+        }
+        else
+        {
+            v = -SearchEngine::NegaScout(move, __depth - 1, -b, -__alpha);
+        }
+
+        if (v > __alpha && v < __beta && i > 0)
+        {
+            v = -SearchEngine::NegaScout(move, __depth - 1, -__beta, -v);
+        }
+
+        if (v > score)
+        {
+            score = v;
+
+            // UPDATE BEST MOVE
+            if (__depth == _maxDepth)
+            {
+                _bestScore = score;
+                _bestMove = move;
+            }
+        }
+
+        __alpha = std::max(__alpha, v);
+
+        if (__alpha >= __beta)
+        {
+            break;
+        }
+
+        b = __alpha + 1;
+    }
+
+    // -------- TRANSPOSITION TABLE PUT --------
+    if (score <= alphaOrigin)
+    {
+        tt_entry = std::make_tuple(score, __depth, FLAG::UPPERBOUND);
+    }
+    else if (score >= b)
+    {
+        tt_entry = std::make_tuple(score, __depth, FLAG::LOWERBOUND);
+    }
+    else
+    {
+        tt_entry = std::make_tuple(score, __depth, FLAG::EXACT);
+    }
+
+    _transpositionTable.put(tt_entry, hash);
+    _transpositionTable.cachePut();
+
+    // -------- TRANSPOSITION TABLE PUT -------- END
+
+    return score;
+}
+
 int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta)
 {
     _totalMoves++;
@@ -195,7 +353,7 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    ZobristKey hash = __currentMove.hash;
+    ZobristKey hash = __currentMove._hash;
     std::optional<Entry> maybe_entry = _transpositionTable.get(hash);
 
     Entry tt_entry;
@@ -306,6 +464,8 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
     return score;
 }
 
+// NEGAMAX __________________________________________
+
 int SearchEngine::NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta)
 {
     _totalMoves++;
@@ -315,7 +475,7 @@ int SearchEngine::NegaMax(Tablut &__currentMove, const int __depth, int __alpha,
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    ZobristKey hash = __currentMove.hash;
+    ZobristKey hash = __currentMove._hash;
     std::optional<Entry> maybe_entry = _transpositionTable.get(hash);
 
     Entry tt_entry;
@@ -415,7 +575,7 @@ int SearchEngine::NegaMaxTimeLimited(Tablut &__currentMove, const int __depth, i
     Tablut move;
 
     // -------- TRANSPOSITION TABLE LOOKUP --------
-    ZobristKey hash = __currentMove.hash;
+    ZobristKey hash = __currentMove._hash;
     std::optional<Entry> maybe_entry = _transpositionTable.get(hash);
 
     Entry tt_entry;

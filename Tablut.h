@@ -41,8 +41,8 @@ const Pos SECOND_COL(1);
 // Dead king position value
 const Pos KDEADPOSITION(20);
 
-// Max hash log extensions, used to check if position is draw(game state position reached twice)
-const int MAX_DRAW_LOG(150);
+// Max _hash log extensions, used to check if position is draw(game state position reached twice)
+const int MAX_DRAW_LOG(250);
 
 // Enum for Checker values
 enum CHECKER : CheckerCodex
@@ -141,15 +141,15 @@ public:
     // Turn count
     int _turn;
 
-    // Current table hash
-    ZobristKey hash;
+    // Current table _hash
+    ZobristKey _hash;
 
     // Past turn hashes, used to check if same game state is reached twice
     std::array<ZobristKey, MAX_DRAW_LOG> _pastHashes;
     int _pastHashesIndex;
 
     // How Much Movements can the king make;
-    int kingMovements;
+    int _kingMovements;
 
     // Tell if game is in win or draw state
     GAME_STATE _gameState;
@@ -316,7 +316,7 @@ public:
     {
         for (int i = 0; i < _pastHashesIndex - 1; i++)
         {
-            if (hash == _pastHashes[i])
+            if (_hash == _pastHashes[i])
             {
                 return true;
             }

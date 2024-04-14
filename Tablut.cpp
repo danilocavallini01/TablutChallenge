@@ -13,7 +13,7 @@ Tablut::Tablut(const Tablut &__startFrom)
 
 Tablut Tablut::getStartingPosition()
 {
-    Tablut t;
+    Tablut t = Tablut();
 
     for (Pos x = 0; x < 9; x++)
     {
@@ -39,10 +39,12 @@ Tablut Tablut::getStartingPosition()
 
     t._kills = 0;
 
-    t._gameState == GAME_STATE::NONE;
+    t._gameState = GAME_STATE::NONE;
 
+    t._hash = 0;
     t._pastHashesIndex = 0;
 
+    t._kingMovements = 0;
     t._turn = 0;
 
     // Setting all black defenders

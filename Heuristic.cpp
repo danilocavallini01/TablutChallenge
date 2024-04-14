@@ -36,7 +36,7 @@ int Heuristic::evaluate(const Tablut &__t)
     }
     else
     {
-        score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t.kingMovements - _weights[6]);
+        score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t._kingMovements - _weights[6]);
     }
 
     return __t._isWhiteTurn ? score : -score;

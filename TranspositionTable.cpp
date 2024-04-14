@@ -1,8 +1,5 @@
 #include "TranspositionTable.h"
 
-std::mutex mtxCacheHit;
-std::mutex mtxCachePut;
-
 TranspositionTable::TranspositionTable()
 {
     _map = boost::unordered::concurrent_flat_map<ZobristKey, Entry>();

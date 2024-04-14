@@ -22,7 +22,7 @@ void MoveGenerator::generateLegalMoves(Tablut &__t, std::vector<Tablut> &__nextT
         // GENERATE MOVES FOR KING
         int moveDifferences = __nextTabluts.size();
         getLegalMovesFrom(__t, __t._kingX, __t._kingY, __nextTabluts);
-        __t.kingMovements = moveDifferences - __nextTabluts.size();
+        __t._kingMovements = moveDifferences - __nextTabluts.size();
     }
     else
     {
@@ -45,7 +45,7 @@ void MoveGenerator::generateLegalMoves(Tablut &__t, std::vector<Tablut> &__nextT
     {
         hash = _zobrist.hash(nextTablut);
 
-        nextTablut.hash = hash;
+        nextTablut._hash = hash;
         nextTablut._pastHashes[nextTablut._pastHashesIndex++] = hash;
 
         if (nextTablut._pastHashesIndex == MAX_DRAW_LOG)

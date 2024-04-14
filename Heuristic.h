@@ -27,7 +27,8 @@ class Tablut;
  8  - E E C C C E E -
 
 */
-typedef std::array<int, 7> Weights;
+const int TOTAL_WEIGHTS = 7;
+typedef std::array<int, TOTAL_WEIGHTS> Weights;
 
 /*
     Negative values mean black advantage

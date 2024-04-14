@@ -17,98 +17,156 @@ private:
     int _maxDepth = 7;
     int _maxIterations = 250;
 
-    int64_t _totalTimeWhite = 0;
-    int64_t _totalTimeBlack = 0;
-
-    SearchEngine _searchEngineWhite;
-    SearchEngine _searchEngineBlack;
-
 public:
-    Fitness() : _maxDepth(7),
-                _maxIterations(250),
-                _totalTimeWhite(0),
-                _totalTimeBlack(0){};
-    ~Fitness();
+    Fitness() : _maxDepth(7), _maxIterations(250){};
+    Fitness(int __maxDepth, int __maxIterations = 250) : _maxDepth(__maxDepth), _maxIterations(__maxIterations){};
+    ~Fitness(){};
 
 private:
     // Do a single match and register both fitness results in a pair <WHITE,BLACK> fitnesses
-    std::pair<int, int> _match(Weights __white, Weights __black)
+    std::pair<double, double> _match(Weights &__white, Weights & __black)
     {
-        int _bestScore;
-
-        Tablut _position = Tablut::getStartingPosition();
+        Tablut gameBoard = Tablut::getStartingPosition();
 
         // Setup new search engine with the given weights heuristic
-        SearchEngine _searchEngineWhite = SearchEngine(Heuristic(__white));
-        SearchEngine _searchEngineBlack = SearchEngine(Heuristic(__black));
+        SearchEngine searchEngineWhite = SearchEngine(Heuristic(__white));
+        SearchEngine searchEngineBlack = SearchEngine(Heuristic(__black));
 
-        std::chrono::steady_clock::time_point _begin;
-        std::chrono::steady_clock::time_point _end;
+        int totalWhiteScore = 0;
+        int totalBlackScore = 0;
 
-        for (int i = 0; i < _maxIterations; i++)
+        int64_t totalTimeWhite = 0;
+        int64_t totalTimeBlack = 0;
+
+        std::chrono::steady_clock::time_point timeBegin;
+        std::chrono::steady_clock::time_point timeEnd;
+
+        int i;
+
+        for (i = 0; i < _maxIterations / 2; i++)
         {
             // WHITE ONE --------------------
             // NEGASCOUT --------------------
-            _begin = std::chrono::steady_clock::now();
-            _position = _searchEngineWhite.NegaScoutSearch(_position, 7);
-            _end = std::chrono::steady_clock::now();
+            timeBegin = std::chrono::steady_clock::now();
+            gameBoard = searchEngineWhite.NegaScoutSearch(gameBoard, _maxDepth);
+            timeEnd = std::chrono::steady_clock::now();
 
             // GAME CICLE
-            _position.print();
+            gameBoard.print();
 
-            std::cout << " --> NEGASCOUT SCORE = " << _searchEngineWhite._bestScore << std::endl;
+            std::cout << " --> NEGASCOUT SCORE = " << searchEngineWhite._bestScore << std::endl;
+            totalWhiteScore += searchEngineWhite._bestScore;
+
             // PERFORMANCE _______________
-            std::cout << _searchEngineWhite._transpositionTable << std::endl;
+            std::cout << searchEngineWhite._transpositionTable << std::endl;
 
-            std::cout << "TOTAL MOVES CHECKED: " << _searchEngineWhite.getTotalMoves() << std::endl;
-            _totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(_end - _begin).count();
-            std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(_end - _begin).count() << "[ms]" << std::endl;
-            std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(_totalTimeWhite) / (i + 1) << "[ms]" << std::endl;
+            std::cout << "TOTAL MOVES CHECKED: " << searchEngineWhite.getTotalMoves() << std::endl;
+            totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
+            std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count() << "[ms]" << std::endl;
+            std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTimeWhite) / (i + 1) << "[ms]" << std::endl;
 
-            _searchEngineWhite._transpositionTable.resetStat();
+            searchEngineWhite._transpositionTable.resetStat();
 
             // CHECK GAME_STATE
-            if (_checkWin(_position))
+            if (_checkWin(gameBoard))
+            {
                 break;
+            }
 
             // BLACK ONE --------------------
             // NEGASCOUT --------------------
-            _begin = std::chrono::steady_clock::now();
-            _position = _searchEngineBlack.NegaScoutSearch(_position, 7);
-            _end = std::chrono::steady_clock::now();
+            timeBegin = std::chrono::steady_clock::now();
+            gameBoard = searchEngineBlack.NegaScoutSearch(gameBoard, _maxDepth);
+            timeEnd = std::chrono::steady_clock::now();
 
             // GAME CICLE
-            _position.print();
+            gameBoard.print();
 
-            std::cout << " --> NEGASCOUT SCORE = " << _searchEngineBlack._bestScore << std::endl;
+            std::cout << " --> NEGASCOUT SCORE = " << searchEngineBlack._bestScore << std::endl;
+            totalBlackScore += searchEngineBlack._bestScore;
+
             // PERFORMANCE _______________
-            std::cout << _searchEngineBlack._transpositionTable << std::endl;
+            std::cout << searchEngineBlack._transpositionTable << std::endl;
 
-            std::cout << "TOTAL MOVES CHECKED: " << _searchEngineBlack.getTotalMoves() << std::endl;
-            _totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(_end - _begin).count();
-            std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(_end - _begin).count() << "[ms]" << std::endl;
-            std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(_totalTimeBlack) / (i + 1) << "[ms]" << std::endl;
+            std::cout << "TOTAL MOVES CHECKED: " << searchEngineBlack.getTotalMoves() << std::endl;
+            totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
+            std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count() << "[ms]" << std::endl;
+            std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTimeBlack) / (i + 1) << "[ms]" << std::endl;
 
-            _searchEngineBlack._transpositionTable.resetStat();
+            searchEngineBlack._transpositionTable.resetStat();
 
             // CHECK GAME_STATE
-            if (_checkWin(_position))
+            if (_checkWin(gameBoard))
+            {
                 break;
+            }
 
             std::cout << "- NEW ROUND ------------------------" << std::endl;
             std::cout << "-----------------------------------" << std::endl;
         }
 
-        // MUST IMPLEMENT FITNESS FUNCTION
-        return std::make_pair(1,1);
+        int gameCicles = i + 1;
+
+        double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard._gameState, true);
+        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard._gameState, false);
+
+        return std::make_pair(whiteFitness, blackFitness);
     }
 
-    bool _checkWin(Tablut &_position)
+    /*
+        Compute fitness for a specific game for both black and white player
+        I compute fitness by this parameters of a player:
+            - total moves checked ( less is better )
+            - avg moves score by player ( more is better )
+            - avg time elapsed to play a move ( less is better )
+            - if as won or not:
+                - WIN: fitness returned without changes
+                - LOSE: fitness returned with negative sign
+                - DRAW: fitness returned halved
+    */
+    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, GAME_STATE __gameState, bool __isWhite)
     {
-        if (_position.isGameOver())
+        double fitness = (1.0 / double(__engine.getTotalMoves())) * (__avgScore) * (1.0 / __avgTimeElapsed) * 10000.0;
+
+        if (__isWhite)
+        {
+            if (__gameState == GAME_STATE::WHITEWIN)
+            {
+                return fitness;
+            }
+            else if (__gameState == GAME_STATE::BLACKDRAW || __gameState == GAME_STATE::WHITEDRAW)
+            {
+                return fitness - 2000.0;
+            }
+            else
+            {
+                return fitness - 200000.0;
+            }
+        }
+        else
+        {
+            if (__gameState == GAME_STATE::BLACKWIN)
+            {
+                return fitness;
+            }
+            else if (__gameState == GAME_STATE::BLACKDRAW || __gameState == GAME_STATE::WHITEDRAW)
+            {
+                return fitness - 2000.0;
+            }
+            else
+            {
+                return fitness - 200000.0;
+            }
+        }
+    }
+
+    // CHECK IF A GAME STATE IS IN A WIN POSITION
+    bool _checkWin(Tablut &__position)
+    {
+        if (__position.isGameOver())
         {
             std::cout << "########################" << std::endl;
-            std::cout << (_position.checkWinState() == GAME_STATE::BLACKWIN ? " BLACK WON " : (_position.checkWinState() == GAME_STATE::WHITEWIN ? " WHITE WON " : " DRAW ")) << std::endl;
+            std::cout << (__position.checkWinState() == GAME_STATE::BLACKWIN ? " BLACK WON " : (__position.checkWinState() == GAME_STATE::WHITEWIN ? " WHITE WON " : " DRAW ")) << std::endl;
             std::cout << "########################" << std::endl;
 
             return true;
@@ -117,9 +175,9 @@ private:
     }
 
 public:
-    std::vector<std::pair<int, int>> fitnessFunction(std::vector<Weights> __whitePopulation, std::vector<Weights> __blackPopulation, int __totalMatches)
+    std::vector<std::pair<double, double>> train(std::vector<Weights> &__whitePopulation, std::vector<Weights> &__blackPopulation, int __totalMatches)
     {
-        std::vector<std::pair<int, int>> results;
+        std::vector<std::pair<double, double>> results{};
 
         for (int i = 0; i < __totalMatches; i++)
         {

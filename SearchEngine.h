@@ -51,7 +51,6 @@ public:
     Tablut _bestMove;
 
     SearchEngine(Heuristic __heuristic = Heuristic(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable());
-
     ~SearchEngine();
 
     // NEGAMAX SEARCH ALGORITHM
@@ -59,6 +58,7 @@ public:
     Tablut NegaMaxSearchTimeLimited(Tablut &__startingPosition, const int __timeLimit, const int __threads = MAX_THREADS);
 
     Tablut NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
+    Tablut NegaScoutSearch2(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
 
     int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
