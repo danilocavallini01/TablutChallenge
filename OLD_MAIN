@@ -1,6 +1,6 @@
 #include "Tablut.h"
 #include "MoveGenerator.h"
-#include "Heuristic.h"
+#include "Heuristic.hpp"
 #include "SearchEngine.h"
 
 #include <vector>

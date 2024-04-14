@@ -4,7 +4,7 @@
 #define SEARCHENGINE
 
 #include "Tablut.h"
-#include "Heuristic.h"
+#include "Heuristic.hpp"
 #include "MoveGenerator.h"
 #include "TranspositionTable.h"
 #include "StopWatch.h"

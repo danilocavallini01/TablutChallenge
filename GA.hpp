@@ -1,13 +1,17 @@
 #ifndef GALG
 #define GALG
 
-#include "Heuristic.h"
+#include "Heuristic.hpp"
 #include "Fitness.hpp"
 
 #include <vector>
 #include <cstdint>
 #include <random>
 #include <ctime>
+#include <string>
+#include <regex>
+#include <fstream>
+#include <iostream>
 
 // Forward Declaration
 class Heuristic;
@@ -24,20 +28,126 @@ private:
     int _totalWeights;
     Fitness _fitnessFn;
 
+    std::string _fileModelName;
+
     std::vector<Weights> _whitePopulation;
     std::vector<Weights> _blackPopulation;
     std::random_device _rd;
     std::mt19937 _gen;
 
+    std::vector<std::string> _tokenize(const std::string str, const std::regex re)
+    {
+        std::sregex_token_iterator it{str.begin(),
+                                      str.end(), re, -1};
+        std::vector<std::string> tokenized{it, {}};
+
+        // Additional check to remove empty strings
+        tokenized.erase(
+            std::remove_if(tokenized.begin(),
+                           tokenized.end(),
+                           [](std::string const &s)
+                           {
+                               return s.size() == 0;
+                           }),
+            tokenized.end());
+
+        return tokenized;
+    }
+
+    void _readModelFromFile(std::ifstream &__fileModel)
+    {
+        Weights add;
+
+        std::string line;
+        std::regex re(R"([\s|,]+)");
+        std::vector<std::string> tokenized;
+
+        for (int i = 0; i < _N; i++)
+        {
+            getline(__fileModel, line);
+            add = {};
+
+            tokenized = _tokenize(line, re);
+
+            for (int i = 0; i < tokenized.size(); i++)
+            {
+                add[i] = std::stoi(tokenized.at(i));
+            }
+
+            _whitePopulation.push_back(add);
+        }
+
+        for (int i = 0; i < _N; i++)
+        {
+            getline(__fileModel, line);
+            add = {};
+
+            tokenized = _tokenize(line, re);
+
+            for (int i = 0; i < tokenized.size(); i++)
+            {
+                add[i] = std::stoi(tokenized.at(i));
+            }
+
+            _blackPopulation.push_back(add);
+        }
+    }
+
+    void _writeModelToFile()
+    {
+        std::ofstream fileModel(_fileModelName, std::ios::trunc);
+        std::string line;
+
+        if (!fileModel.is_open())
+        {
+            std::cout << "UNABLE TO OPEN WRITE FILE -> ABORTING" << std::endl;
+            return;
+        }
+
+        for (int i = 0; i < _N; i++)
+        {
+            line = "";
+            for (int j = 0; j < _totalWeights; j++)
+            {
+                line += std::to_string(_whitePopulation.at(i)[j]);
+                line += " ";
+            }
+
+            fileModel << line << std::endl;
+        }
+
+        for (int i = 0; i < _N; i++)
+        {
+            line = "";
+            for (int j = 0; j < _totalWeights; j++)
+            {
+                line += std::to_string(_blackPopulation.at(i)[j]);
+                line += " ";
+            }
+
+            fileModel << line << std::endl;
+        }
+    }
+
     void _initalizePopulation()
     {
-        std::uniform_int_distribution<int> distribution(1, 10000);
 
         // Resetting any previous population
         _whitePopulation = {};
         _blackPopulation = {};
 
         Weights add;
+
+        // read population model from file if exist
+        std::ifstream fileModel(_fileModelName);
+        if (fileModel.is_open())
+        {
+            _readModelFromFile(fileModel);
+            return;
+        }
+
+        std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
+        std::uniform_int_distribution<int> distribution(1, 10000);
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -259,11 +369,12 @@ private:
 public:
     GA(int _maxDepth = 7) : _N(10),
                             _mutationProb(0.3),
-                            _mutationFactor(100),
+                            _mutationFactor(50),
                             _tournSize(3),
                             _maxGeneration(10),
                             _totalWeights(TOTAL_WEIGHTS),
-                            _fitnessFn(Fitness(_maxDepth))
+                            _fitnessFn(Fitness(_maxDepth)),
+                            _fileModelName("tablutGaModel.model")
     {
         std::random_device _rd;
         std::mt19937 _gen(_rd());
@@ -360,6 +471,8 @@ public:
             oldResults = results;
             _divideResults(oldResults, oldWhiteResults, oldBlackResults, _whitePopulation, _blackPopulation);
         }
+
+        _writeModelToFile();
     }
 };
 

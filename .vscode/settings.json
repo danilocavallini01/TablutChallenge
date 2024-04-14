@@ -88,7 +88,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "format": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++-11"
 }

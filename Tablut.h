@@ -1,9 +1,5 @@
-#pragma once
-
 #ifndef TABLUT_H
 #define TABLUT_H
-
-#include "Heuristic.h"
 
 #include <iostream>
 #include <cstdint>
@@ -14,9 +10,6 @@
 #include <chrono>
 #include <vector>
 #include <deque>
-
-// Forward Declaration
-class Heuristic;
 
 typedef uint64_t ZobristKey;
 
