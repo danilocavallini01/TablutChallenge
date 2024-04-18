@@ -5,9 +5,10 @@
 
 #include "Tablut.h"
 #include "Heuristic.hpp"
-#include "MoveGenerator.h"
-#include "TranspositionTable.h"
-#include "StopWatch.h"
+#include "MoveGenerator.hpp"
+#include "TranspositionTable.hpp"
+#include "StopWatch.hpp"
+#include "Zobrist.h"
 
 #include <limits>
 #include <thread>
@@ -21,6 +22,7 @@ class Heuristic;
 class MoveGenerator;
 class TranspositionTable;
 class StopWatch;
+class Zobrist;
 
 // Lowest and Highest scores for alpha and beta initialization
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
@@ -40,6 +42,8 @@ public:
     TranspositionTable _transpositionTable;
     // Timer for time limited search
     StopWatch _stopWatch;
+    // To Check Board and hash current game boards
+    Zobrist _zobrist;
 
     // _maxDepth set by the last method that invoked a XXSearch() Function
     int _maxDepth;
@@ -50,7 +54,7 @@ public:
     // best move found by last method that invoked a XXSearch() Function
     Tablut _bestMove;
 
-    SearchEngine(Heuristic __heuristic = Heuristic(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable());
+    SearchEngine(Heuristic __heuristic = Heuristic(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable(), Zobrist _zobrist = Zobrist());
     ~SearchEngine();
 
     // NEGAMAX SEARCH ALGORITHM

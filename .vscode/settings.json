@@ -91,5 +91,6 @@
         "*.ipp": "cpp",
         "format": "cpp"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/g++-11"
+    "C_Cpp.default.compilerPath": "/usr/bin/g++-11",
+    "cmake.configureOnOpen": true
 }

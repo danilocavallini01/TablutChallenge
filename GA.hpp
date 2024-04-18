@@ -147,7 +147,7 @@ private:
         }
 
         std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
-        std::uniform_int_distribution<int> distribution(1, 10000);
+        std::uniform_int_distribution<int> distribution(1, _mutationFactor*2);
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -156,7 +156,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = abs((distribution(_gen) % _mutationFactor) - _mutationFactor / 2) * FIXED_WEIGHTS[j];
+                add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
             }
 
             _whitePopulation.push_back(add);
@@ -168,7 +168,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = abs((distribution(_gen) % _mutationFactor) - _mutationFactor / 2) * FIXED_WEIGHTS[j];
+                add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
             }
 
             _blackPopulation.push_back(add);
@@ -262,7 +262,7 @@ private:
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
-        std::uniform_int_distribution<int> mutationChangeDistribution(0, 10000);
+        std::uniform_int_distribution<int> mutationChangeDistribution(0, _mutationFactor*2);
 
         for (int i = 0; i < _totalWeights; i++)
         {

@@ -2,11 +2,12 @@
 
 std::atomic<int> _totalMoves;
 
-SearchEngine::SearchEngine(Heuristic __heuristic, MoveGenerator __moveGenerator, TranspositionTable __transpositionTable)
+SearchEngine::SearchEngine(Heuristic __heuristic, MoveGenerator __moveGenerator, TranspositionTable __transpositionTable, Zobrist __zobrist)
 {
     _heuristic = __heuristic;
     _moveGenerator = __moveGenerator;
     _transpositionTable = __transpositionTable;
+    _zobrist = __zobrist;
 }
 
 SearchEngine::~SearchEngine(){};
@@ -135,11 +136,11 @@ Tablut SearchEngine::NegaScoutSearch2(Tablut &__startingPosition, const int __ma
     return _bestMove;
 }
 
-
 Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth, const int __threads)
 {
     _maxDepth = __maxDepth;
     _totalMoves = 0;
+    ZobristKey hash;
 
     std::vector<Tablut> moves;
     Tablut bestMove;
@@ -153,6 +154,23 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __max
     int v;
 
     _moveGenerator.generateLegalMoves(__startingPosition, moves);
+
+    // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+    for (auto &nextTablut : moves)
+    {
+        hash = _zobrist.hash(nextTablut);
+
+        nextTablut._hash = hash;
+        nextTablut._pastHashes[nextTablut._pastHashesIndex++] = hash;
+
+        if (nextTablut._pastHashesIndex == MAX_DRAW_LOG)
+        {
+            nextTablut._pastHashesIndex = 0;
+        }
+
+        nextTablut.checkWinState();
+    }
+
     _heuristic.sortMoves(moves);
 
     bestMove = moves[0];
@@ -161,21 +179,23 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __max
     {
         for (int i = 0; i < __threads && i + t < moves.size(); i++)
         {
-            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(moves[i + t]), __maxDepth - 1, -b, -alpha));
+            if (v > alpha && v < beta && i + t > 0)
+            {
+                results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(moves[i + t]), __maxDepth - 1, -beta, -v));
+            }
+            else
+            {
+                results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(moves[i + t]), __maxDepth - 1, -b, -alpha));
+            }
         }
 
         for (int i = 0; i < results.size(); i++)
         {
             v = -results[i].get();
 
-            if (v > alpha && v < beta && i > 0)
-            {
-                v = -SearchEngine::NegaScout(moves[i + t], __maxDepth - 1, -beta, -v);
-            }
-
             if (v > _bestScore)
             {
-            
+
                 bestMove = moves[i + t];
                 _bestScore = v;
             }
@@ -400,6 +420,22 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
 
     _moveGenerator.generateLegalMoves(__currentMove, moves);
 
+    // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+    for (auto &nextTablut : moves)
+    {
+        hash = _zobrist.hash(nextTablut);
+
+        nextTablut._hash = hash;
+        nextTablut._pastHashes[nextTablut._pastHashesIndex++] = hash;
+
+        if (nextTablut._pastHashesIndex == MAX_DRAW_LOG)
+        {
+            nextTablut._pastHashesIndex = 0;
+        }
+
+        nextTablut.checkWinState();
+    }
+
     // LOSE BY NO MOVE LEFT
     if (moves.size() == 0)
     {
@@ -415,6 +451,7 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
         return _heuristic.evaluate(__currentMove);
     }
 
+    // SORT MOVES
     _heuristic.sortMoves(moves);
 
     for (int i = 0; i < moves.size(); i++)
@@ -465,7 +502,6 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
 }
 
 // NEGAMAX __________________________________________
-
 int SearchEngine::NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta)
 {
     _totalMoves++;

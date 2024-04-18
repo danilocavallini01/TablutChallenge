@@ -1,5 +1,5 @@
 #include "Tablut.h"
-#include "MoveGenerator.h"
+#include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
 #include "SearchEngine.h"
 

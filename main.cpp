@@ -5,8 +5,11 @@
 
 int main(int argc, char *argv[])
 {
-    GA geneticAlgorithm = GA(5);
-    geneticAlgorithm.start();
+    while (true)
+    {
+        GA geneticAlgorithm = GA(5);
+        geneticAlgorithm.start();
+    }
 
     return EXIT_SUCCESS;
 }

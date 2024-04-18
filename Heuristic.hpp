@@ -27,8 +27,9 @@ class Tablut;
  8  - E E C C C E E -
 
 */
-const int TOTAL_WEIGHTS = 14;
+const int TOTAL_WEIGHTS = 38;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
+typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 
 /*
     Negative values mean black advantage
@@ -37,42 +38,83 @@ typedef std::array<int, TOTAL_WEIGHTS> Weights;
     weightsS
     0 : white pieces alive count weight
     1 : black pieces alive count weight
-    2 : king distances from escape positions
-    3 : kills white on this round weight
-    4 : kills black on this round weight
-    5 : king no space weight
-    6-13: king position weight
+    2 : kills white on this round weight
+    3 : kills black on this round weight
+    4 : king no space weight
+    5-12: king position weight
+    13-23: white pieces position weight
+    24-37: black pieces position weight
 
 */
-//                             0  1   2   3   4    5  6  7  8  9 10 11 12 13
-const Weights FIXED_WEIGHTS = {5, -2, 10, 10, -20, 5, 5, 5, 5, 5, 5, 5, 5, 5};
-const int WIN_WEIGHT = std::numeric_limits<int>::max()/2;
-const int DRAW_WEIGHT = -2000;
+
+const int WIN_WEIGHT = 100000;
 
 class Heuristic
 {
 private:
     Weights _weights;
-    std::array<std::array<int, 9>, 9> _kingPosHeuristic;
+    BoardWeights _kingPosHeuristic;
+    BoardWeights _whitePosHeuristic;
+    BoardWeights _blackPosHeuristic;
 
 public:
-    Heuristic(Weights __weights = FIXED_WEIGHTS)
+    Heuristic(Weights __weights)
     {
         _weights = __weights;
-        std::array<std::array<int, 9>, 9> _kingPosHeuristic = {{
-            {_weights[6], _weights[7], _weights[7], _weights[0], _weights[0], _weights[0], _weights[7], _weights[7], _weights[6]},
-            {_weights[7], _weights[8], _weights[8], _weights[9], _weights[0], _weights[9], _weights[8], _weights[8], _weights[7]},
-            {_weights[7], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[7]},
-            {_weights[0], _weights[9], _weights[10], _weights[11], _weights[12], _weights[11], _weights[10], _weights[9], _weights[0]},
-            {_weights[0], _weights[0], _weights[11], _weights[12], _weights[13], _weights[12], _weights[11], _weights[0], _weights[0]},
-            {_weights[0], _weights[9], _weights[10], _weights[11], _weights[12], _weights[11], _weights[10], _weights[9], _weights[0]},
-            {_weights[7], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[7]},
-            {_weights[7], _weights[8], _weights[8], _weights[9], _weights[0], _weights[9], _weights[8], _weights[8], _weights[7]},
-            {_weights[6], _weights[7], _weights[7], _weights[0], _weights[0], _weights[0], _weights[7], _weights[7], _weights[6]},
-        }};
+        setupPositionsWeights();
     }
+    
+    Heuristic()
+    {
+        for (int i = 0; i < TOTAL_WEIGHTS; i++)
+        {
+            _weights[i] = 0;
+        }
+        setupPositionsWeights();
+    }
+
     ~Heuristic() {}
 
+    void setupPositionsWeights()
+    {
+        _kingPosHeuristic = {{
+            {_weights[5], _weights[6], _weights[6], _weights[0], _weights[0], _weights[0], _weights[6], _weights[6], _weights[5]},
+            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[0], _weights[8], _weights[7], _weights[7], _weights[6]},
+            {_weights[6], _weights[7], _weights[8], _weights[9], _weights[10], _weights[9], _weights[8], _weights[7], _weights[6]},
+            {_weights[0], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[0]},
+            {_weights[0], _weights[0], _weights[10], _weights[11], _weights[12], _weights[11], _weights[10], _weights[0], _weights[0]},
+            {_weights[0], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[0]},
+            {_weights[6], _weights[7], _weights[8], _weights[9], _weights[10], _weights[9], _weights[8], _weights[7], _weights[6]},
+            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[0], _weights[8], _weights[7], _weights[7], _weights[6]},
+            {_weights[5], _weights[6], _weights[6], _weights[0], _weights[0], _weights[0], _weights[6], _weights[6], _weights[5]},
+        }};
+
+        _whitePosHeuristic = {{
+            {_weights[13], _weights[14], _weights[26], _weights[00], _weights[00], _weights[00], _weights[16], _weights[14], _weights[13]},
+            {_weights[14], _weights[15], _weights[17], _weights[19], _weights[00], _weights[19], _weights[17], _weights[15], _weights[14]},
+            {_weights[16], _weights[17], _weights[18], _weights[20], _weights[22], _weights[20], _weights[18], _weights[17], _weights[16]},
+            {_weights[00], _weights[19], _weights[20], _weights[21], _weights[23], _weights[21], _weights[20], _weights[19], _weights[00]},
+            {_weights[00], _weights[00], _weights[22], _weights[23], _weights[00], _weights[23], _weights[22], _weights[00], _weights[00]},
+            {_weights[00], _weights[19], _weights[20], _weights[21], _weights[23], _weights[21], _weights[20], _weights[19], _weights[00]},
+            {_weights[16], _weights[17], _weights[18], _weights[20], _weights[22], _weights[20], _weights[18], _weights[17], _weights[16]},
+            {_weights[14], _weights[15], _weights[17], _weights[19], _weights[00], _weights[19], _weights[17], _weights[15], _weights[14]},
+            {_weights[13], _weights[14], _weights[16], _weights[00], _weights[00], _weights[00], _weights[16], _weights[14], _weights[13]},
+        }};
+
+        _blackPosHeuristic = {{
+            {_weights[24], _weights[25], _weights[26], _weights[35], _weights[36], _weights[35], _weights[26], _weights[25], _weights[24]},
+            {_weights[25], _weights[27], _weights[28], _weights[30], _weights[37], _weights[30], _weights[28], _weights[27], _weights[25]},
+            {_weights[26], _weights[28], _weights[29], _weights[31], _weights[33], _weights[31], _weights[29], _weights[28], _weights[26]},
+            {_weights[35], _weights[30], _weights[31], _weights[32], _weights[34], _weights[32], _weights[31], _weights[30], _weights[35]},
+            {_weights[36], _weights[37], _weights[33], _weights[34], _weights[00], _weights[34], _weights[33], _weights[37], _weights[36]},
+            {_weights[35], _weights[30], _weights[31], _weights[32], _weights[34], _weights[32], _weights[31], _weights[30], _weights[35]},
+            {_weights[26], _weights[28], _weights[29], _weights[31], _weights[33], _weights[31], _weights[29], _weights[28], _weights[26]},
+            {_weights[25], _weights[27], _weights[28], _weights[30], _weights[37], _weights[30], _weights[28], _weights[27], _weights[25]},
+            {_weights[24], _weights[25], _weights[26], _weights[35], _weights[36], _weights[35], _weights[26], _weights[25], _weights[24]},
+        }};
+    }
+
+    // Evaluate a tablut with all weights defined in this classes
     int evaluate(const Tablut &__t)
     {
         int score;
@@ -90,10 +132,30 @@ public:
         }
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _weights[2] * _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t._kingMovements);
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t._kingMovements) + positionsWeightSum(__t);
         }
 
         return __t._isWhiteTurn ? score : -score;
+    }
+
+    int positionsWeightSum(const Tablut &__t)
+    {
+        int score = 0;
+        for (int i = 0; i < DIM; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                if (__t._board[i][j] == C::WHITE)
+                {
+                    score += _whitePosHeuristic[i][j];
+                }
+                else if (__t._board[i][j] == C::BLACK)
+                {
+                    score += _blackPosHeuristic[i][j];
+                }
+            }
+        }
+        return score;
     }
 
     // Compare function between two Tabluts
