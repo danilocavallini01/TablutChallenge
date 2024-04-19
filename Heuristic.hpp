@@ -28,6 +28,7 @@ class Tablut;
 
 */
 const int TOTAL_WEIGHTS = 38;
+const int POSITION_WEIGHT_INDEX = 13;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
 typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 
@@ -63,7 +64,7 @@ public:
         _weights = __weights;
         setupPositionsWeights();
     }
-    
+
     Heuristic()
     {
         for (int i = 0; i < TOTAL_WEIGHTS; i++)
@@ -78,15 +79,15 @@ public:
     void setupPositionsWeights()
     {
         _kingPosHeuristic = {{
-            {_weights[5], _weights[6], _weights[6], _weights[0], _weights[0], _weights[0], _weights[6], _weights[6], _weights[5]},
-            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[0], _weights[8], _weights[7], _weights[7], _weights[6]},
+            {_weights[5], _weights[6], _weights[6], _weights[00], _weights[00], _weights[00], _weights[6], _weights[6], _weights[5]},
+            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[00], _weights[8], _weights[7], _weights[7], _weights[6]},
             {_weights[6], _weights[7], _weights[8], _weights[9], _weights[10], _weights[9], _weights[8], _weights[7], _weights[6]},
-            {_weights[0], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[0]},
-            {_weights[0], _weights[0], _weights[10], _weights[11], _weights[12], _weights[11], _weights[10], _weights[0], _weights[0]},
-            {_weights[0], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[0]},
+            {_weights[00], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[00]},
+            {_weights[00], _weights[00], _weights[10], _weights[11], _weights[12], _weights[11], _weights[10], _weights[00], _weights[00]},
+            {_weights[00], _weights[8], _weights[9], _weights[10], _weights[11], _weights[10], _weights[9], _weights[8], _weights[00]},
             {_weights[6], _weights[7], _weights[8], _weights[9], _weights[10], _weights[9], _weights[8], _weights[7], _weights[6]},
-            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[0], _weights[8], _weights[7], _weights[7], _weights[6]},
-            {_weights[5], _weights[6], _weights[6], _weights[0], _weights[0], _weights[0], _weights[6], _weights[6], _weights[5]},
+            {_weights[6], _weights[7], _weights[7], _weights[8], _weights[00], _weights[8], _weights[7], _weights[7], _weights[6]},
+            {_weights[5], _weights[6], _weights[6], _weights[00], _weights[00], _weights[00], _weights[6], _weights[6], _weights[5]},
         }};
 
         _whitePosHeuristic = {{
@@ -132,7 +133,7 @@ public:
         }
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[3] : _weights[4]) + _weights[5] * (__t._kingMovements) + positionsWeightSum(__t);
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + positionsWeightSum(__t);
         }
 
         return __t._isWhiteTurn ? score : -score;
@@ -141,18 +142,23 @@ public:
     int positionsWeightSum(const Tablut &__t)
     {
         int score = 0;
-        for (int i = 0; i < DIM; i++)
+
+        std::pair<Pos, Pos> position;
+        Pos x, y;
+
+        for (int i = 0; i < __t._checkerPositionIndex; i++)
         {
-            for (int j = 0; j < DIM; j++)
+            position = __t._checkerPositions[i];
+            x = position.first;
+            y = position.second;
+
+            if (__t._board[x][y] == C::WHITE)
             {
-                if (__t._board[i][j] == C::WHITE)
-                {
-                    score += _whitePosHeuristic[i][j];
-                }
-                else if (__t._board[i][j] == C::BLACK)
-                {
-                    score += _blackPosHeuristic[i][j];
-                }
+                score += _whitePosHeuristic[x][y];
+            }
+            else if (__t._board[x][y] == C::BLACK)
+            {
+                score += _blackPosHeuristic[x][y];
             }
         }
         return score;

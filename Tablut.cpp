@@ -78,6 +78,18 @@ Tablut Tablut::getStartingPosition()
     // Setting Throne
     t._board[4][4] = C::KING;
 
+    t._checkerPositionIndex = 0;
+    for (int i = 0; i < DIM; i++)
+    {
+        for (int j = 0; j < DIM; j++)
+        {
+            if (t._board[i][j] == C::BLACK || t._board[i][j] == C::WHITE)
+            {
+                t._checkerPositions[t._checkerPositionIndex++] = {i, j};
+            }
+        }
+    }
+
     return t;
 }
 
@@ -88,6 +100,18 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
 
     _next._board[__toX][__toY] = _next._board[__fromX][__fromY]; // Update checker position
     _next._board[__fromX][__fromY] = C::EMPTY;                   // Remove checker from its past position
+
+    // Moving past checker
+
+    auto mustFind = std::make_pair(__fromX, __fromY);
+    for (int i = 0; i < _next._checkerPositionIndex; i++)
+    {
+        if (_next._checkerPositions[i] == mustFind)
+        {
+            _next._checkerPositions[i] = std::make_pair(__toX, __toY);
+            break;
+        }
+    }
 
     // Update old and new positions of the moved pieces
     _next._oldX = __fromX;

@@ -33,9 +33,10 @@ const Pos SECOND_COL(1);
 
 // Dead king position value
 const Pos KDEADPOSITION(20);
-
 // Max _hash log extensions, used to check if position is draw(game state position reached twice)
 const int MAX_DRAW_LOG(250);
+// Max position log used to check where checkers are ( no king )
+const int MAX_POS_LOG(24);
 
 // Enum for Checker values
 enum CHECKER : CheckerCodex
@@ -143,6 +144,9 @@ public:
 
     // How Much Movements can the king make;
     int _kingMovements;
+
+    std::array<std::pair<Pos, Pos>, MAX_POS_LOG> _checkerPositions;
+    int _checkerPositionIndex;
 
     // Tell if game is in win or draw state
     GAME_STATE _gameState;
@@ -367,24 +371,38 @@ public:
             target = C::EMPTY;
             _whiteCount = _whiteCount - 1U;
             _kills++;
-            return;
         }
-
-        if (target == C::BLACK)
+        else if (target == C::BLACK)
         {
             target = C::EMPTY;
             _blackCount = _blackCount - 1U;
             _kills++;
-            return;
         }
-
-        if (target == C::KING)
+        else if (target == C::KING)
         {
             target = C::EMPTY;
             _kingX = KDEADPOSITION;
             _kingY = KDEADPOSITION;
             _kills++;
         }
+
+        int i = 0;
+        auto mustFind = std::make_pair(__x, __y);
+
+        for (i = 0; i < _checkerPositionIndex; i++)
+        {
+            if (_checkerPositions[i] == mustFind)
+            {
+                break;
+            }
+        }
+
+        for (; i < _checkerPositionIndex - 1; i++)
+        {
+            _checkerPositions[i] = _checkerPositions[i + 1];
+        }
+
+        _checkerPositionIndex--;
     }
 
     inline bool checkIfKingDead() const

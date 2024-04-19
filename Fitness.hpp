@@ -20,6 +20,7 @@ private:
 
 public:
     Fitness(int __maxDepth = 7, int __maxIterations = 250, bool __verbose = true) : _maxDepth(__maxDepth), _maxIterations(__maxIterations), _verbose(__verbose){};
+    Fitness(bool __verbose) : Fitness(7, 250, __verbose){};
     ~Fitness(){};
 
 private:
@@ -119,8 +120,11 @@ private:
                 break;
             }
 
-            std::cout << "- NEW ROUND ------------------------" << std::endl;
-            std::cout << "-----------------------------------" << std::endl;
+            if (_verbose)
+            {
+                std::cout << "- NEW ROUND ------------------------" << std::endl;
+                std::cout << "-----------------------------------" << std::endl;
+            }
         }
 
         int gameCicles = i + 1;
@@ -144,7 +148,7 @@ private:
     */
     double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, GAME_STATE __gameState, bool __isWhite)
     {
-        double fitness = (1.0 / double(__engine.getTotalMoves())) * (__avgScore) * (1.0 / __avgTimeElapsed) * 10000.0;
+        double fitness = (1.0 / double(__engine.getTotalMoves())) * (__avgScore) * (1.0 / __avgTimeElapsed);
 
         // WIN FITNESS
         if (__isWhite)
@@ -165,7 +169,7 @@ private:
         // DRAW FITNESS
         if (__gameState == GAME_STATE::BLACKDRAW || __gameState == GAME_STATE::WHITEDRAW)
         {
-            return fitness - 2000.0;
+            return fitness - 10000.0;
         }
 
         // LOSE OR TOO MUCH ITERATIONS FITNESS

@@ -23,6 +23,7 @@ private:
     int _N;
     double _mutationProb;
     int _mutationFactor;
+    int _lowerMutationFactor;
     int _tournSize;
     int _maxGeneration;
     int _totalWeights;
@@ -95,7 +96,19 @@ private:
 
     void _writeModelToFile()
     {
-        std::ofstream fileModel(_fileModelName, std::ios::trunc);
+        _writePopulationToFile(_fileModelName);
+    }
+
+    void _backupPopulation()
+    {
+        std::time_t result = std::time(nullptr);
+        std::string fileName = "LOG_" + _fileModelName + "_" + std::ctime(&result);
+        _writePopulationToFile(fileName);
+    }
+
+    void _writePopulationToFile(std::string &__fileName)
+    {
+        std::ofstream fileModel(__fileName, std::ios::trunc);
         std::string line;
 
         if (!fileModel.is_open())
@@ -147,7 +160,7 @@ private:
         }
 
         std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
-        std::uniform_int_distribution<int> distribution(1, _mutationFactor*2);
+        std::uniform_int_distribution<int> distribution(1, _mutationFactor * 2);
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -156,7 +169,13 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
+                if (j < POSITION_WEIGHT_INDEX)
+                {
+                    add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
+                }
+                else
+                {
+                }
             }
 
             _whitePopulation.push_back(add);
@@ -262,7 +281,7 @@ private:
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
-        std::uniform_int_distribution<int> mutationChangeDistribution(0, _mutationFactor*2);
+        std::uniform_int_distribution<int> mutationChangeDistribution(0, _mutationFactor * 2);
 
         for (int i = 0; i < _totalWeights; i++)
         {
@@ -367,14 +386,16 @@ private:
     }
 
 public:
-    GA(int _maxDepth = 7) : _N(10),
-                            _mutationProb(0.3),
-                            _mutationFactor(50),
-                            _tournSize(3),
-                            _maxGeneration(10),
-                            _totalWeights(TOTAL_WEIGHTS),
-                            _fitnessFn(Fitness(_maxDepth)),
-                            _fileModelName("tablutGaModel.model")
+    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.3,
+       int __mutationFactor = 80, int __tournSize = 3, int __generation = 10) : _N(__N),
+                                                                           _mutationProb(__mutationProb),
+                                                                           _mutationFactor(__mutationFactor),
+                                                                           _lowerMutationFactor(__mutationFactor / 2),
+                                                                           _tournSize(__tournSize),
+                                                                           _maxGeneration(__generation),
+                                                                           _totalWeights(TOTAL_WEIGHTS),
+                                                                           _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
+                                                                           _fileModelName("tablutGaModel.model")
     {
         std::random_device _rd;
         std::mt19937 _gen(_rd());
@@ -466,6 +487,7 @@ public:
             // NEW GENERATION CREATED !
             std::cout << "---------NEW GENERATION CREATED---------" << std::endl;
             _printGenes();
+            _backupPopulation();
 
             // Set current population as old Population
             oldResults = results;
