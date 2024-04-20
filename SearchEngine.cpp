@@ -175,14 +175,7 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __max
 
     bestMove = moves[0];
 
-    // FIRST ROUND
-    v = -NegaScout(moves[0], __maxDepth - 1, -b, -alpha);
-    _bestScore = v;
-
-    alpha = std::max(alpha, v);
-    b = alpha + 1;
-
-    for (int t = 1; t < moves.size(); t += __threads)
+    for (int t = 0; t < moves.size(); t += __threads)
     {
         for (int i = 0; i < __threads && i + t < moves.size(); i++)
         {
@@ -317,6 +310,7 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
     // SORT MOVES
     _heuristic.sortMoves(moves);
 
+    // NEGASCOUT CORE ENGINE
     for (int i = 0; i < moves.size(); i++)
     {
         move = moves[i];

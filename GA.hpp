@@ -12,6 +12,7 @@
 #include <regex>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 // Forward Declaration
 class Heuristic;
@@ -30,6 +31,7 @@ private:
     Fitness _fitnessFn;
 
     std::string _fileModelName;
+    std::string _backupDir;
 
     std::vector<Weights> _whitePopulation;
     std::vector<Weights> _blackPopulation;
@@ -96,11 +98,18 @@ private:
 
     void _writeModelToFile()
     {
-        _writePopulationToFile(_fileModelName);
+        std::string fileName = _fileModelName;
+    }
+
+    std::string _computeFileName(std::string &__fileName)
+    {
+        return std::filesystem::current_path().string() + separator() + _backupDir + separator() + __fileName;
     }
 
     void _backupPopulation()
     {
+        std::cout << "BACKUPPING POPULATION" << std::endl;
+
         // GETTING CURRENT TIMEZONED TIME
         std::time_t result = std::time(nullptr);
         std::string timeStamp = std::ctime(&result);
@@ -110,6 +119,8 @@ private:
         std::replace(timeStamp.begin(), timeStamp.end(), ' ', '_');
 
         std::string fileName = "LOG_" + _fileModelName + "_" + timeStamp;
+        fileName = _computeFileName(fileName);
+
         _writePopulationToFile(fileName);
     }
 
@@ -147,6 +158,11 @@ private:
 
             fileModel << line << std::endl;
         }
+    }
+
+    char separator()
+    {
+        return std::filesystem::path::preferred_separator;
     }
 
     void _initalizePopulation()
@@ -411,7 +427,8 @@ public:
                                                                                 _maxGeneration(__generation),
                                                                                 _totalWeights(TOTAL_WEIGHTS),
                                                                                 _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
-                                                                                _fileModelName("tablutGaModel.model")
+                                                                                _fileModelName("tablutGaModel.model"),
+                                                                                _backupDir("backup")
     {
         std::random_device _rd;
         std::mt19937 _gen(_rd());
@@ -447,6 +464,7 @@ public:
         std::cout << "---------INITIALIZE POPULATION GAME---------" << std::endl;
 
         _initalizePopulation();
+        _backupPopulation();
 
         _printGenes();
         oldResults = _fitnessFn.train(_whitePopulation, _blackPopulation, _N);

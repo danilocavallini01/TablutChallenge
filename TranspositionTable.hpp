@@ -62,6 +62,7 @@ public:
         _map.try_emplace(__k, t);
     }
 
+    // Get entry by giving the paired key
     std::optional<Entry> get(const ZobristKey &__k)
     {
         std::optional<Entry> entry;
@@ -72,6 +73,7 @@ public:
 
     void cacheHit()
     {
+
         _cacheHit++;
     }
 

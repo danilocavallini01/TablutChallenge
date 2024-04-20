@@ -138,59 +138,10 @@ public:
         }
         else
         {
-            int weightScore = 0;
-
-            if (__t._kingMoved)
-            {
-                weightScore = __t._pastScore;
-            }
-            else
-            {
-                weightScore = __t._pastScore + differenceWeightSum(__t);
-                __t._pastScore = weightScore;
-            }
-
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + weightScore;
-        }
-
-        return __t._isWhiteTurn ? score : -score;
-    }
-
-    int firstEvalutate(Tablut &__t)
-    {
-        int score;
-
-        if (__t.isGameOver())
-        {
-            if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
-            {
-                score = 0;
-            }
-            else
-            {
-                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
-            }
-        }
-        else
-        {
             score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + positionsWeightSum(__t);
         }
 
         return __t._isWhiteTurn ? score : -score;
-    }
-
-    int differenceWeightSum(Tablut &__t)
-    {
-        // BLACK MOVED
-        if (__t._isWhiteTurn)
-        {
-            return -_blackPosHeuristic[__t._oldX][__t._oldY] + _blackPosHeuristic[__t._x][__t._y];
-            // WHITE MOVED - BALANCE SCORE OF THE MOVED CHECKER
-        }
-        else
-        {
-            return -_whitePosHeuristic[__t._oldX][__t._oldY] + _whitePosHeuristic[__t._x][__t._y];
-        }
     }
 
     int positionsWeightSum(Tablut &__t)
@@ -224,13 +175,14 @@ public:
         return __t1._score < __t2._score;
     }
 
-    // Sorting moves algorithm
+    // Sorting moves algorithm, first evaluate the score of every Tablut then it proceed to Sort them
     void sortMoves(std::vector<Tablut> &__moves)
     {
         for (Tablut &move : __moves)
         {
             move._score = evaluate(move);
         }
+
         std::sort(__moves.begin(), __moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
     }
 };

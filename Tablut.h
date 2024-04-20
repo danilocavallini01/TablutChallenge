@@ -141,13 +141,12 @@ public:
     // How Much Movements can the king make;
     int _kingMovements;
 
+    // Vector of Checkers representing all checkers position of the board ( No king )
     std::array<std::pair<Pos, Pos>, MAX_POS_LOG> _checkerPositions;
     int _checkerPositionIndex;
 
+    // Current Tablut score
     int _score;
-
-    int _pastScore;
-    bool _kingMoved;
 
     // Tell if game is in win or draw state
     GAME_STATE _gameState;
