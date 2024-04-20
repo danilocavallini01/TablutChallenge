@@ -129,8 +129,8 @@ private:
 
         int gameCicles = i + 1;
 
-        double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeWhite) / gameCicles, gameBoard._gameState, true);
-        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard._gameState, false);
+        double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeWhite) / gameCicles, gameBoard._gameState, gameCicles, true);
+        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard._gameState, gameCicles, false);
 
         return std::make_pair(whiteFitness, blackFitness);
     }
@@ -146,9 +146,9 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, GAME_STATE __gameState, bool __isWhite)
+    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, GAME_STATE __gameState, int gameCicles, bool __isWhite)
     {
-        double fitness = (1.0 / double(__engine.getTotalMoves())) * (__avgScore) * (1.0 / __avgTimeElapsed);
+        double fitness = 1.0 * (__avgScore) * (1.0 / __avgTimeElapsed) * (1.0 / double(gameCicles)) * 10000.0;
 
         // WIN FITNESS
         if (__isWhite)

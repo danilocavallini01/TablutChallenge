@@ -13,6 +13,11 @@
 // Forward Declaration
 class Tablut;
 
+/* -------------------------------
+        MUST IMPLEMENT QUICK HEURISTIC WHEN TRAINING IS COMPLETED
+   -------------------------------
+*/
+
 // Matrix representing the distance ( in number of moves ) in every cell from the nearest camp
 /*--0 1 2 3 4 5 6 7 8
  |
@@ -28,7 +33,7 @@ class Tablut;
 
 */
 const int TOTAL_WEIGHTS = 38;
-const int POSITION_WEIGHT_INDEX = 13;
+const int POSITION_WEIGHT_START_INDEX = 5;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
 typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 
@@ -116,7 +121,7 @@ public:
     }
 
     // Evaluate a tablut with all weights defined in this classes
-    int evaluate(const Tablut &__t)
+    int evaluate(Tablut &__t)
     {
         int score;
 
@@ -124,7 +129,42 @@ public:
         {
             if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
             {
-                return 0;
+                score = 0;
+            }
+            else
+            {
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
+            }
+        }
+        else
+        {
+            int weightScore = 0;
+
+            if (__t._kingMoved)
+            {
+                weightScore = __t._pastScore;
+            }
+            else
+            {
+                weightScore = __t._pastScore + differenceWeightSum(__t);
+                __t._pastScore = weightScore;
+            }
+
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + weightScore;
+        }
+
+        return __t._isWhiteTurn ? score : -score;
+    }
+
+    int firstEvalutate(Tablut &__t)
+    {
+        int score;
+
+        if (__t.isGameOver())
+        {
+            if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
+            {
+                score = 0;
             }
             else
             {
@@ -139,7 +179,21 @@ public:
         return __t._isWhiteTurn ? score : -score;
     }
 
-    int positionsWeightSum(const Tablut &__t)
+    int differenceWeightSum(Tablut &__t)
+    {
+        // BLACK MOVED
+        if (__t._isWhiteTurn)
+        {
+            return -_blackPosHeuristic[__t._oldX][__t._oldY] + _blackPosHeuristic[__t._x][__t._y];
+            // WHITE MOVED - BALANCE SCORE OF THE MOVED CHECKER
+        }
+        else
+        {
+            return -_whitePosHeuristic[__t._oldX][__t._oldY] + _whitePosHeuristic[__t._x][__t._y];
+        }
+    }
+
+    int positionsWeightSum(Tablut &__t)
     {
         int score = 0;
 
@@ -165,14 +219,18 @@ public:
     }
 
     // Compare function between two Tabluts
-    bool compare(const Tablut &__t1, const Tablut &__t2)
+    bool compare(Tablut &__t1, Tablut &__t2)
     {
-        return evaluate(__t1) < evaluate(__t2);
+        return __t1._score < __t2._score;
     }
 
     // Sorting moves algorithm
     void sortMoves(std::vector<Tablut> &__moves)
     {
+        for (Tablut &move : __moves)
+        {
+            move._score = evaluate(move);
+        }
         std::sort(__moves.begin(), __moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
     }
 };

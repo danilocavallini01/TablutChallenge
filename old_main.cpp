@@ -32,8 +32,7 @@ int main(int argc, char *argv[])
 
     const int iterations = 300;
 
-    std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point end;
+    std::chrono::steady_clock::time_point begin, end;
 
     int64_t totalTime = 0;
     int64_t totalTime2 = 0;

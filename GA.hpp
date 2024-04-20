@@ -101,8 +101,15 @@ private:
 
     void _backupPopulation()
     {
+        // GETTING CURRENT TIMEZONED TIME
         std::time_t result = std::time(nullptr);
-        std::string fileName = "LOG_" + _fileModelName + "_" + std::ctime(&result);
+        std::string timeStamp = std::ctime(&result);
+
+        // FORMATTING ALL FILES WITH UNDERSCORE
+        std::replace(timeStamp.begin(), timeStamp.end(), ':', '_');
+        std::replace(timeStamp.begin(), timeStamp.end(), ' ', '_');
+
+        std::string fileName = "LOG_" + _fileModelName + "_" + timeStamp;
         _writePopulationToFile(fileName);
     }
 
@@ -160,7 +167,7 @@ private:
         }
 
         std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
-        std::uniform_int_distribution<int> distribution(1, _mutationFactor * 2);
+        std::uniform_int_distribution<int> distribution(1, 10000);
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -169,13 +176,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                if (j < POSITION_WEIGHT_INDEX)
-                {
-                    add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
-                }
-                else
-                {
-                }
+                add[j] = (distribution(_gen) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
             }
 
             _whitePopulation.push_back(add);
@@ -187,7 +188,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_gen) % _mutationFactor) - _mutationFactor / 2;
+                add[j] = (distribution(_gen) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
             }
 
             _blackPopulation.push_back(add);
@@ -275,20 +276,35 @@ private:
     }
 
     /*
-        Mutate some chromosome of the offspring with probability -> _mutationProb
-        Mutation change the value of the selected chromosome by max +- _mutationFactor / 2
+        Mutate some gene of the offspring with probability -> _mutationProb
+        Mutation change the value of the selected gene by max +- _mutationFactor / 2
     */
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
-        std::uniform_int_distribution<int> mutationChangeDistribution(0, _mutationFactor * 2);
+        std::uniform_int_distribution<int> mutationChangeDistribution(0, 10000);
 
         for (int i = 0; i < _totalWeights; i++)
         {
             if (mutationProbDistribution(_gen) <= _mutationProb)
             {
-                __offspring[i] += ((mutationChangeDistribution(_gen) % _mutationFactor) - _mutationFactor / 2);
+                __offspring[i] += ((mutationChangeDistribution(_gen) % _calculateMutationFactor(i)) - _calculateMutationFactor(i) / 2);
             }
+        }
+    }
+
+    /*
+        Return a different mutation factor based on the index of the targeted weight
+    */
+    int _calculateMutationFactor(int index)
+    {
+        if (index < POSITION_WEIGHT_START_INDEX)
+        {
+            return _mutationFactor;
+        }
+        else
+        {
+            return _lowerMutationFactor;
         }
     }
 
@@ -388,14 +404,14 @@ private:
 public:
     GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.3,
        int __mutationFactor = 80, int __tournSize = 3, int __generation = 10) : _N(__N),
-                                                                           _mutationProb(__mutationProb),
-                                                                           _mutationFactor(__mutationFactor),
-                                                                           _lowerMutationFactor(__mutationFactor / 2),
-                                                                           _tournSize(__tournSize),
-                                                                           _maxGeneration(__generation),
-                                                                           _totalWeights(TOTAL_WEIGHTS),
-                                                                           _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
-                                                                           _fileModelName("tablutGaModel.model")
+                                                                                _mutationProb(__mutationProb),
+                                                                                _mutationFactor(__mutationFactor),
+                                                                                _lowerMutationFactor(__mutationFactor / 4),
+                                                                                _tournSize(__tournSize),
+                                                                                _maxGeneration(__generation),
+                                                                                _totalWeights(TOTAL_WEIGHTS),
+                                                                                _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
+                                                                                _fileModelName("tablutGaModel.model")
     {
         std::random_device _rd;
         std::mt19937 _gen(_rd());

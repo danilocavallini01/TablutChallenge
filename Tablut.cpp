@@ -47,6 +47,11 @@ Tablut Tablut::getStartingPosition()
     t._kingMovements = 0;
     t._turn = 0;
 
+    t._score = 0;
+
+    t._kingMoved = false;
+    t._pastScore = 0;
+
     // Setting all black defenders
     t._board[0][3] = C::BLACK;
     t._board[0][4] = C::BLACK;
@@ -123,6 +128,9 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
     // Reset kill feed of previous round
     _next._kills = 0;
 
+    // Reset king moved flag
+    _next._kingMoved = false;
+
     CHECKER leftChecker = _next.getLeftChecker();
     CHECKER rightChecker = _next.getRightChecker();
     CHECKER upChecker = _next.getUpChecker();
@@ -136,6 +144,8 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         {
             _next._kingX = __toX;
             _next._kingY = __toY;
+
+            _next._kingMoved = true;
         }
 
         // NORMAL WHITE EATS

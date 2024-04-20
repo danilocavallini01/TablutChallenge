@@ -22,14 +22,10 @@ typedef int16_t CheckerCountCodex;
 
 // Table dimensions -> always 9
 const Pos DIM(9);
-const Pos LAST_ROW(DIM - 1);
-const Pos SEC_LAST_ROW(DIM - 2);
-const Pos LAST_COL(DIM - 1);
-const Pos SEC_LAST_COL(DIM - 2);
-const Pos FIRST_ROW(0);
-const Pos SECOND_ROW(1);
-const Pos FIRST_COL(0);
-const Pos SECOND_COL(1);
+const Pos LAST_ROW(DIM - 2);
+const Pos LAST_COL(DIM - 2);
+const Pos FIRST_ROW(1);
+const Pos FIRST_COL(1);
 
 // Dead king position value
 const Pos KDEADPOSITION(20);
@@ -147,6 +143,11 @@ public:
 
     std::array<std::pair<Pos, Pos>, MAX_POS_LOG> _checkerPositions;
     int _checkerPositionIndex;
+
+    int _score;
+
+    int _pastScore;
+    bool _kingMoved;
 
     // Tell if game is in win or draw state
     GAME_STATE _gameState;
