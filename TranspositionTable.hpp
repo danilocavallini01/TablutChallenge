@@ -1,7 +1,7 @@
 #ifndef TRANSPOSITION_TABLE
 #define TRANSPOSITION_TABLE
 
-#include "Zobrist.h"
+#include "Zobrist.hpp"
 
 #include <unordered_map>
 #include <optional>
@@ -69,6 +69,11 @@ public:
         _map.visit(__k, [&](const auto &__entry)
                    { entry = __entry.second; });
         return entry;
+    }
+
+    void clear() {
+        _map.clear();
+        resetStat();
     }
 
     void cacheHit()

@@ -30,7 +30,7 @@ void customMatch()
     std::vector<Tablut> moves{};
 
     int best_score;
-    const int max_depth = 5;
+    const int max_depth = 7;
 
     const int iterations = 300;
 
@@ -167,14 +167,15 @@ void customMatch()
 
 int main(int argc, char *argv[])
 {
-    customMatch();
-    /*
+    //customMatch();
+    
+    
     while (true)
     {
         GA geneticAlgorithm = GA(7);
         geneticAlgorithm.start();
     }
-    */
+    
 
     return EXIT_SUCCESS;
 }

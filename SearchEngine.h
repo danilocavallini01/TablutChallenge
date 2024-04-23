@@ -8,7 +8,7 @@
 #include "MoveGenerator.hpp"
 #include "TranspositionTable.hpp"
 #include "StopWatch.hpp"
-#include "Zobrist.h"
+#include "Zobrist.hpp"
 
 #include <limits>
 #include <thread>
@@ -66,10 +66,13 @@ public:
 
     int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
+    int NegaScoutTT(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
+
     int NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaMaxTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
 
     int getTotalMoves();
+    void resetTranspositionTable();
 };
 
 #endif
