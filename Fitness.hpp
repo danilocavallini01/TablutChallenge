@@ -129,8 +129,8 @@ private:
 
         int gameCicles = i + 1;
 
-        double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeWhite) / gameCicles, gameBoard._gameState, gameCicles, true);
-        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard._gameState, gameCicles, false);
+        double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeWhite) / gameCicles, gameBoard, gameCicles, true);
+        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard, gameCicles, false);
 
         return std::make_pair(whiteFitness, blackFitness);
     }
@@ -146,28 +146,38 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, GAME_STATE __gameState, int gameCicles, bool __isWhite)
+    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
-        double fitness = 1.0 * (__avgScore) * (1.0 / __avgTimeElapsed) * (1.0 / double(gameCicles)) * 10000.0;
+        double scoreWeight = 10.0;
+        double avgTimeWeight = 10.0;
+        double gameCicleWeight = 10.0;
+
+        double fitness = 1.0 * (__avgScore / 1000.0) * scoreWeight * (10000.0 / __avgTimeElapsed) * avgTimeWeight * (100.0 / double(gameCicles)) * gameCicleWeight;
+
+        if (__isWhite ) {
+            fitness += __gameBoard._whiteCount * 20.0 - __gameBoard._blackCount * 10.0;
+        } else {
+            fitness += - __gameBoard._whiteCount * 20.0 + __gameBoard._blackCount * 10.0;
+        }
 
         // WIN FITNESS
         if (__isWhite)
         {
-            if (__gameState == GAME_STATE::WHITEWIN)
+            if (__gameBoard._gameState == GAME_STATE::WHITEWIN)
             {
                 return fitness;
             }
         }
         else
         {
-            if (__gameState == GAME_STATE::BLACKWIN)
+            if (__gameBoard._gameState == GAME_STATE::BLACKWIN)
             {
                 return fitness;
             }
         }
 
         // DRAW FITNESS
-        if (__gameState == GAME_STATE::BLACKDRAW || __gameState == GAME_STATE::WHITEDRAW)
+        if (__gameBoard._gameState == GAME_STATE::BLACKDRAW || __gameBoard._gameState == GAME_STATE::WHITEDRAW)
         {
             return fitness - 10000.0;
         }

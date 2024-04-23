@@ -234,6 +234,12 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
 
     Entry tt_entry;
 
+
+    if (__currentMove.isGameOver() || __depth == 0)
+    {
+        return _heuristic.evaluate(__currentMove);
+    }
+
     if (maybe_entry.has_value())
     {
         _transpositionTable.cacheHit();
@@ -266,10 +272,6 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
     }
     // --------TRANSPOSITION TABLE LOOKUP -------- END
 
-    if (__currentMove.isGameOver() || __depth == 0)
-    {
-        return _heuristic.evaluate(__currentMove);
-    }
 
     score = BOTTOM_SCORE;
     b = __beta;

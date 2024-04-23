@@ -418,8 +418,8 @@ private:
     }
 
 public:
-    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.3,
-       int __mutationFactor = 80, int __tournSize = 3, int __generation = 10) : _N(__N),
+    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.2,
+       int __mutationFactor = 40, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
                                                                                 _mutationFactor(__mutationFactor),
                                                                                 _lowerMutationFactor(__mutationFactor / 4),
@@ -464,7 +464,6 @@ public:
         std::cout << "---------INITIALIZE POPULATION GAME---------" << std::endl;
 
         _initalizePopulation();
-        _backupPopulation();
 
         _printGenes();
         oldResults = _fitnessFn.train(_whitePopulation, _blackPopulation, _N);

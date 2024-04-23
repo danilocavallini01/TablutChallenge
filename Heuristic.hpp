@@ -129,7 +129,7 @@ public:
         {
             if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
             {
-                score = 0;
+                score = __t._isWhiteTurn ? -2000 : 2000;
             }
             else
             {
