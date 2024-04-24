@@ -40,6 +40,10 @@ public:
         _startPoint = std::chrono::high_resolution_clock::now();
     }
 
+    int getRemainingTime() {
+        return _timeout ? 0 : _timeLimit - std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - _startPoint).count();
+    }
+
     void setTimeLimit(const int __timeLimit)
     {
         _timeLimit = __timeLimit;

@@ -28,11 +28,20 @@ class Zobrist;
 const int BOTTOM_SCORE(std::numeric_limits<int>::min());
 const int TOP_SCORE(std::numeric_limits<int>::max());
 
+// Default depth mainly used for time limited algorithm
+const int MAX_DEFAULT_DEPTH = 9;
+
+// Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
+const float MAX_TIME_ERROR = 20.0;
+
 // Default thread parameter
 const int MAX_THREADS = int(std::thread::hardware_concurrency());
 
 class SearchEngine
 {
+private:
+    void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __moveSize, int __threads);
+
 public:
     // Heuristic function: gives score to each Board position
     Heuristic _heuristic;
@@ -42,6 +51,8 @@ public:
     TranspositionTable _transpositionTable;
     // Timer for time limited search
     StopWatch _stopWatch;
+    StopWatch _globalRemainingTime;
+
     // To Check Board and hash current game boards
     Zobrist _zobrist;
 
@@ -61,11 +72,13 @@ public:
     Tablut NegaMaxSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
     Tablut NegaMaxSearchTimeLimited(Tablut &__startingPosition, const int __timeLimit, const int __threads = MAX_THREADS);
 
+    // NEGASCOUT SEARCH ALGORITHM
     Tablut NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
-    Tablut NegaScoutSearch2(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
+    Tablut NegaScoutSearchTimeLimited(Tablut &__startingPosition, StopWatch &_globalTimer, const int __threads = 8);
 
     int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
+    int NegaScoutTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScoutTT(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
 
     int NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta);

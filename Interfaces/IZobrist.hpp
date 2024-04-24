@@ -6,7 +6,7 @@ class IZobrist
 {
 public:
     virtual ~IZobrist() {}
-    virtual Key hash(const IGameBoard &__game) = 0;
+    //virtual Key hash(const IGameBoard &__game) = 0;
 
 };
 

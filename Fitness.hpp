@@ -42,15 +42,22 @@ private:
         std::chrono::steady_clock::time_point timeBegin;
         std::chrono::steady_clock::time_point timeEnd;
 
+        StopWatch timerWhite = StopWatch(60000);
+        StopWatch timerBlack = StopWatch(60000);
+
         int i;
 
         for (i = 0; i < _maxIterations / 2; i++)
         {
             // WHITE ONE --------------------
             // NEGASCOUT --------------------
+            timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineWhite.NegaScoutSearch(gameBoard, _maxDepth);
+            //gameBoard = searchEngineWhite.NegaScoutSearch(gameBoard, _maxDepth);
+            gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerWhite);
             timeEnd = std::chrono::steady_clock::now();
+            
+            timerWhite.reset();
 
             if (_verbose)
             {
@@ -82,12 +89,15 @@ private:
             {
                 break;
             }
-
+            
             // BLACK ONE --------------------
             // NEGASCOUT --------------------
+            timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineBlack.NegaScoutSearch(gameBoard, _maxDepth);
+            //gameBoard = searchEngineBlack.NegaScoutSearch(gameBoard, _maxDepth);
+            gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerBlack);
             timeEnd = std::chrono::steady_clock::now();
+            timerBlack.reset();
 
             if (_verbose)
             {
