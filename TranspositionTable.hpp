@@ -78,7 +78,6 @@ public:
 
     void cacheHit()
     {
-
         _cacheHit++;
     }
 

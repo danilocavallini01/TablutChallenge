@@ -419,7 +419,7 @@ private:
 
 public:
     GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.2,
-       int __mutationFactor = 40, int __tournSize = 3, int __generation = 10) : _N(__N),
+       int __mutationFactor = 60, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
                                                                                 _mutationFactor(__mutationFactor),
                                                                                 _lowerMutationFactor(__mutationFactor / 4),
@@ -431,8 +431,9 @@ public:
                                                                                 _backupDir("backup")
     {
         std::random_device _rd;
+        std::srand(std::time(0));
+
         std::mt19937 _gen(_rd());
-        std::srand(std::time(nullptr));
     }
 
     ~GA(){};

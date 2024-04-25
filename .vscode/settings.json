@@ -89,7 +89,11 @@
         "valarray": "cpp",
         "variant": "cpp",
         "*.ipp": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "expected": "cpp",
+        "spanstream": "cpp",
+        "stacktrace": "cpp",
+        "stdfloat": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++-11",
     "cmake.configureOnOpen": true

@@ -62,6 +62,9 @@ public:
     // max score set by the last method that invoked a XXSearch() Function
     int _bestScore;
 
+    // Total cutoof made by alpha beta prunings
+    int _cutOffs[MAX_DEFAULT_DEPTH];
+
     // best move found by last method that invoked a XXSearch() Function
     Tablut _bestMove;
 
@@ -84,8 +87,12 @@ public:
     int NegaMax(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaMaxTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
 
+    Tablut AlphaBetaSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
+    int AlphaBeta(Tablut &__currentMove, const int __depth, int __alpha, int __beta, bool isWhite);
+
     int getTotalMoves();
     void resetTranspositionTable();
+    void _resetCutoffs();
 };
 
 #endif

@@ -47,37 +47,45 @@ public:
     ~Zobrist() {}
 
     // Give hash by calculating XOR of all
-    ZobristKey hash(const Tablut &__t) const
+    ZobristKey hash(const Tablut &__t, bool colored = false) const
     {
         ZobristKey hashKey = 0;
 
-        if (!__t._isWhiteTurn)
+        std::pair<Pos, Pos> position;
+        Pos x, y;
+
+        if (colored && !__t._isWhiteTurn)
         {
             hashKey ^= _colorHash;
         }
 
-        for (int i = 0; i < DIM; i++)
+        for (int i = 0; i < __t._checkerPositionIndex; i++)
         {
-            for (int j = 0; j < DIM; j++)
+            position = __t._checkerPositions[i];
+            x = position.first;
+            y = position.second;
+
+            if (__t._board[x][y] == C::WHITE)
             {
-                if (__t._board[i][j] != C::EMPTY)
-                {
-                    if (__t._board[i][j] == C::WHITE)
-                    {
-                        hashKey ^= _hashesTable[i][j][0];
-                    }
-                    else if (__t._board[i][j] == C::BLACK)
-                    {
-                        hashKey ^= _hashesTable[i][j][1];
-                    }
-                    else
-                    {
-                        hashKey ^= _hashesTable[i][j][2];
-                    }
-                }
+                hashKey ^= _hashesTable[x][y][0];
+            }
+            else
+            {
+                hashKey ^= _hashesTable[x][y][1];
             }
         }
+
+        if (__t._kingX != KDEADPOSITION)
+        {
+            hashKey ^= _hashesTable[__t._kingX][__t._kingY][2];
+        }
+
         return hashKey;
+    }
+
+    void addHash(Tablut &__t)
+    {
+        __t._pastHashes[__t._pastHashesIndex++] = hash(__t, false);
     }
 };
 

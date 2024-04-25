@@ -121,7 +121,7 @@ public:
     }
 
     // Evaluate a tablut with all weights defined in this classes
-    int evaluate(Tablut &__t)
+    int evaluate(Tablut &__t, bool __colored = false)
     {
         int score;
 
@@ -129,7 +129,7 @@ public:
         {
             if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
             {
-                score = __t._isWhiteTurn ? -2000 : 2000;
+                score = 0;
             }
             else
             {
@@ -141,7 +141,7 @@ public:
             score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + positionsWeightSum(__t);
         }
 
-        return __t._isWhiteTurn ? score : -score;
+        return __colored ? (__t._isWhiteTurn ? score : -score) : score;
     }
 
     int positionsWeightSum(Tablut &__t)
@@ -161,7 +161,7 @@ public:
             {
                 score += _whitePosHeuristic[x][y];
             }
-            else if (__t._board[x][y] == C::BLACK)
+            else
             {
                 score += _blackPosHeuristic[x][y];
             }
@@ -175,15 +175,20 @@ public:
         return __t1._score < __t2._score;
     }
 
+    bool inverseCompare(Tablut &__t1, Tablut &__t2)
+    {
+        return __t1._score > __t2._score;
+    }
+
     // Sorting moves algorithm, first evaluate the score of every Tablut then it proceed to Sort them
-    void sortMoves(std::vector<Tablut> &__moves)
+    void sortMoves(std::vector<Tablut> &__moves, bool colored = false, bool __inverse = false)
     {
         for (Tablut &move : __moves)
         {
-            move._score = evaluate(move);
+            move._score = evaluate(move, colored);
         }
 
-        std::sort(__moves.begin(), __moves.end(), std::bind(&Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
+        std::sort(__moves.begin(), __moves.end(), std::bind(__inverse ? &Heuristic::inverseCompare : &Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
     }
 };
 
