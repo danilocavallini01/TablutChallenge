@@ -54,6 +54,7 @@ typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 */
 
 const int WIN_WEIGHT = 100000;
+const int DRAW_WEIGHT = 0;
 
 class Heuristic
 {
@@ -129,16 +130,18 @@ public:
         {
             if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
             {
-                score = 0;
+                // MUST IMPROVE DRAW WEIGHT
+                score = DRAW_WEIGHT;
             }
             else
             {
-                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn: -HEURISTIC::WIN_WEIGHT + __t._turn;
             }
         }
         else
         {
             score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + _kingPosHeuristic[__t._kingX][__t._kingY] + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * (__t._kingMovements) + positionsWeightSum(__t);
+            score += 2000 - __t._turn;
         }
 
         return __colored ? (__t._isWhiteTurn ? score : -score) : score;

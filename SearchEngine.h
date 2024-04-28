@@ -29,7 +29,7 @@ const int BOTTOM_SCORE(std::numeric_limits<int>::min());
 const int TOP_SCORE(std::numeric_limits<int>::max());
 
 // Default depth mainly used for time limited algorithm
-const int MAX_DEFAULT_DEPTH = 9;
+const int MAX_DEFAULT_DEPTH = 8;
 
 // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
 const float MAX_TIME_ERROR = 20.0;
@@ -62,13 +62,11 @@ public:
     // max score set by the last method that invoked a XXSearch() Function
     int _bestScore;
 
-    // Total cutoof made by alpha beta prunings
-    int _cutOffs[MAX_DEFAULT_DEPTH];
-
+   
     // best move found by last method that invoked a XXSearch() Function
     Tablut _bestMove;
 
-    SearchEngine(Heuristic __heuristic = Heuristic(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable(), Zobrist _zobrist = Zobrist());
+    SearchEngine(Heuristic __heuristic = Heuristic(), Zobrist _zobrist = Zobrist(), MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable());
     ~SearchEngine();
 
     // NEGAMAX SEARCH ALGORITHM
@@ -77,7 +75,7 @@ public:
 
     // NEGASCOUT SEARCH ALGORITHM
     Tablut NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
-    Tablut NegaScoutSearchTimeLimited(Tablut &__startingPosition, StopWatch &_globalTimer, const int __threads = 8);
+    Tablut NegaScoutSearchTimeLimited(Tablut &__startingPosition, StopWatch &_globalTimer, const int __threads = MAX_THREADS);
 
     int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
@@ -93,6 +91,7 @@ public:
     int getTotalMoves();
     void resetTranspositionTable();
     void _resetCutoffs();
+    int getCutOffs(int index);
 };
 
 #endif

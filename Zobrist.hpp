@@ -19,7 +19,8 @@ private:
     ZobristKey _hashesTable[DIM][DIM][3];
 
     // Single bitstring containing the board turn
-    ZobristKey _colorHash;
+    ZobristKey _whiteColorHash;
+    ZobristKey _blackColorHash;
 
 public:
     Zobrist()
@@ -41,7 +42,8 @@ public:
             }
         }
 
-        _colorHash = distribution(gen);
+        _whiteColorHash = distribution(gen);
+        _blackColorHash = distribution(gen);
     }
 
     ~Zobrist() {}
@@ -54,9 +56,16 @@ public:
         std::pair<Pos, Pos> position;
         Pos x, y;
 
-        if (colored && !__t._isWhiteTurn)
+        if (colored)
         {
-            hashKey ^= _colorHash;
+            if (__t._isWhiteTurn)
+            {
+                hashKey ^= _whiteColorHash;
+            }
+            else
+            {
+                hashKey ^= _blackColorHash;
+            }
         }
 
         for (int i = 0; i < __t._checkerPositionIndex; i++)
@@ -83,9 +92,31 @@ public:
         return hashKey;
     }
 
-    void addHash(Tablut &__t)
+    /*
+        Add hash computed by this Zobrist function and add the computed kyes to the GameState
+        If the Search Algorithm also consider current turn into keys then compute the 2 different values
+        Specified by the @var colored
+    */
+
+    void addHash(Tablut &__t, bool colored = false)
     {
-        __t._pastHashes[__t._pastHashesIndex++] = hash(__t, false);
+        if (!colored)
+        {
+            ZobristKey hash = Zobrist::hash(__t, false);
+            __t._hash = hash;
+            __t._gameBoardHash = hash;
+        }
+        else
+        {
+            __t._hash = Zobrist::hash(__t, true);
+            __t._gameBoardHash = Zobrist::hash(__t, false);
+        }
+
+        __t._pastHashes[__t._pastHashesIndex++] = __t._gameBoardHash;
+        if (__t._pastHashesIndex == MAX_DRAW_LOG)
+        {
+            __t._pastHashesIndex = 0;
+        }
     }
 };
 

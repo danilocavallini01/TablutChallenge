@@ -430,10 +430,10 @@ public:
                                                                                 _fileModelName("tablutGaModel.model"),
                                                                                 _backupDir("backup")
     {
-        std::random_device _rd;
-        std::srand(std::time(0));
 
+        std::random_device _rd;
         std::mt19937 _gen(_rd());
+        std::srand(std::time(nullptr));
     }
 
     ~GA(){};

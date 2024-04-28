@@ -97,7 +97,7 @@ private:
         C targetChecker = __t._board[__toX][__toY];
         S targetStructure = tablutStructure[__toX][__toY];
 
-        return targetChecker == C::EMPTY && targetStructure < 2U;
+        return targetChecker == C::EMPTY && targetStructure < 2;
     }
 
     // Tell if a white checker can go in that location
@@ -111,7 +111,7 @@ private:
         {
             return targetChecker == C::EMPTY && _tellIfCanPassCamp(__fromX, __fromY, __toX, __toY);
         }
-        return targetChecker == C::EMPTY && targetStructure < 2U;
+        return targetChecker == C::EMPTY && targetStructure < 2;
     }
 
     bool _isInCamp(const Pos &__x, const Pos &__y)

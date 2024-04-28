@@ -131,8 +131,10 @@ public:
     // Turn count
     int _turn;
 
-    // Current table _hash
+    // Current table hash used for transpositionTable lookup
     ZobristKey _hash;
+    // Current gameBoard hash, used to log past seen positions
+    ZobristKey _gameBoardHash;
 
     // Past turn hashes, used to check if same game state is reached twice
     std::array<ZobristKey, MAX_DRAW_LOG> _pastHashes;
@@ -259,6 +261,7 @@ public:
         out << (__tablut._isWhiteTurn ? "\033[1;47m| WHITE MOVE NOW (BLACK MOVED) |\033[0m" : "\033[1;40m| BLACK MOVE NOW (WHITE MOVED)|\033[0m") << std::endl;
         out << "====================" << std::endl;
 
+        out << "WINSTATE: " << __tablut._gameState << std::endl;
         out << "TURN: " << __tablut._turn << std::endl;
         out << "whiteCheckers: " << unsigned(__tablut._whiteCount) << std::endl;
         out << "blackCheckers: " << unsigned(__tablut._blackCount) << std::endl;
@@ -313,7 +316,7 @@ public:
     {
         for (int i = 0; i < _pastHashesIndex - 1; i++)
         {
-            if (_hash == _pastHashes[i])
+            if (_gameBoardHash == _pastHashes[i])
             {
                 return true;
             }
@@ -351,9 +354,74 @@ public:
         return _board[4][3] == C::BLACK && _board[4][5] == C::BLACK && _board[3][4] == C::BLACK && _board[5][4] == C::BLACK;
     }
 
-    inline bool kingNearThrone() const
+    inline bool isKingNearThrone() const
     {
         return _board[4][3] == C::KING || _board[4][5] == C::KING || _board[3][4] == C::KING || _board[5][4] == C::KING;
+    }
+
+    inline bool isKingSurroundedNearThrone() const
+    {
+        // King near throne so can be killed by 3 black checkers surounding him
+        int16_t surroundCount = 0;  // Number of black defenders surrounding king
+        bool castleCounted = false; // Tell if castle as been counted or not
+
+        // Left CHECK
+        if (_board[_kingX][_kingY - 1] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (tablutStructure[_kingX][_kingY - 1] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            return false;
+        }
+
+        // Right CHECK
+        if (_board[_kingX][_kingY + 1] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[_kingX][_kingY + 1] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            return false;
+        }
+
+        // Up CHECK
+        if (_board[_kingX - 1][_kingY] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[_kingX - 1][_kingY] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            return false;
+        }
+
+        // Down CHECK
+        if (_board[_kingX + 1][_kingY] == C::BLACK)
+        {
+            surroundCount++;
+        }
+        else if (!castleCounted && tablutStructure[_kingX + 1][_kingY] == S::CASTLE)
+        {
+            castleCounted = true;
+        }
+        else
+        {
+            return false;
+        }
+
+        return surroundCount == 3 && castleCounted;
     }
 
     // Kill checker by checking which type of checker is on the specified point, update checkersCount and killFeed variables
@@ -384,6 +452,7 @@ public:
             _kingX = KDEADPOSITION;
             _kingY = KDEADPOSITION;
             _kills++;
+            return;
         }
 
         int i = 0;
@@ -411,73 +480,21 @@ public:
 
         // King in throne and black surounded throne -> WHITE LOSE
         if (kingIsInThrone() && isKingSurrounded())
-            return true;
-
-        if (kingNearThrone())
         {
-            // King near throne so can be killed by 3 black checkers surounding him
-            u_int8_t surroundCount = 0U; // Number of black defenders surrounding king
-            bool castleCounted = false;  // Tell if castle as been counted or not
-
-            // Left CHECK
-            if (_board[_kingX][_kingY - 1] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (tablutStructure[_kingX][_kingY - 1] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                return false;
-            }
-
-            // Right CHECK
-            if (_board[_kingX][_kingY + 1] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[_kingX][_kingY + 1] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                return false;
-            }
-
-            // Up CHECK
-            if (_board[_kingX - 1][_kingY] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[_kingX - 1][_kingY] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                return false;
-            }
-
-            // Down CHECK
-            if (_board[_kingX + 1][_kingY] == C::BLACK)
-            {
-                surroundCount++;
-            }
-            else if (!castleCounted && tablutStructure[_kingX + 1][_kingY] == S::CASTLE)
-            {
-                castleCounted = true;
-            }
-            else
-            {
-                return false;
-            }
-
-            return surroundCount == 3 && castleCounted;
+            return true;
         }
+
+        if (isKingNearThrone() && isKingSurroundedNearThrone())
+        {
+            return true;
+        }
+
         return false;
+    }
+
+    inline bool checkIfKingThreatened() const
+    {
+        return kingIsInThrone() || isKingNearThrone();
     }
 
     inline void killLeft()

@@ -193,16 +193,6 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
     // BLACK TURN
     else
     {
-        if (checkIfKingDead())
-        {
-            killChecker(_next._kingX, _next._kingY);
-
-            _next._turn++;
-            _next.switchTurn();
-
-            return _next;
-        }
-
         // NORMAL EATS
 
         // Opposite structure to check if white checker are surrounded by a structure in any direction
@@ -211,53 +201,99 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         // LEFT eat ( KING OR SOLDIER ( > 1))
         if (_next._y > FIRST_COL && (leftChecker == C::WHITE || leftChecker == C::KING))
         {
-            oppositeStructure = tablutStructure[_next._x][_next._y - 2];
-
-            // eat if normall eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-            if (tablutStructure[_next._x][_next._y - 1] != S::CASTLE && _next.getLeftChecker(2) == C::BLACK || oppositeStructure > 1)
+            // Special eat, if king is in throne or near throne kills
+            if (leftChecker == C::KING && _next.checkIfKingThreatened())
             {
-                _next.killLeft();
+                if (_next.checkIfKingDead())
+                {
+                    _next.killLeft();
+                }
+            }
+            else
+            {
+                oppositeStructure = tablutStructure[_next._x][_next._y - 2];
+
+                // eat if normall eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+                if (tablutStructure[_next._x][_next._y - 1] != S::CASTLE && _next.getLeftChecker(2) == C::BLACK || oppositeStructure > 1)
+                {
+                    _next.killLeft();
+                }
             }
         }
 
         // RIGHT eat
         if (_next._y < LAST_COL && (rightChecker == C::WHITE || rightChecker == C::KING))
         {
-            oppositeStructure = tablutStructure[_next._x][_next._y + 2];
-
-            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-            if (tablutStructure[_next._x][_next._y + 1] != S::CASTLE && _next.getRightChecker(2) == C::BLACK || oppositeStructure > 1)
+            // Special eat, if king is in throne or near throne kills
+            if (rightChecker == C::KING && _next.checkIfKingThreatened())
             {
-                _next.killRight();
+                if (_next.checkIfKingDead())
+                {
+                    _next.killRight();
+                }
+            }
+            else
+            {
+                oppositeStructure = tablutStructure[_next._x][_next._y + 2];
+
+                // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+                if (tablutStructure[_next._x][_next._y + 1] != S::CASTLE && _next.getRightChecker(2) == C::BLACK || oppositeStructure > 1)
+                {
+                    _next.killRight();
+                }
             }
         }
 
         // UP eat
         if (_next._x > FIRST_ROW && (upChecker == C::WHITE || upChecker == C::KING))
         {
-            oppositeStructure = tablutStructure[_next._x - 2][_next._y];
-
-            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-            if (tablutStructure[_next._x - 1][_next._y] != S::CASTLE && _next.getUpChecker(2) == C::BLACK || oppositeStructure > 1)
+            // Special eat, if king is in throne or near throne kills
+            if (upChecker == C::KING && _next.checkIfKingThreatened())
             {
-                _next.killUp();
+                if (_next.checkIfKingDead())
+                {
+                    _next.killUp();
+                }
+            }
+            else
+            {
+                oppositeStructure = tablutStructure[_next._x - 2][_next._y];
+
+                // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+                if (tablutStructure[_next._x - 1][_next._y] != S::CASTLE && _next.getUpChecker(2) == C::BLACK || oppositeStructure > 1)
+                {
+                    _next.killUp();
+                }
             }
         }
 
         // DOWN eat
         if (_next._x < LAST_ROW && (downChecker == C::WHITE || downChecker == C::KING))
         {
-            oppositeStructure = tablutStructure[_next._x + 2][_next._y];
-
-            // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-            if (tablutStructure[_next._x + 1][_next._y] != S::CASTLE && _next.getDownChecker(2) == C::BLACK || oppositeStructure > 1)
+            // Special eat, if king is in throne or near throne kills
+            if (downChecker == C::KING && _next.checkIfKingThreatened())
             {
-                _next.killDown();
+                if (_next.checkIfKingDead())
+                {
+                    _next.killDown();
+                }
+            }
+            else
+            {
+                oppositeStructure = tablutStructure[_next._x + 2][_next._y];
+
+                // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
+                if (tablutStructure[_next._x + 1][_next._y] != S::CASTLE && _next.getDownChecker(2) == C::BLACK || oppositeStructure > 1)
+                {
+                    _next.killDown();
+                }
             }
         }
     }
 
     _next._turn++;
+    _next.checkWinState();
+
     _next.switchTurn();
 
     return _next;

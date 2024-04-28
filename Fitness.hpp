@@ -36,7 +36,7 @@ private:
 
         for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
         {
-            std::cout << engine._cutOffs[i] << ",";
+            std::cout << engine.getCutOffs(i) << ",";
         }
 
         std::cout << std::endl;
@@ -49,9 +49,12 @@ private:
     {
         Tablut gameBoard = Tablut::getStartingPosition();
 
+        // Zobrist hash instance
+        Zobrist hasher = Zobrist();
+
         // Setup new search engine with the given weights heuristic
-        SearchEngine searchEngineWhite = SearchEngine(Heuristic(__white));
-        SearchEngine searchEngineBlack = SearchEngine(Heuristic(__black));
+        SearchEngine searchEngineWhite = SearchEngine(Heuristic(__white), hasher);
+        SearchEngine searchEngineBlack = SearchEngine(Heuristic(__black), hasher);
 
         int totalWhiteScore = 0;
         int totalBlackScore = 0;
@@ -67,36 +70,31 @@ private:
 
         int i;
 
+        hasher.addHash(gameBoard);
+
         for (i = 0; i < _maxIterations / 2; i++)
         {
             // WHITE ONE --------------------
             // NEGASCOUT --------------------
-
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
+            // gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerWhite);
             gameBoard = searchEngineWhite.NegaScoutSearch(gameBoard, _maxDepth);
             timeEnd = std::chrono::steady_clock::now();
-
             timerWhite.reset();
+
+            // STAT ------------------
+
+            totalWhiteScore += searchEngineWhite._bestScore;
+            totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
 
             if (_verbose)
             {
-                // GAME CICLE
                 gameBoard.print();
-
-                totalWhiteScore += searchEngineWhite._bestScore;
-                totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
-
                 printStats(searchEngineWhite, timeBegin, timeEnd, totalTimeWhite, i);
+            }
 
-                searchEngineWhite._transpositionTable.resetStat();
-            }
-            else
-            {
-                totalWhiteScore += searchEngineWhite._bestScore;
-                totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
-                searchEngineWhite._transpositionTable.resetStat();
-            }
+            searchEngineWhite._transpositionTable.resetStat();
 
             // CHECK GAME_STATE
             if (_checkWin(gameBoard))
@@ -108,30 +106,24 @@ private:
             // NEGASCOUT --------------------
 
             timerBlack.start();
-            // gameBoard = searchEngineBlack.NegaScoutSearchTimeLimited(gameBoard, timerBlack);
             timeBegin = std::chrono::steady_clock::now();
+            // gameBoard = searchEngineBlack.NegaScoutSearchTimeLimited(gameBoard, timerBlack);
             gameBoard = searchEngineBlack.NegaScoutSearch(gameBoard, _maxDepth);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 
+            // STAT ------------------
+
+            totalBlackScore += searchEngineBlack._bestScore;
+            totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
+
             if (_verbose)
             {
-                // GAME CICLE
                 gameBoard.print();
-
-                totalBlackScore += searchEngineBlack._bestScore;
-                totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
-
                 printStats(searchEngineBlack, timeBegin, timeEnd, totalTimeBlack, i);
+            }
 
-                searchEngineBlack._transpositionTable.resetStat();
-            }
-            else
-            {
-                totalBlackScore += searchEngineBlack._bestScore;
-                totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
-                searchEngineBlack._transpositionTable.resetStat();
-            }
+            searchEngineBlack._transpositionTable.resetStat();
 
             // CHECK GAME_STATE
             if (_checkWin(gameBoard))
@@ -172,11 +164,14 @@ private:
         double gameCicleWeight = 10.0;
         double cutOffFitness = 0.0;
 
-        double fitness = 1.0 * (__avgScore / 1000.0) * scoreWeight * (10000.0 / __avgTimeElapsed) * avgTimeWeight * (100.0 / double(gameCicles)) * gameCicleWeight;
+        double fitness = 0.0;
+        //fitness += (__avgScore / 1000.0) * scoreWeight;
+        fitness += (1000.0 / __avgTimeElapsed) * avgTimeWeight;
+        fitness += (100.0 / double(gameCicles)) * gameCicleWeight;
 
         for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
         {
-            cutOffFitness += __engine._cutOffs[i] * pow(10, i);
+            cutOffFitness += __engine.getCutOffs(i) * pow(10, i);
         }
 
         cutOffFitness = std::log10(cutOffFitness);
@@ -219,6 +214,7 @@ private:
     // CHECK IF A GAME STATE IS IN A WIN POSITION
     bool _checkWin(Tablut &__position)
     {
+        __position.checkWinState();
         if (__position.isGameOver())
         {
             std::cout << "########################" << std::endl;
