@@ -30,13 +30,13 @@ private:
     int _totalWeights;
     Fitness _fitnessFn;
 
+    std::random_device _rd;
+
     std::string _fileModelName;
     std::string _backupDir;
 
     std::vector<Weights> _whitePopulation;
     std::vector<Weights> _blackPopulation;
-    std::random_device _rd;
-    std::mt19937 _gen;
 
     std::vector<std::string> _tokenize(const std::string str, const std::regex re)
     {
@@ -192,7 +192,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_gen) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
+                add[j] = (distribution(_rd) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
             }
 
             _whitePopulation.push_back(add);
@@ -204,7 +204,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_gen) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
+                add[j] = (distribution(_rd) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
             }
 
             _blackPopulation.push_back(add);
@@ -247,8 +247,8 @@ private:
         for (int i = 0; i < _tournSize; i++)
         {
             // CHOOSE RANDOMLY FROM THE POPULATION
-            selectedWhitePlayer = distribution(_gen);
-            selectedBlackPlayer = distribution(_gen);
+            selectedWhitePlayer = distribution(_rd);
+            selectedBlackPlayer = distribution(_rd);
 
             if (i == 0 || __fitnesses[selectedWhitePlayer].first > bestWhitePlayerScore)
             {
@@ -278,7 +278,7 @@ private:
         for (int i = 0; i < _totalWeights; i++)
         {
             // Toss coin
-            if (coinToss(_gen) == 1)
+            if (coinToss(_rd) == 1)
             {
                 __offspring1[i] = __parents.first[i];
                 __offspring2[i] = __parents.second[i];
@@ -302,9 +302,9 @@ private:
 
         for (int i = 0; i < _totalWeights; i++)
         {
-            if (mutationProbDistribution(_gen) <= _mutationProb)
+            if (mutationProbDistribution(_rd) <= _mutationProb)
             {
-                __offspring[i] += ((mutationChangeDistribution(_gen) % _calculateMutationFactor(i)) - _calculateMutationFactor(i) / 2);
+                __offspring[i] += ((mutationChangeDistribution(_rd) % _calculateMutationFactor(i)) - _calculateMutationFactor(i) / 2);
             }
         }
     }
@@ -422,7 +422,7 @@ public:
        int __mutationFactor = 60, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
                                                                                 _mutationFactor(__mutationFactor),
-                                                                                _lowerMutationFactor(__mutationFactor / 4),
+                                                                                _lowerMutationFactor(__mutationFactor / 3),
                                                                                 _tournSize(__tournSize),
                                                                                 _maxGeneration(__generation),
                                                                                 _totalWeights(TOTAL_WEIGHTS),
@@ -431,9 +431,7 @@ public:
                                                                                 _backupDir("backup")
     {
 
-        std::random_device _rd;
-        std::mt19937 _gen(_rd());
-        std::srand(std::time(nullptr));
+        std::random_device _rd{"/dev/urandom"};
     }
 
     ~GA(){};

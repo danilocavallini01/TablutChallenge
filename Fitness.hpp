@@ -56,6 +56,12 @@ private:
         SearchEngine searchEngineWhite = SearchEngine(Heuristic(__white), hasher);
         SearchEngine searchEngineBlack = SearchEngine(Heuristic(__black), hasher);
 
+        // Print Heuristics value
+        std::cout<<"- WHITE HEURISTIC ------------------------"<<std::endl;
+        searchEngineWhite._heuristic.print();
+        std::cout<<"- BLACK HEURISTIC ------------------------"<<std::endl;
+        searchEngineBlack._heuristic.print();
+
         int totalWhiteScore = 0;
         int totalBlackScore = 0;
 
@@ -141,7 +147,7 @@ private:
         int gameCicles = i + 1;
 
         double whiteFitness = _computeFitness(searchEngineWhite, double(totalWhiteScore) / gameCicles, double(totalTimeWhite) / gameCicles, gameBoard, gameCicles, true);
-        double blackFitness = _computeFitness(searchEngineBlack, double(totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard, gameCicles, false);
+        double blackFitness = _computeFitness(searchEngineBlack, double(-totalBlackScore) / gameCicles, double(totalTimeBlack) / gameCicles, gameBoard, gameCicles, false);
 
         return std::make_pair(whiteFitness, blackFitness);
     }
@@ -159,13 +165,13 @@ private:
     */
     double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
-        double scoreWeight = 10.0;
+        double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;
         double gameCicleWeight = 10.0;
         double cutOffFitness = 0.0;
 
         double fitness = 0.0;
-        //fitness += (__avgScore / 1000.0) * scoreWeight;
+        //fitness += (__avgScore) * scoreWeight;
         fitness += (1000.0 / __avgTimeElapsed) * avgTimeWeight;
         fitness += (100.0 / double(gameCicles)) * gameCicleWeight;
 

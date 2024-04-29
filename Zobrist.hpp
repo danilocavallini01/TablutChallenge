@@ -25,8 +25,7 @@ private:
 public:
     Zobrist()
     {
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        std::random_device rd{"/dev/urandom"};
         std::srand(std::time(nullptr));
 
         std::uniform_int_distribution<ZobristKey> distribution(1, std::numeric_limits<uint64_t>::max());
@@ -37,13 +36,13 @@ public:
             {
                 for (int x = 0; x < 3; x++)
                 {
-                    _hashesTable[i][j][x] = distribution(gen);
+                    _hashesTable[i][j][x] = distribution(rd);
                 }
             }
         }
 
-        _whiteColorHash = distribution(gen);
-        _blackColorHash = distribution(gen);
+        _whiteColorHash = distribution(rd);
+        _blackColorHash = distribution(rd);
     }
 
     ~Zobrist() {}

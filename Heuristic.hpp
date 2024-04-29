@@ -135,7 +135,7 @@ public:
             }
             else
             {
-                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn: -HEURISTIC::WIN_WEIGHT + __t._turn;
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
             }
         }
         else
@@ -147,6 +147,7 @@ public:
         return __colored ? (__t._isWhiteTurn ? score : -score) : score;
     }
 
+    // Sum of all position weights used to evaluate a tablut
     int positionsWeightSum(Tablut &__t)
     {
         int score = 0;
@@ -172,12 +173,13 @@ public:
         return score;
     }
 
-    // Compare function between two Tabluts
+    // Compare function between two Tabluts, they're sorted by the respective scores
     bool compare(Tablut &__t1, Tablut &__t2)
     {
         return __t1._score < __t2._score;
     }
 
+    // The inverse of the compare function between two Tabluts
     bool inverseCompare(Tablut &__t1, Tablut &__t2)
     {
         return __t1._score > __t2._score;
@@ -192,6 +194,29 @@ public:
         }
 
         std::sort(__moves.begin(), __moves.end(), std::bind(__inverse ? &Heuristic::inverseCompare : &Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
+    }
+
+    void print()
+    {
+        std::cout << "-> KING POS HEURISTIC" << std::endl;
+        printBoardWeight(_kingPosHeuristic);
+        std::cout << "-> WHITE POS HEURISTIC" << std::endl;
+        printBoardWeight(_whitePosHeuristic);
+        std::cout << "-> BLACK POS HEURISTIC" << std::endl;
+        printBoardWeight(_blackPosHeuristic);
+    }
+
+    void printBoardWeight(BoardWeights &_boardWeight)
+    {
+        for (int i = 0; i < DIM; i++)
+        {
+            std::cout << "[";
+            for (int j = 0; j < DIM; j++)
+            {
+                std::cout << " " << _boardWeight[i][j];
+            }
+            std::cout << " ]" << std::endl;
+        }
     }
 };
 
