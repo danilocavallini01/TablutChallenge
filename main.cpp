@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     
     while (true)
     {
-        GA geneticAlgorithm = GA(6);
+        GA geneticAlgorithm = GA(5);
         geneticAlgorithm.start();
     }
     

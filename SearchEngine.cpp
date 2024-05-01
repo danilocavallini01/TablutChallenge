@@ -48,13 +48,13 @@ Tablut SearchEngine::NegaScoutSearch(Tablut &__startingPosition, const int __max
     {
         for (int i = 0; i < __threads && i + t < moves.size(); i++)
         {
-            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, std::ref(*this), std::ref(moves[i + t]), __maxDepth - 1, BOTTOM_SCORE, TOP_SCORE));
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScout, this, std::ref(moves[i + t]), __maxDepth - 1, BOTTOM_SCORE, TOP_SCORE));
         }
 
         for (int i = 0; i < results.size(); i++)
         {
             v = -results[i].get();
-
+            //std::cout << v << std::endl;
             // MAXIMIZE PROBLEM
             if (v > _bestScore)
             {
@@ -145,6 +145,11 @@ int SearchEngine::NegaScoutTT(Tablut &__currentMove, const int __depth, int __al
     std::vector<Tablut> moves;
     Tablut move;
 
+    if (__currentMove.isGameOver() || __depth == 0)
+    {
+        return _heuristic.evaluate(__currentMove, true);
+    }
+
     // -------- TRANSPOSITION TABLE LOOKUP --------
     ZobristKey hash = __currentMove._hash;
     std::optional<Entry> maybe_entry = _transpositionTable.get(hash);
@@ -185,11 +190,6 @@ int SearchEngine::NegaScoutTT(Tablut &__currentMove, const int __depth, int __al
     }
 
     // --------TRANSPOSITION TABLE LOOKUP -------- END
-
-    if (__currentMove.isGameOver() || __depth == 0)
-    {
-        return _heuristic.evaluate(__currentMove, true);
-    }
 
     score = BOTTOM_SCORE;
     b = __beta;

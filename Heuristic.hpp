@@ -221,13 +221,13 @@ public:
     // Compare function between two Tabluts, they're sorted by the respective scores
     bool compare(Tablut &__t1, Tablut &__t2)
     {
-        return __t1._score < __t2._score;
+        return __t1._score > __t2._score;
     }
 
     // The inverse of the compare function between two Tabluts
     bool inverseCompare(Tablut &__t1, Tablut &__t2)
     {
-        return __t1._score > __t2._score;
+        return __t1._score < __t2._score;
     }
 
     // Sorting moves algorithm, first evaluate the score of every Tablut then it proceed to Sort them
