@@ -77,7 +77,6 @@ public:
     Tablut NegaScoutSearch(Tablut &__startingPosition, const int __maxDepth = 7, const int __threads = MAX_THREADS);
     Tablut NegaScoutSearchTimeLimited(Tablut &__startingPosition, StopWatch &_globalTimer, const int __threads = MAX_THREADS);
 
-    int NegaScoutParallel(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScoutTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta);
     int NegaScoutTT(Tablut &__currentMove, const int __depth, int __alpha, int __beta);

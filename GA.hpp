@@ -183,7 +183,7 @@ private:
         }
 
         std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
-        std::uniform_int_distribution<int> distribution(1, 10000);
+        std::uniform_int_distribution<int> distribution;
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -192,7 +192,8 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_rd) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
+                _calculateMutationFactor(distribution, j);
+                add[j] = distribution(_rd);
             }
 
             _whitePopulation.push_back(add);
@@ -204,7 +205,8 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                add[j] = (distribution(_rd) % _calculateMutationFactor(j)) - _calculateMutationFactor(j) / 2;
+                _calculateMutationFactor(distribution, j);
+                add[j] = distribution(_rd);
             }
 
             _blackPopulation.push_back(add);
@@ -298,13 +300,14 @@ private:
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
-        std::uniform_int_distribution<int> mutationChangeDistribution(0, 10000);
+        std::uniform_int_distribution<int> distribution;
 
         for (int i = 0; i < _totalWeights; i++)
         {
             if (mutationProbDistribution(_rd) <= _mutationProb)
             {
-                __offspring[i] += ((mutationChangeDistribution(_rd) % _calculateMutationFactor(i)) - _calculateMutationFactor(i) / 2);
+                _calculateMutationFactor(distribution, i);
+                __offspring[i] = distribution(_rd);
             }
         }
     }
@@ -312,17 +315,11 @@ private:
     /*
         Return a different mutation factor based on the index of the targeted weight
     */
-    int _calculateMutationFactor(int index)
+    void _calculateMutationFactor(std::uniform_int_distribution<int> &__distribution, int index)
     {
-        if (index < POSITION_WEIGHT_START_INDEX)
-        {
-            return _mutationFactor;
-        }
-        else
-        {
-            return _lowerMutationFactor;
-        }
-    }
+        WeightBounds bound = Heuristic::getWeightBounds(index);
+        __distribution = std::uniform_int_distribution<int>(bound.first, bound.second);
+    };
 
     /*
         Select the best half of new population and best half of the old population to create the new generation
@@ -504,6 +501,7 @@ public:
 
             std::cout << "---------NEW POPULATION CREATED---------" << std::endl;
             results = _fitnessFn.train(newWhitePopulation, newBlackPopulation, _N);
+
 
             // reset new Results
             whiteResults = {};

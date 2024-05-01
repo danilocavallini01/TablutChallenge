@@ -143,6 +143,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         // NORMAL WHITE EATS
 
         // Opposite structure to check if black checker are surrounded by a structure in any direction
+        // Kill can occur with white or king checker
         STRUCTURE oppositeStructure;
 
         // LEFT eat
@@ -150,7 +151,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         {
             oppositeStructure = tablutStructure[_next._x][_next._y - 2];
 
-            if (tablutStructure[_next._x][_next._y - 1] != S::CAMPS && (_next.getLeftChecker(2) == C::WHITE || oppositeStructure > 1))
+            if (_next.getLeftChecker(2) > 1 || (oppositeStructure > 1 && tablutStructure[_next._x][_next._y - 1] != S::CAMPS))
             {
                 _next.killLeft();
             }
@@ -161,7 +162,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         {
             oppositeStructure = tablutStructure[_next._x][_next._y + 2];
 
-            if (tablutStructure[_next._x][_next._y + 1] != S::CAMPS && (_next.getRightChecker(2) == C::WHITE || oppositeStructure > 1))
+            if (_next.getRightChecker(2) > 1 || (oppositeStructure > 1 && tablutStructure[_next._x][_next._y + 1] != S::CAMPS))
             {
                 _next.killRight();
             }
@@ -172,7 +173,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         {
             oppositeStructure = tablutStructure[_next._x - 2][_next._y];
 
-            if (tablutStructure[_next._x - 1][_next._y] != S::CAMPS && (_next.getUpChecker(2) == C::WHITE || oppositeStructure > 1))
+            if (_next.getUpChecker(2) > 1 || (oppositeStructure > 1 && tablutStructure[_next._x - 1][_next._y] != S::CAMPS))
             {
                 _next.killUp();
             }
@@ -183,7 +184,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
         {
             oppositeStructure = tablutStructure[_next._x + 2][_next._y];
 
-            if (tablutStructure[_next._x + 1][_next._y] != S::CAMPS && (_next.getDownChecker(2) == C::WHITE || oppositeStructure > 1))
+            if (_next.getDownChecker(2) > 1 || (oppositeStructure > 1 && tablutStructure[_next._x + 1][_next._y] != S::CAMPS))
             {
                 _next.killDown();
             }

@@ -329,10 +329,6 @@ int SearchEngine::NegaScout(Tablut &__currentMove, const int __depth, int __alph
 
         if (v > score)
         {
-            if (__depth == _maxDepth)
-            {
-                _bestScore = v;
-            }
             score = v;
         }
 
@@ -704,3 +700,107 @@ void SearchEngine::_computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &_
     std::cout << "TIME LIMIT SLICED -> TR: " << __globalTimer.getRemainingTime() << ", REMAINING MOVES:" << __remainingMoves << ", TOTAL THREAD: " << __threads << ", SLICED TIME: " << slicedTimeLimit << std::endl;
     __mustSetTimer.setTimeLimit(slicedTimeLimit);
 }
+
+/*
+
+Tablut SearchEngine::NegaScoutSearchSliced(Tablut &__startingPosition, const int __maxDepth, const int __threads)
+{
+    _maxDepth = __maxDepth;
+    _totalMoves = 0;
+    _resetCutoffs();
+
+    ZobristKey hash;
+
+    std::vector<Tablut> moves;
+    Tablut bestMove;
+    std::vector<std::future<std::pair<int,Tablut>>> results;
+
+    _bestScore = BOTTOM_SCORE;
+    std::pair<int,Tablut> v;
+
+    // GENERATE ALL LEGAL MOVES
+    _moveGenerator.generateLegalMoves(__startingPosition, moves);
+
+    // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+    for (auto &nextTablut : moves)
+    {
+        _zobrist.addHash(nextTablut, true);
+    }
+
+    // SORT MOVES
+    _heuristic.sortMoves(moves, true);
+
+    int movesPerThread = moves.size() / __threads;
+
+    for (int t = 0; t < moves.size(); t += movesPerThread)
+    {
+        // LAST ITERATION, CONSUME ALL MOVES VECTOR
+        if (moves.size() <= t + movesPerThread * 2)
+        {
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScoutSliced, std::ref(*this), std::ref(moves), t, moves.size() - 1, _maxDepth - 1));
+            break;
+        }
+        else
+        {
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScoutSliced, std::ref(*this), std::ref(moves), t, t + movesPerThread - 1, _maxDepth - 1));
+        }
+    }
+
+    for (int i = 0; i < results.size(); i++)
+    {
+        v = results[i].get();
+
+        // MAXIMIZE PROBLEM
+        if (v.first > _bestScore)
+        {
+            bestMove = v.second;
+            _bestScore = v.first;
+        }
+    }
+
+    return bestMove;
+}
+
+std::pair<int,Tablut> SearchEngine::NegaScoutSliced(std::vector<Tablut> &__moves, int __startIndex, int __endIndex, const int __depth)
+{
+    int alpha = BOTTOM_SCORE;
+    int beta = TOP_SCORE;
+
+    int score = BOTTOM_SCORE;
+    int b = beta;
+    int v;
+
+    Tablut move;
+    Tablut bestMove;
+
+    // NEGASCOUT CORE ENGINE
+    for (int i = __startIndex; i <= __endIndex; i++)
+    {
+        move = __moves[i];
+        v = -SearchEngine::NegaScout(move, __depth, -b, -alpha);
+
+        if (v > alpha && v < beta && i > __startIndex)
+        {
+            v = -SearchEngine::NegaScout(move, __depth, -beta, -v);
+        }
+        std::cout << "SCORE i:"<< i << "->"<< v << std::endl;
+
+        if (v > score)
+        {
+            bestMove = move;
+            score = v;
+        }
+
+        alpha = std::max(alpha, v);
+
+        if (alpha >= beta)
+        {
+            _cutOffs[__depth]++;
+            break;
+        }
+
+        b = alpha + 1;
+    }
+
+    return { score, bestMove };
+}*/

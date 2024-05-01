@@ -147,9 +147,7 @@ public:
             }
 
             // GENERATE MOVES FOR KING
-            int moveDifferences = __nextTabluts.size();
             _getLegalMovesFrom(__t, __t._kingX, __t._kingY, __nextTabluts);
-            __t._kingMovements = moveDifferences - __nextTabluts.size();
         }
         else
         {

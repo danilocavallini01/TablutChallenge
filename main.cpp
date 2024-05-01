@@ -4,6 +4,8 @@
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
 #include "SearchEngine.h"
+#include "Connection.hpp"
+#include "ResourceAllocator.hpp"
 
 #include <vector>
 #include <chrono>
@@ -12,13 +14,23 @@
 
 int main(int argc, char *argv[])
 {
-    // customMatch();
 
+   /* Connection c = Connection("IMPOSTOR");
+    c.declareName();*/
+
+    
+    ResourceAllocator allocator{};
+
+    allocator.increaseStackSize();
+    allocator.printSizeDifference();
+
+    
     while (true)
     {
         GA geneticAlgorithm = GA(6);
         geneticAlgorithm.start();
     }
+    
 
     return EXIT_SUCCESS;
 }
