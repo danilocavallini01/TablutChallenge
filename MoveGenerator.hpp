@@ -4,6 +4,7 @@
 #include "Tablut.h"
 #include <vector>
 #include <cstdlib>
+#include <ranges>
 
 // Forward Declaration
 class Tablut;

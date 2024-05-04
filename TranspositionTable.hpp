@@ -28,13 +28,14 @@ enum ENTRY : int
     SCORE_INDEX = 0,
     DEPTH_INDEX = 1,
     FLAG_INDEX = 2,
+    COLOR_INDEX = 3,
 };
 
 /* Entry node of transposition table defined as follow:
     <SCORE,DEPTH,TT_FLAG>
 */
 
-typedef std::tuple<int, int, FLAG> Entry;
+typedef std::tuple<int, int, FLAG, bool> Entry;
 
 class TranspositionTable
 {

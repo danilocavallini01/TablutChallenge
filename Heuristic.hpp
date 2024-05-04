@@ -131,9 +131,10 @@ public:
     }
 
     // Evaluate a tablut with all weights defined in this classes
-    int evaluate(Tablut &__t, bool __colored = false)
+    int evaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
     {
         int score;
+        int depthPenality = 10 - __depth; 
 
         if (__t.isGameOver())
         {
@@ -144,15 +145,43 @@ public:
             }
             else
             {
-                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - __t._turn : -HEURISTIC::WIN_WEIGHT + __t._turn;
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
             }
         }
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__t._isWhiteTurn ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
+            score -= depthPenality;
         }
 
-        return __colored ? (__t._isWhiteTurn ? score : -score) : score;
+        return __colored ? (__whiteEvaluate ? score : -score) : score;
+    }
+
+     // Fast evaluate a Tablut, used mainly for move ordering 
+    int quickEvaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
+    {
+        int score;
+        int depthPenality = 10 - __depth; 
+
+        if (__t.isGameOver())
+        {
+            if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
+            {
+                // MUST IMPROVE DRAW WEIGHT
+                score = DRAW_WEIGHT;
+            }
+            else
+            {
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
+            }
+        }
+        else
+        {
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _kingPosHeuristic[__t._kingX][__t._kingY];
+            score -= depthPenality;
+        }
+
+        return __colored ? (__whiteEvaluate ? score : -score) : score;
     }
 
     /*
@@ -231,14 +260,15 @@ public:
     }
 
     // Sorting moves algorithm, first evaluate the score of every Tablut then it proceed to Sort them
-    void sortMoves(std::vector<Tablut> &__moves, bool colored = false, bool __inverse = false)
+    void sortMoves(std::vector<Tablut> &__moves, int __depth, bool __whiteEvaluate = true, bool __colored = false)
     {
         for (Tablut &move : __moves)
         {
-            move._score = evaluate(move, colored);
+            move._score = quickEvaluate(move, __depth, __whiteEvaluate, __colored);
         }
 
-        std::sort(__moves.begin(), __moves.end(), std::bind(__inverse ? &Heuristic::inverseCompare : &Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
+        // SORT BY HIGHEST VALUE IF THE EVALUATION IS COLORED, SORT BY MIN OR MAX VALUE (BY @param __whiteEvaluate)
+        std::sort(__moves.begin(), __moves.end(), std::bind(!__colored && !__whiteEvaluate ? &Heuristic::inverseCompare : &Heuristic::compare, std::ref(*this), std::placeholders::_1, std::placeholders::_2));
     }
 
     void print()

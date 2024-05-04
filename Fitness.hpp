@@ -4,7 +4,10 @@
 #include "Tablut.h"
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
-#include "SearchEngine.h"
+#include "SearchEngine.hpp"
+
+#include "NegaScoutEngine.hpp"
+#include "AlphaBetaEngine.hpp"
 
 #include <vector>
 #include <chrono>
@@ -24,25 +27,12 @@ public:
     ~Fitness(){};
 
 private:
-    void printStats(SearchEngine &engine, std::chrono::steady_clock::time_point &timeBegin, std::chrono::steady_clock::time_point &timeEnd, int totalTime, int i)
+    void printStats(SearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
     {
-        std::cout << " --> ENGINE SCORE = " << engine._bestScore << std::endl;
+        __engine.print();
 
-        // PERFORMANCE _______________
-        std::cout << engine._transpositionTable << std::endl;
-
-        std::cout << "TOTAL MOVES CHECKED: " << engine.getTotalMoves() << std::endl;
-        std::cout << "TOTAL CUTOFFS ";
-
-        for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
-        {
-            std::cout << engine.getCutOffs(i) << ",";
-        }
-
-        std::cout << std::endl;
-
-        std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count() << "[ms]" << std::endl;
-        std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
+        std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(__timeEnd - __timeBegin).count() << "[ms]" << std::endl;
+        std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(__totalTime) / (__cicles + 1) << "[ms]" << std::endl;
     }
     // Do a single match and register both fitness results in a pair <WHITE,BLACK> fitnesses
     std::pair<double, double> _match(Weights &__white, Weights &__black)
@@ -53,10 +43,10 @@ private:
         Zobrist hasher = Zobrist();
 
         // Setup new search engine with the given weights heuristic
-        SearchEngine searchEngineWhite = SearchEngine(Heuristic(__white), hasher);
-        SearchEngine searchEngineBlack = SearchEngine(Heuristic(__black), hasher);
+        NegaScoutEngine searchEngineWhite = NegaScoutEngine(Heuristic(__white), hasher, _maxDepth);
+        AlphaBetaEngine searchEngineBlack = AlphaBetaEngine(Heuristic(__black), hasher, _maxDepth);
 
-        searchEngineWhite._heuristic.print();
+        searchEngineWhite.printHeuristic();
 
         int totalWhiteScore = 0;
         int totalBlackScore = 0;
@@ -79,17 +69,18 @@ private:
             // WHITE ONE --------------------
             // NEGASCOUT --------------------
 
-            // gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerWhite);
+            // gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerWhite)
 
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineWhite.NegaScoutSearch(gameBoard, _maxDepth);
+            // searchEngineWhite.NegaScoutSearchT(gameBoard, _maxDepth).print();
+            gameBoard = searchEngineWhite.Search(gameBoard);
             timeEnd = std::chrono::steady_clock::now();
             timerWhite.reset();
 
             // STAT ------------------
 
-            totalWhiteScore += searchEngineWhite._bestScore;
+            totalWhiteScore += searchEngineWhite.getBestScore();
             totalTimeWhite += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
 
             if (_verbose)
@@ -98,7 +89,7 @@ private:
                 printStats(searchEngineWhite, timeBegin, timeEnd, totalTimeWhite, i);
             }
 
-            searchEngineWhite._transpositionTable.clear();
+            searchEngineWhite.resetTranspositionTable();
 
             // CHECK GAME_STATE
             if (_checkWin(gameBoard))
@@ -111,13 +102,13 @@ private:
 
             timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineBlack.NegaScoutSearch(gameBoard, _maxDepth);
+            gameBoard = searchEngineBlack.Search(gameBoard);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 
             // STAT ------------------
 
-            totalBlackScore += searchEngineBlack._bestScore;
+            totalBlackScore += searchEngineBlack.getBestScore();
             totalTimeBlack += std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
 
             if (_verbose)
@@ -132,7 +123,7 @@ private:
                 break;
             }
 
-            searchEngineBlack._transpositionTable.clear();
+            searchEngineBlack.resetTranspositionTable();
 
             if (_verbose)
             {
@@ -160,6 +151,7 @@ private:
                 break;
 
             */
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
         int gameCicles = i + 1;
@@ -181,7 +173,7 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(SearchEngine __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
+    double _computeFitness(SearchEngine & __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;

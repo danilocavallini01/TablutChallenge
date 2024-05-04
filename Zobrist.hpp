@@ -97,21 +97,13 @@ public:
         Specified by the @var colored
     */
 
-    void addHash(Tablut &__t, bool colored = false)
+    void addHash(Tablut &__t)
     {
-        if (!colored)
-        {
-            ZobristKey hash = Zobrist::hash(__t, false);
-            __t._hash = hash;
-            __t._gameBoardHash = hash;
-        }
-        else
-        {
-            __t._hash = Zobrist::hash(__t, true);
-            __t._gameBoardHash = Zobrist::hash(__t, false);
-        }
+        ZobristKey hash = Zobrist::hash(__t, false);
 
-        __t._pastHashes[__t._pastHashesIndex++] = __t._gameBoardHash;
+        __t._hash = hash;
+
+        __t._pastHashes[__t._pastHashesIndex++] = __t._hash;
         if (__t._pastHashesIndex == MAX_DRAW_LOG)
         {
             __t._pastHashesIndex = 0;

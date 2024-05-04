@@ -133,8 +133,6 @@ public:
 
     // Current table hash used for transpositionTable lookup
     ZobristKey _hash;
-    // Current gameBoard hash, used to log past seen positions
-    ZobristKey _gameBoardHash;
 
     // Past turn hashes, used to check if same game state is reached twice
     std::array<ZobristKey, MAX_DRAW_LOG> _pastHashes;
@@ -288,6 +286,10 @@ public:
         return _gameState != GAME_STATE::NONE;
     }
 
+    inline bool isNonQuiet() {
+        return _kills > 0 || isGameOver();
+    }
+
     // Tell if someone won, lost or drawed
     inline GAME_STATE checkWinState()
     {
@@ -316,7 +318,7 @@ public:
     {
         for (int i = 0; i < _pastHashesIndex - 1; i++)
         {
-            if (_gameBoardHash == _pastHashes[i])
+            if (_hash == _pastHashes[i])
             {
                 return true;
             }

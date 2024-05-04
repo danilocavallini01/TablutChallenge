@@ -1,9 +1,5 @@
 
 #include "GA.hpp"
-#include "Tablut.h"
-#include "MoveGenerator.hpp"
-#include "Heuristic.hpp"
-#include "SearchEngine.h"
 #include "Connection.hpp"
 #include "ResourceAllocator.hpp"
 

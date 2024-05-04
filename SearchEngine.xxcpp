@@ -1,0 +1,325 @@
+#include "SearchEngine.h"
+
+std::atomic<int> _totalMoves;
+std::atomic<int> _qTotalMoves;
+
+// Total cutoff made by alpha beta prunings
+std::atomic<int> _cutOffs[MAX_DEFAULT_DEPTH];
+
+SearchEngine::SearchEngine(Heuristic __heuristic, Zobrist __zobrist, MoveGenerator __moveGenerator, TranspositionTable __transpositionTable) : _quiesceMaxDepth(-2)
+{
+    _heuristic = __heuristic;
+    _moveGenerator = __moveGenerator;
+    _transpositionTable = __transpositionTable;
+    _zobrist = __zobrist;
+}
+
+SearchEngine::~SearchEngine(){};
+
+
+int SearchEngine::Quiesce(Tablut &__currentMove, int __qDepth, int __alpha, int __beta, int __color)
+{
+    _qTotalMoves++;
+
+    // QUIESCENCE MAX DEPTH OR GAME OVER CONDITION
+    if (__currentMove.isGameOver() || __qDepth == _quiesceMaxDepth)
+    {
+        return _heuristic.evaluate(__currentMove, __qDepth, __color, true);
+    }
+
+    int score;
+    std::vector<Tablut> moves;
+
+    int standPat = _heuristic.evaluate(__currentMove, __qDepth, __color, true);
+
+    if (standPat >= __beta)
+    {
+        return __beta;
+    }
+
+    __alpha = std::max(__alpha, standPat);
+
+    // GENERATE ALL NON QUIET MOVES ( CAPTURE OR WINS )
+    _moveGenerator.generateLegalMoves(__currentMove, moves);
+
+    // NO NON-QUIET MOVE AVAILABLE, QUIET STATE SO WE RETURN NORMAL HEURISTIC VALUE
+    if (moves.size() == 0)
+    {
+        return _heuristic.evaluate(__currentMove, __qDepth, __color, true);
+    }
+
+    for (Tablut &move : moves)
+    {
+        // CHECK IF MOVE IS NON QUIET
+        if (move._kills > 0 || move.isGameOver())
+        {
+            score = -Quiesce(move, __qDepth - 1, -__beta, -__alpha, !__color);
+            if (score >= __beta)
+            {
+                return __beta;
+            }
+
+            __alpha = std::max(__alpha, score);
+        }
+    }
+
+    return __alpha;
+}
+
+
+
+// Generate all non quiet moves ( CAPTURES ) for a specified Tablut used for Quiesce Function
+void SearchEngine::generateNonQuietMoves(Tablut &__t, std::vector<Tablut> &__nextTabluts)
+{
+    _moveGenerator.generateLegalMoves(__t, __nextTabluts);
+    __nextTabluts.erase(std::remove_if(__nextTabluts.begin(), __nextTabluts.end(), [&](const Tablut &__x)
+                                       { return __x._kills == 0 && !__x.isGameOver(); }),
+                        __nextTabluts.end());
+}
+
+int SearchEngine::getTotalMoves()
+{
+    return _totalMoves;
+}
+
+int SearchEngine::getQTotalMoves()
+{
+    return _qTotalMoves;
+}
+
+void SearchEngine::resetTranspositionTable()
+{
+    _transpositionTable.clear();
+}
+
+void SearchEngine::_resetCutoffs()
+{
+    for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
+    {
+        _cutOffs[i] = 0;
+    }
+}
+
+int SearchEngine::getCutOffs(int index)
+{
+    return _cutOffs[index];
+}
+
+void SearchEngine::_computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads)
+{
+    int slicedTimeLimit = int(float(__globalTimer.getRemainingTime()) / std::ceil(float(__remainingMoves) / float(__threads)) * (100.0 - MAX_TIME_ERROR) / 100.0);
+    std::cout << "TIME LIMIT SLICED -> TR: " << __globalTimer.getRemainingTime() << ", REMAINING MOVES:" << __remainingMoves << ", TOTAL THREAD: " << __threads << ", SLICED TIME: " << slicedTimeLimit << std::endl;
+    __mustSetTimer.setTimeLimit(slicedTimeLimit);
+}
+
+Tablut SearchEngine::AlphaBetaSearch(Tablut &__startingPosition, const int __maxDepth, const int __threads)
+{
+    _maxDepth = __maxDepth;
+    _totalMoves = 0;
+    _qTotalMoves = 0;
+    _resetCutoffs();
+
+    AlphaBeta(__startingPosition, __maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
+
+    return _bestMove;
+}
+
+int SearchEngine::AlphaBeta(Tablut &__currentMove, const int __depth, int __alpha, int __beta, bool __color)
+{
+    _totalMoves++;
+
+    int score;
+
+    std::vector<Tablut> moves;
+    Tablut move;
+
+    if (__currentMove.isGameOver() || __depth == 0)
+    {
+        return _heuristic.evaluate(__currentMove, __depth, __color, false);
+    }
+
+    _moveGenerator.generateLegalMoves(__currentMove, moves);
+
+    // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+    for (auto &nextTablut : moves)
+    {
+        _zobrist.addHash(nextTablut);
+    }
+
+    // LOSE BY NO MOVE LEFT
+    if (moves.size() == 0)
+    {
+        if (__currentMove._isWhiteTurn)
+        {
+            __currentMove._gameState = GAME_STATE::BLACKWIN;
+        }
+        else
+        {
+            __currentMove._gameState = GAME_STATE::WHITEWIN;
+        }
+
+        return _heuristic.evaluate(__currentMove, __depth, __color, false);
+    }
+
+    // SORT MOVES
+    _heuristic.sortMoves(moves, __depth, __color, false);
+
+    if (__color)
+    {
+        score = BOTTOM_SCORE;
+
+        for (int i = 0; i < moves.size(); i++)
+        {
+            score = std::max(score, AlphaBeta(moves[i], __depth - 1, __alpha, __beta, !__color));
+
+            if (score > __alpha)
+            {
+                __alpha = score;
+                if (__depth == _maxDepth)
+                {
+                    _bestScore = score;
+                    _bestMove = moves[i];
+                }
+            }
+
+            if (score >= __beta)
+            {
+                _cutOffs[__depth]++;
+                break;
+            }
+        }
+    }
+    else
+    {
+        score = TOP_SCORE;
+
+        for (int i = 0; i < moves.size(); i++)
+        {
+            score = std::min(score, AlphaBeta(moves[i], __depth - 1, __alpha, __beta, !__color));
+
+            if (score < __beta)
+            {
+                __beta = score;
+                if (__depth == _maxDepth)
+                {
+                    _bestScore = score;
+                    _bestMove = moves[i];
+                }
+            }
+
+            if (score <= __alpha)
+            {
+                _cutOffs[__depth]++;
+                break;
+            }
+        }
+    }
+
+    return score;
+}
+
+/*
+
+
+
+Tablut SearchEngine::NegaScoutSearchSliced(Tablut &__startingPosition, const int __maxDepth, const int __threads)
+{
+    _maxDepth = __maxDepth;
+    _totalMoves = 0;
+    _resetCutoffs();
+
+    ZobristKey hash;
+
+    std::vector<Tablut> moves;
+    Tablut bestMove;
+    std::vector<std::future<std::pair<int,Tablut>>> results;
+
+    _bestScore = BOTTOM_SCORE;
+    std::pair<int,Tablut> v;
+
+    // GENERATE ALL LEGAL MOVES
+    _moveGenerator.generateLegalMoves(__startingPosition, moves);
+
+    // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+    for (auto &nextTablut : moves)
+    {
+        _zobrist.addHash(nextTablut, true);
+    }
+
+    // SORT MOVES
+    _heuristic.sortMoves(moves, true);
+
+    int movesPerThread = moves.size() / __threads;
+
+    for (int t = 0; t < moves.size(); t += movesPerThread)
+    {
+        // LAST ITERATION, CONSUME ALL MOVES VECTOR
+        if (moves.size() <= t + movesPerThread * 2)
+        {
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScoutSliced, std::ref(*this), std::ref(moves), t, moves.size() - 1, _maxDepth - 1));
+            break;
+        }
+        else
+        {
+            results.push_back(std::async(std::launch::async, &SearchEngine::NegaScoutSliced, std::ref(*this), std::ref(moves), t, t + movesPerThread - 1, _maxDepth - 1));
+        }
+    }
+
+    for (int i = 0; i < results.size(); i++)
+    {
+        v = results[i].get();
+
+        // MAXIMIZE PROBLEM
+        if (v.first > _bestScore)
+        {
+            bestMove = v.second;
+            _bestScore = v.first;
+        }
+    }
+
+    return bestMove;
+}
+
+std::pair<int,Tablut> SearchEngine::NegaScoutSliced(std::vector<Tablut> &__moves, int __startIndex, int __endIndex, const int __depth)
+{
+    int alpha = BOTTOM_SCORE;
+    int beta = TOP_SCORE;
+
+    int score = BOTTOM_SCORE;
+    int b = beta;
+    int v;
+
+    Tablut move;
+    Tablut bestMove;
+
+    // NEGASCOUT CORE ENGINE
+    for (int i = __startIndex; i <= __endIndex; i++)
+    {
+        move = __moves[i];
+        v = -SearchEngine::NegaScout(move, __depth, -b, -alpha);
+
+        if (v > alpha && v < beta && i > __startIndex)
+        {
+            v = -SearchEngine::NegaScout(move, __depth, -beta, -v);
+        }
+        std::cout << "SCORE i:"<< i << "->"<< v << std::endl;
+
+        if (v > score)
+        {
+            bestMove = move;
+            score = v;
+        }
+
+        alpha = std::max(alpha, v);
+
+        if (alpha >= beta)
+        {
+            _cutOffs[__depth]++;
+            break;
+        }
+
+        b = alpha + 1;
+    }
+
+    return { score, bestMove };
+}*/
