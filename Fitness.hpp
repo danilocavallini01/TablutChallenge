@@ -4,7 +4,7 @@
 #include "Tablut.h"
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
-#include "SearchEngine.hpp"
+#include "AbstractSearchEngine.hpp"
 
 #include "NegaScoutEngine.hpp"
 #include "AlphaBetaEngine.hpp"
@@ -27,7 +27,7 @@ public:
     ~Fitness(){};
 
 private:
-    void printStats(SearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
+    void printStats(AbstractSearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
     {
         __engine.print();
 
@@ -44,7 +44,7 @@ private:
 
         // Setup new search engine with the given weights heuristic
         NegaScoutEngine searchEngineWhite = NegaScoutEngine(Heuristic(__white), hasher, _maxDepth);
-        AlphaBetaEngine searchEngineBlack = AlphaBetaEngine(Heuristic(__black), hasher, _maxDepth);
+        NegaScoutEngine searchEngineBlack = NegaScoutEngine(Heuristic(__black), hasher, _maxDepth);
 
         searchEngineWhite.printHeuristic();
 
@@ -69,12 +69,9 @@ private:
             // WHITE ONE --------------------
             // NEGASCOUT --------------------
 
-            // gameBoard = searchEngineWhite.NegaScoutSearchTimeLimited(gameBoard, timerWhite)
-
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
-            // searchEngineWhite.NegaScoutSearchT(gameBoard, _maxDepth).print();
-            gameBoard = searchEngineWhite.Search(gameBoard);
+            gameBoard = searchEngineWhite.ParallelSearch(gameBoard);
             timeEnd = std::chrono::steady_clock::now();
             timerWhite.reset();
 
@@ -102,7 +99,7 @@ private:
 
             timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineBlack.Search(gameBoard);
+            gameBoard = searchEngineBlack.ParallelSearch(gameBoard);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 
@@ -151,7 +148,6 @@ private:
                 break;
 
             */
-            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
         int gameCicles = i + 1;
@@ -173,7 +169,7 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(SearchEngine & __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
+    double _computeFitness(AbstractSearchEngine & __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;

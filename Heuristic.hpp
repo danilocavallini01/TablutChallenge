@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include <functional>
+#include <atomic>
 
 // Forward Declaration
 class Tablut;
@@ -34,6 +34,7 @@ class Tablut;
 */
 const int TOTAL_WEIGHTS = 38;
 
+typedef std::tuple<Pos, Pos, Pos, Pos> KillerMove;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
 typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 typedef std::pair<int, int> WeightBounds;
@@ -54,6 +55,7 @@ typedef std::pair<int, int> WeightBounds;
 
 */
 
+// HEURISTIC WEIGHTS BOUNDS
 const int WIN_WEIGHT = 100000;
 const int DRAW_WEIGHT = 0;
 
@@ -65,6 +67,12 @@ const WeightBounds negativeBound = {-BOUND, 0};
 const WeightBounds neutralBound = {-BOUND / 2, BOUND / 2};
 const WeightBounds neutralLowerBound = {-LOWER_BOUND / 2, LOWER_BOUND / 2};
 
+// KILLER MOVES TOTAL SLOT
+const int KILLER_MOVES_SLOT = 2;
+const int MAX_KILLER_MOVES_DEPTH = 15;
+
+std::atomic<int> _killerMovesHit;
+
 class Heuristic
 {
 private:
@@ -73,11 +81,21 @@ private:
     BoardWeights _whitePosHeuristic;
     BoardWeights _blackPosHeuristic;
 
+    // Killer moves set
+    std::array<std::array<KillerMove, KILLER_MOVES_SLOT>, MAX_KILLER_MOVES_DEPTH> _killerMoves;
+    std::array<int, MAX_KILLER_MOVES_DEPTH> _killerMovesIndex;
+
+    void _killerMoveHit()
+    {
+        _killerMovesHit++;
+    }
+
 public:
     Heuristic(Weights __weights)
     {
         _weights = __weights;
         setupPositionsWeights();
+        _killerMovesHit = 0;
     }
 
     Heuristic()
@@ -134,20 +152,23 @@ public:
     int evaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
     {
         int score;
-        int depthPenality = 10 - __depth; 
+        int depthPenality = 10 - __depth;
 
         if (__t.isGameOver())
         {
+            // DRAW CASE
             if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
             {
                 // MUST IMPROVE DRAW WEIGHT
                 score = DRAW_WEIGHT;
             }
+            // WIN CASE
             else
             {
                 score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
             }
         }
+        // NO GAME STATE FOUND CASE
         else
         {
             score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
@@ -157,11 +178,11 @@ public:
         return __colored ? (__whiteEvaluate ? score : -score) : score;
     }
 
-     // Fast evaluate a Tablut, used mainly for move ordering 
+    // Fast evaluate a Tablut, used mainly for move ordering
     int quickEvaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
     {
         int score;
-        int depthPenality = 10 - __depth; 
+        int depthPenality = 10 - __depth;
 
         if (__t.isGameOver())
         {
@@ -178,10 +199,91 @@ public:
         else
         {
             score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _kingPosHeuristic[__t._kingX][__t._kingY];
+            score += computeKillerMovesScore(__t, __depth);
             score -= depthPenality;
         }
 
         return __colored ? (__whiteEvaluate ? score : -score) : score;
+    }
+
+    /*
+        Function used to store a move killer into the killer moves
+        When at a given depth the array is not full simply push a killer move into the first slot
+        In alternative slide all the old killer moves and put the new one on top of the array
+    */
+    void storeKillerMove(KillerMove &__kMove, int __depth)
+    {
+        if (_killerMovesIndex[__depth] < KILLER_MOVES_SLOT)
+        {
+            _killerMoves[__depth][_killerMovesIndex[__depth]++] = __kMove;
+        }
+        else
+        {
+            for (int i = KILLER_MOVES_SLOT - 2; i >= 0; i--)
+            {
+                _killerMoves[__depth][i + 1] = _killerMoves[__depth][i];
+            }
+            _killerMoves[__depth][0] = __kMove;
+        }
+    }
+
+    /*
+        Tells if a move is a store killer move of a specified depth
+        Return the index of the killer moves if its found, if not returns -1
+    */
+    int isKillerMove(KillerMove &__kMove, int __depth)
+    {
+        for (int i = 0; i < _killerMovesIndex[__depth]; i++)
+        {
+            if (__kMove == _killerMoves[__depth][i])
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /*
+        Gives a bonus score based on if a move is a killer move
+    */
+    int computeKillerMovesScore(Tablut &__t, int __depth)
+    {
+        // KILLER MOVES
+        KillerMove move = __t.getMove();
+        int killerIndex = isKillerMove(move, __depth);
+
+        if (killerIndex == -1)
+        {
+            return 0;
+        }
+
+        _killerMoveHit();
+
+        if (killerIndex == 0)
+        {
+            return 5000;
+        }
+
+        return 2000;
+    }
+
+    // Get total killer moves hit
+    int getKillerMovesHits() const
+    {
+        return _killerMovesHit;
+    }
+
+    /*
+        Reset all killer moves, dont need to clean all killer moves array,
+        by clearing only the index array, when new killer moves will be added they'll overwrite 
+        the old invalid entries 
+    */
+    void resetKillerMoves()
+    {
+        _killerMovesHit = 0;
+        for ( int i = 0; i < MAX_KILLER_MOVES_DEPTH; i++) {
+            _killerMovesIndex[i] = 0;
+        }
     }
 
     /*

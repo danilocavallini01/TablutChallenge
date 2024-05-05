@@ -54,7 +54,7 @@ public:
 
     friend std::ostream &operator<<(std::ostream &out, const TranspositionTable &p)
     {
-        out << "PERFORMANCE TT-> HITS:" << p._cacheHit << " ,PUTS:" << p._cachePut << ", TOTAL: " << p.cacheTotalAccess();
+        out << "PERFORMANCE TT-> HITS: " << p._cacheHit << " ,PUTS: " << p._cachePut << ", TOTAL: " << p.cacheTotalAccess();
         return out;
     }
 

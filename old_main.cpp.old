@@ -1,7 +1,7 @@
 #include "Tablut.h"
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
-#include "SearchEngine.h"
+#include "AbstractSearchEngine.h"
 
 #include <vector>
 #include <chrono>
@@ -37,8 +37,8 @@ int main(int argc, char *argv[])
     int64_t totalTime = 0;
     int64_t totalTime2 = 0;
 
-    SearchEngine searchEngine = SearchEngine(Heuristic());
-    SearchEngine searchEngine2 = SearchEngine(Heuristic());
+    AbstractSearchEngine AbstractSearchEngine = AbstractSearchEngine(Heuristic());
+    AbstractSearchEngine searchEngine2 = AbstractSearchEngine(Heuristic());
 
     MoveGenerator moveGene = MoveGenerator();
     Heuristic _heuristic = Heuristic();
@@ -66,22 +66,22 @@ int main(int argc, char *argv[])
         /*
         // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
-        t = searchEngine.NegaScoutSearch(t, 7);
+        t = AbstractSearchEngine.NegaScoutSearch(t, 7);
         end = std::chrono::steady_clock::now();
 
         // GAME CICLE
         t.print();
 
-        std::cout << " --> NEGASCOUT SCORE = " << searchEngine._bestScore << std::endl;
+        std::cout << " --> NEGASCOUT SCORE = " << AbstractSearchEngine._bestScore << std::endl;
         // PERFORMANCE _______________
-        std::cout << searchEngine._transpositionTable << std::endl;
+        std::cout << AbstractSearchEngine._transpositionTable << std::endl;
 
-        std::cout << "TOTAL MOVES CHECKED: " << searchEngine.getTotalMoves() << std::endl;
+        std::cout << "TOTAL MOVES CHECKED: " << AbstractSearchEngine.getTotalMoves() << std::endl;
         totalTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine._transpositionTable.resetStat();
+        AbstractSearchEngine._transpositionTable.resetStat();
 
         // CHECK GAME_STATE
         if (checkWin(t))
@@ -93,22 +93,22 @@ int main(int argc, char *argv[])
 
         // NEGASCOUT --------------------
         begin = std::chrono::steady_clock::now();
-        t = searchEngine.NegaScoutSearch(t, 7);
+        t = AbstractSearchEngine.NegaScoutSearch(t, 7);
         end = std::chrono::steady_clock::now();
 
         // GAME CICLE
         t.print();
 
-        std::cout << " --> NEGASCOUT SCORE = " << searchEngine._bestScore << std::endl;
+        std::cout << " --> NEGASCOUT SCORE = " << AbstractSearchEngine._bestScore << std::endl;
         // PERFORMANCE _______________
-        std::cout << searchEngine._transpositionTable << std::endl;
+        std::cout << AbstractSearchEngine._transpositionTable << std::endl;
 
-        std::cout << "TOTAL MOVES CHECKED: " << searchEngine.getTotalMoves() << std::endl;
+        std::cout << "TOTAL MOVES CHECKED: " << AbstractSearchEngine.getTotalMoves() << std::endl;
         totalTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(totalTime) / (i + 1) << "[ms]" << std::endl;
 
-        searchEngine._transpositionTable.resetStat();
+        AbstractSearchEngine._transpositionTable.resetStat();
 
         // CHECK GAME_STATE
         if (checkWin(t))

@@ -286,8 +286,14 @@ public:
         return _gameState != GAME_STATE::NONE;
     }
 
-    inline bool isNonQuiet() {
+    inline bool isNonQuiet()
+    {
         return _kills > 0 || isGameOver();
+    }
+
+    inline std::tuple<Pos, Pos, Pos, Pos> getMove()
+    {
+        return {_oldX, _oldY, _x, _y};
     }
 
     // Tell if someone won, lost or drawed

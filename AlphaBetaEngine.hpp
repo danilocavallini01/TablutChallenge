@@ -1,17 +1,19 @@
 #ifndef ALPHABETA_SEARCH_ENGINE
 #define ALPHABETA_SEARCH_ENGINE
 
-#include "SearchEngine.hpp"
+#include "AbstractSearchEngine.hpp"
 
-class AlphaBetaEngine : public SearchEngine
+class AlphaBetaEngine : public AbstractSearchEngine
 {
 public:
     AlphaBetaEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)
-        : SearchEngine(__maxDepth, __quiescenceMaxDepth, false, __heuristic, __zobrist)
+        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, false, __heuristic, __zobrist)
     {
     }
 
-    // NEGASCOUT __________________________________________
+    ~AlphaBetaEngine(){};
+
+    // ALPHABETA __________________________________________
 
     Tablut Search(Tablut &__startingPosition) override
     {
@@ -59,8 +61,10 @@ public:
         // SORT MOVES
         sortMoves(moves, __depth, __color);
 
+        // ALPHA BETA ENGINE CORE
         if (__color)
         {
+            // MAXIMIZE PLAYER
             score = BOTTOM_SCORE;
 
             for (int i = 0; i < moves.size(); i++)
@@ -86,6 +90,7 @@ public:
         }
         else
         {
+            // MINIMIZE
             score = TOP_SCORE;
 
             for (int i = 0; i < moves.size(); i++)

@@ -1,15 +1,17 @@
 #ifndef NEGASCOUT_SEARCH_ENGINE
 #define NEGASCOUT_SEARCH_ENGINE
 
-#include "SearchEngine.hpp"
+#include "AbstractSearchEngine.hpp"
 
-class NegaScoutEngine : public SearchEngine
+class NegaScoutEngine : public AbstractSearchEngine
 {
 public:
     NegaScoutEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)
-        : SearchEngine(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist)
+        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist)
     {
     }
+
+    ~NegaScoutEngine(){};
 
     // NEGASCOUT __________________________________________
     Tablut Search(Tablut &__startingPosition) override
@@ -21,25 +23,72 @@ public:
         return _bestMove;
     }
 
+    Tablut ParallelSearch(Tablut &__startingPosition, int __threads = MAX_THREADS)
+    {
+        resetStats();
+
+        std::vector<Tablut> moves;
+        std::vector<std::future<int>> results;
+
+        const bool color = __startingPosition._isWhiteTurn;
+
+        _bestScore = BOTTOM_SCORE;
+        int alpha = BOTTOM_SCORE;
+        int v;
+
+        // GENERATE ALL LEGAL MOVES
+        getMoves(__startingPosition, moves);
+
+        // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+        addHashToMoves(moves);
+
+        // SORT MOVES
+        sortMoves(moves, _maxDepth, color);
+
+        for (int t = 0; t < moves.size(); t += __threads)
+        {
+            for (int i = 0; i < __threads && i + t < moves.size(); i++)
+            {
+                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScout, this, std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE , -alpha, !color));
+            }
+
+            for (int i = 0; i < results.size(); i++)
+            {
+                v = -results[i].get();
+
+                if (v > _bestScore || t + i == 0)
+                {
+                    _bestMove = moves[i + t];
+                    _bestScore = v;
+
+                    alpha = std::max(alpha, v);
+                }
+            }
+
+            results.clear();
+        }
+
+        return _bestMove;
+    }
+
     int NegaScout(Tablut &__currentMove, const int __depth, int __alpha, int __beta, const bool __color)
     {
         _totalMoves++;
 
-        int score = BOTTOM_SCORE;
-
+        int score;
         int b;
         int v;
 
         std::vector<Tablut> moves;
         Tablut move;
 
+        score = BOTTOM_SCORE;
+        b = __beta;
+
         if (__currentMove.isGameOver() || __depth == 0)
         {
             return Quiesce(__currentMove, __depth, __alpha, __beta, __color);
         }
-
-        score = BOTTOM_SCORE;
-        b = __beta;
 
         getMoves(__currentMove, moves);
 
@@ -90,6 +139,7 @@ public:
 
             if (__alpha >= __beta)
             {
+                storeKillerMove(move, __depth);
                 _cutOffs[__depth]++;
                 break;
             }
