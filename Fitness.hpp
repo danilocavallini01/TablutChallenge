@@ -86,8 +86,6 @@ private:
                 printStats(searchEngineWhite, timeBegin, timeEnd, totalTimeWhite, i);
             }
 
-            searchEngineWhite.resetTranspositionTable();
-
             // CHECK GAME_STATE
             if (_checkWin(gameBoard))
             {
@@ -119,8 +117,6 @@ private:
             {
                 break;
             }
-
-            searchEngineBlack.resetTranspositionTable();
 
             if (_verbose)
             {
@@ -169,7 +165,7 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(AbstractSearchEngine & __engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
+    double _computeFitness(AbstractSearchEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;
@@ -181,13 +177,14 @@ private:
         fitness += (1000.0 / __avgTimeElapsed) * avgTimeWeight;
         fitness += (100.0 / double(gameCicles)) * gameCicleWeight;
 
-        for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
-        {
-            cutOffFitness += __engine.getCutOffs(i) * pow(10, i);
-        }
+        /*
+            for (int i = 0; i < MAX_DEFAULT_DEPTH; i++)
+            {
+                cutOffFitness += __engine.getCutOffs(i) * pow(10, i);
+            }
 
-        cutOffFitness = std::log10(cutOffFitness);
-
+            cutOffFitness = std::log10(cutOffFitness);
+    */
         if (__isWhite)
         {
             fitness += __gameBoard._whiteCount * 20.0 - __gameBoard._blackCount * 10.0;

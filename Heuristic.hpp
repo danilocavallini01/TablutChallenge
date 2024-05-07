@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <atomic>
+#include <mutex>
 
 // Forward Declaration
 class Tablut;
@@ -72,6 +73,7 @@ const int KILLER_MOVES_SLOT = 2;
 const int MAX_KILLER_MOVES_DEPTH = 15;
 
 std::atomic<int> _killerMovesHit;
+std::mutex _mtxKillerMoveStore;
 
 class Heuristic
 {
@@ -149,7 +151,38 @@ public:
     }
 
     // Evaluate a tablut with all weights defined in this classes
-    int evaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
+    int evaluate(Tablut &__t, int __depth, bool __color = true, bool __colored = false)
+    {
+        int score;
+        int depthPenality = 10 - __depth;
+
+        if (__t.isGameOver())
+        {
+            // DRAW CASE
+            if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
+            {
+                // MUST IMPROVE DRAW WEIGHT
+                score = DRAW_WEIGHT;
+                score = __color ? score - depthPenality : score + depthPenality;
+            }
+            // WIN CASE
+            else
+            {
+                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
+            }
+        }
+        // NO GAME STATE FOUND CASE
+        else
+        {
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__color ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
+            score = __color ? score - depthPenality : score + depthPenality;
+        }
+
+        return __colored ? (__color ? score : -score) : score;
+    }
+
+    // Fast evaluate a Tablut, used mainly for move ordering
+    int quickEvaluate(Tablut &__t, int __depth, bool __color = true, bool __colored = false)
     {
         int score;
         int depthPenality = 10 - __depth;
@@ -168,42 +201,14 @@ public:
                 score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
             }
         }
-        // NO GAME STATE FOUND CASE
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
-            score -= depthPenality;
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__color ? _weights[2] : _weights[3]) + _kingPosHeuristic[__t._kingX][__t._kingY];
+            score += computeKillerMovesScore(__t, __depth, __color);
+            score = __color ? score - depthPenality : score + depthPenality;
         }
 
-        return __colored ? (__whiteEvaluate ? score : -score) : score;
-    }
-
-    // Fast evaluate a Tablut, used mainly for move ordering
-    int quickEvaluate(Tablut &__t, int __depth, bool __whiteEvaluate = true, bool __colored = false)
-    {
-        int score;
-        int depthPenality = 10 - __depth;
-
-        if (__t.isGameOver())
-        {
-            if (__t._gameState == GAME_STATE::WHITEDRAW || __t._gameState == GAME_STATE::BLACKDRAW)
-            {
-                // MUST IMPROVE DRAW WEIGHT
-                score = DRAW_WEIGHT;
-            }
-            else
-            {
-                score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
-            }
-        }
-        else
-        {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__whiteEvaluate ? _weights[2] : _weights[3]) + _kingPosHeuristic[__t._kingX][__t._kingY];
-            score += computeKillerMovesScore(__t, __depth);
-            score -= depthPenality;
-        }
-
-        return __colored ? (__whiteEvaluate ? score : -score) : score;
+        return __colored ? (__color ? score : -score) : score;
     }
 
     /*
@@ -213,6 +218,7 @@ public:
     */
     void storeKillerMove(KillerMove &__kMove, int __depth)
     {
+        _mtxKillerMoveStore.lock();
         if (_killerMovesIndex[__depth] < KILLER_MOVES_SLOT)
         {
             _killerMoves[__depth][_killerMovesIndex[__depth]++] = __kMove;
@@ -225,6 +231,7 @@ public:
             }
             _killerMoves[__depth][0] = __kMove;
         }
+        _mtxKillerMoveStore.unlock();
     }
 
     /*
@@ -246,7 +253,7 @@ public:
     /*
         Gives a bonus score based on if a move is a killer move
     */
-    int computeKillerMovesScore(Tablut &__t, int __depth)
+    int computeKillerMovesScore(Tablut &__t, int __depth, bool __color)
     {
         // KILLER MOVES
         KillerMove move = __t.getMove();
@@ -261,10 +268,10 @@ public:
 
         if (killerIndex == 0)
         {
-            return 5000;
+            return __color ? 5000 : -5000;
         }
 
-        return 2000;
+        return __color ? 2000 : -2000;
     }
 
     // Get total killer moves hit
@@ -275,13 +282,14 @@ public:
 
     /*
         Reset all killer moves, dont need to clean all killer moves array,
-        by clearing only the index array, when new killer moves will be added they'll overwrite 
-        the old invalid entries 
+        by clearing only the index array, when new killer moves will be added they'll overwrite
+        the old invalid entries
     */
     void resetKillerMoves()
     {
         _killerMovesHit = 0;
-        for ( int i = 0; i < MAX_KILLER_MOVES_DEPTH; i++) {
+        for (int i = 0; i < MAX_KILLER_MOVES_DEPTH; i++)
+        {
             _killerMovesIndex[i] = 0;
         }
     }

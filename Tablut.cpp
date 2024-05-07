@@ -215,7 +215,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
                 oppositeStructure = tablutStructure[_next._x][_next._y - 2];
 
                 // eat if normall eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-                if (tablutStructure[_next._x][_next._y - 1] != S::CASTLE && _next.getLeftChecker(2) == C::BLACK || oppositeStructure > 1)
+                if (tablutStructure[_next._x][_next._y - 1] != S::CASTLE && (_next.getLeftChecker(2) == C::BLACK || oppositeStructure > 1))
                 {
                     _next.killLeft();
                 }
@@ -238,7 +238,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
                 oppositeStructure = tablutStructure[_next._x][_next._y + 2];
 
                 // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-                if (tablutStructure[_next._x][_next._y + 1] != S::CASTLE && _next.getRightChecker(2) == C::BLACK || oppositeStructure > 1)
+                if (tablutStructure[_next._x][_next._y + 1] != S::CASTLE && (_next.getRightChecker(2) == C::BLACK || oppositeStructure > 1))
                 {
                     _next.killRight();
                 }
@@ -261,7 +261,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
                 oppositeStructure = tablutStructure[_next._x - 2][_next._y];
 
                 // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-                if (tablutStructure[_next._x - 1][_next._y] != S::CASTLE && _next.getUpChecker(2) == C::BLACK || oppositeStructure > 1)
+                if (tablutStructure[_next._x - 1][_next._y] != S::CASTLE && (_next.getUpChecker(2) == C::BLACK || oppositeStructure > 1))
                 {
                     _next.killUp();
                 }
@@ -284,7 +284,7 @@ Tablut Tablut::next(const Pos __fromX, const Pos __fromY, const Pos __toX, const
                 oppositeStructure = tablutStructure[_next._x + 2][_next._y];
 
                 // eat if normal eat (black on opposite side) or theres a camp or castle on the opposite side  @see STRUCTURE
-                if (tablutStructure[_next._x + 1][_next._y] != S::CASTLE && _next.getDownChecker(2) == C::BLACK || oppositeStructure > 1)
+                if (tablutStructure[_next._x + 1][_next._y] != S::CASTLE && (_next.getDownChecker(2) == C::BLACK || oppositeStructure > 1))
                 {
                     _next.killDown();
                 }

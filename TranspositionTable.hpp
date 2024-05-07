@@ -72,10 +72,16 @@ public:
         return entry;
     }
 
-    void clear() {
+    void clear()
+    {
         _map.clear();
         resetStat();
     }
+
+    /*
+        Remove all transposition table entries whos depth is lower than
+        the specified threshold
+    */
 
     void cacheHit()
     {

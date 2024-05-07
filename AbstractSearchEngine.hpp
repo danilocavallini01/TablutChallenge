@@ -111,6 +111,7 @@ public:
 
     virtual Tablut Search(Tablut &__startingPosition) = 0;
     virtual Tablut ParallelSearch(Tablut &__startingPosition, int __threads = MAX_THREADS) = 0;
+    virtual int Quiesce(Tablut &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
 
     int evaluate(Tablut &__move, int __depth, bool __color)
     {
@@ -140,55 +141,6 @@ public:
     {
         KillerMove move = __t.getMove();
         _heuristic.storeKillerMove(move, __depth);
-    }
-
-    int Quiesce(Tablut &__currentMove, int __qDepth, int __alpha, int __beta, int __color)
-    {
-        _qTotalMoves++;
-
-        // QUIESCENCE MAX DEPTH OR GAME OVER CONDITION
-        if (__currentMove.isGameOver() || __qDepth == _quiesceMaxDepth)
-        {
-            return evaluate(__currentMove, __qDepth, __color);
-        }
-
-        int score;
-        std::vector<Tablut> moves;
-
-        int standPat = evaluate(__currentMove, __qDepth, __color);
-
-        if (standPat >= __beta)
-        {
-            return __beta;
-        }
-
-        __alpha = std::max(__alpha, standPat);
-
-        // GENERATE ALL NON QUIET MOVES ( CAPTURE OR WINS )
-        getMoves(__currentMove, moves);
-
-        // NO NON-QUIET MOVE AVAILABLE, QUIET STATE SO WE RETURN NORMAL HEURISTIC VALUE
-        if (moves.size() == 0)
-        {
-            return evaluate(__currentMove, __qDepth, __color);
-        }
-
-        for (Tablut &move : moves)
-        {
-            // CHECK IF MOVE IS NON QUIET
-            if (move.isNonQuiet())
-            {
-                score = -Quiesce(move, __qDepth - 1, -__beta, -__alpha, !__color);
-                if (score >= __beta)
-                {
-                    return __beta;
-                }
-
-                __alpha = std::max(__alpha, score);
-            }
-        }
-
-        return __alpha;
     }
 
     friend std::ostream &operator<<(std::ostream &out, const AbstractSearchEngine &__engine)

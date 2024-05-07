@@ -415,7 +415,7 @@ private:
     }
 
 public:
-    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.2,
+    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.15,
        int __mutationFactor = 60, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
                                                                                 _mutationFactor(__mutationFactor),
