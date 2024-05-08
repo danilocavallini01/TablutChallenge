@@ -71,7 +71,8 @@ private:
 
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineWhite.ParallelSearch(gameBoard);
+            //gameBoard = searchEngineWhite.ParallelSearch(gameBoard);
+            gameBoard = searchEngineWhite.TimeLimitedSearch(gameBoard, timerWhite);
             timeEnd = std::chrono::steady_clock::now();
             timerWhite.reset();
 
@@ -97,7 +98,8 @@ private:
 
             timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
-            gameBoard = searchEngineBlack.ParallelSearch(gameBoard);
+            //gameBoard = searchEngineBlack.ParallelSearch(gameBoard);
+            gameBoard = searchEngineBlack.TimeLimitedSearch(gameBoard, timerBlack);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 

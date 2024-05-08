@@ -11,6 +11,11 @@ Tablut::Tablut(const Tablut &__startFrom)
     std::memcpy(this, &__startFrom, sizeof(Tablut));
 }
 
+Tablut Tablut::fromJson(const std::string &__json)
+{
+    std::cout << __json << std::endl;
+}
+
 Tablut Tablut::getStartingPosition()
 {
     Tablut t = Tablut();

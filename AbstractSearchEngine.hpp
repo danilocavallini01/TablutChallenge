@@ -27,8 +27,8 @@ const int BOTTOM_SCORE(-10000000);
 const int TOP_SCORE(10000000);
 
 // Default depth mainly used for time limited algorithm
-const int MAX_DEFAULT_DEPTH = 8;
-const int MAX_DEFAULT_QSEARCH_DEPTH = 2;
+const int MAX_DEFAULT_DEPTH = 7;
+const int MAX_DEFAULT_QSEARCH_DEPTH = 5;
 
 // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
 const float MAX_TIME_ERROR = 20.0;
@@ -200,12 +200,18 @@ public:
         _transpositionTable.clear();
     }
 
+    void reset()
+    {
+        resetStats();
+        resetTranspositionTable();
+        _heuristic.resetKillerMoves();
+    }
+
     void resetStats()
     {
         _totalMoves = 0;
         _qTotalMoves = 0;
         _resetCutoffs();
-        _heuristic.resetKillerMoves();
     }
 };
 

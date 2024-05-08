@@ -45,7 +45,7 @@ public:
         return -1;
     }
 
-    void printSizeDifference()
+    void printStackSize()
     {
         std::cout << "TOTAL STACK SIZE: " << getStackSize() <<std::endl;
     }
