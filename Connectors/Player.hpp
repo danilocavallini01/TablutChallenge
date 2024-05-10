@@ -79,19 +79,13 @@ namespace Connectors
             Tablut board = Tablut::getStartingPosition();
             std::array<ZobristKey, MAX_DRAW_LOG> hashes = {};
             int hashesIndex = 0;
-
-            _hasher.addHash(board);
-            hashes = board.getPastMoves();
-            hashesIndex = board.getPastMovesIndex();
-
-            int turn = 0;
+            int turn = 1;
 
             while (gameContinue)
             {
                 // RECEIVE GAME STATE VIA JSON VALUE
                 board = Tablut::fromJson(_socket.receiveString());
-                _hasher.addHash(board);
-                board._turn++;
+                updateGameBoard(board, hashes, hashesIndex++, turn++);
 
                 if (_color == COLOR::WHITE)
                 {
@@ -101,8 +95,7 @@ namespace Connectors
                 }
 
                 board = Tablut::fromJson(_socket.receiveString());
-                _hasher.addHash(board);
-                board._turn++;
+                updateGameBoard(board, hashes, hashesIndex++, turn++);
 
                 if (_color == COLOR::BLACK)
                 {
@@ -113,13 +106,19 @@ namespace Connectors
             }
         }
 
-        void sendMove(Tablut &board)
+        void updateGameBoard(Tablut &__board, std::array<ZobristKey, MAX_DRAW_LOG> &__hashes, int __hashesIndex, int __turn)
+        {
+            __hashes[__hashesIndex] = _hasher.hash(__board, false);
+            __board._turn = __turn;
+        }
+
+        void sendMove(Tablut &__board)
         {
             StopWatch timer = StopWatch(_timeout);
 
             // BEST MOVE SEARCH
             timer.start();
-            Tablut bestMove = _engine.ParallelSearch(board);
+            Tablut bestMove = _engine.ParallelSearch(__board);
 
             bestMove.print();
             _engine.print();
@@ -130,15 +129,15 @@ namespace Connectors
             _socket.send(parsedMove);
         }
 
-        std::string toStandardMove(std::tuple<int, int, int, int> _move)
+        std::string toStandardMove(std::tuple<int, int, int, int> __move)
         {
             std::string from = "", to = "";
 
-            from += char(std::get<1>(_move) + 97);
-            from += char(std::get<0>(_move) + 49);
+            from += char(std::get<1>(__move) + 97);
+            from += char(std::get<0>(__move) + 49);
 
-            to += char(std::get<3>(_move) + 97);
-            to += char(std::get<2>(_move) + 49);
+            to += char(std::get<3>(__move) + 97);
+            to += char(std::get<2>(__move) + 49);
 
             json JSON = {
                 {"from", from},

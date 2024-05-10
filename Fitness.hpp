@@ -35,7 +35,7 @@ private:
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(__totalTime) / (__cicles + 1) << "[ms]" << std::endl;
     }
     // Do a single match and register both fitness results in a pair <WHITE,BLACK> fitnesses
-    std::pair<double, double> _match(Weights &__white, Weights &__black)
+    std::pair<double, double> _match(Weights &__white, Weights &__black, int __threadId = -1)
     {
         Tablut gameBoard = Tablut::getStartingPosition();
 
@@ -48,11 +48,11 @@ private:
 
         for (int n : __white)
             std::cout << n << ' ';
-        std::cout << '\n';
+        std::cout << std::endl;
 
         for (int n : __black)
             std::cout << n << ' ';
-        std::cout << '\n';
+        std::cout << std::endl;
 
         int totalWhiteScore = 0;
         int totalBlackScore = 0;
@@ -251,7 +251,7 @@ public:
 
         for (int i = 0; i < __totalMatches; i++)
         {
-            threads.push_back(std::async(std::launch::async, &Fitness::_match, std::ref(*this), std::ref(__whitePopulation[i]), std::ref(__blackPopulation[i])));
+            threads.push_back(std::async(std::launch::async, &Fitness::_match, std::ref(*this), std::ref(__whitePopulation[i]), std::ref(__blackPopulation[i]), i));
         }
 
         for (int i = 0; i < __totalMatches; i++)
