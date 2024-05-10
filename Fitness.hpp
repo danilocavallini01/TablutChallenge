@@ -46,7 +46,13 @@ private:
         NegaScoutEngine searchEngineWhite = NegaScoutEngine(Heuristic(__white), hasher, _maxDepth);
         NegaScoutEngine searchEngineBlack = NegaScoutEngine(Heuristic(__black), hasher, _maxDepth);
 
-        searchEngineWhite.printHeuristic();
+        for (int n : __white)
+            std::cout << n << ' ';
+        std::cout << '\n';
+
+        for (int n : __black)
+            std::cout << n << ' ';
+        std::cout << '\n';
 
         int totalWhiteScore = 0;
         int totalBlackScore = 0;
@@ -71,8 +77,8 @@ private:
 
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
-            //gameBoard = searchEngineWhite.ParallelSearch(gameBoard);
-            gameBoard = searchEngineWhite.TimeLimitedSearch(gameBoard, timerWhite);
+            gameBoard = searchEngineWhite.Search(gameBoard);
+            // gameBoard = searchEngineWhite.TimeLimitedSearch(gameBoard, timerWhite);
             timeEnd = std::chrono::steady_clock::now();
             timerWhite.reset();
 
@@ -98,8 +104,8 @@ private:
 
             timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
-            //gameBoard = searchEngineBlack.ParallelSearch(gameBoard);
-            gameBoard = searchEngineBlack.TimeLimitedSearch(gameBoard, timerBlack);
+            gameBoard = searchEngineBlack.Search(gameBoard);
+            // gameBoard = searchEngineBlack.TimeLimitedSearch(gameBoard, timerBlack);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 
@@ -241,10 +247,16 @@ public:
     std::vector<std::pair<double, double>> train(std::vector<Weights> &__whitePopulation, std::vector<Weights> &__blackPopulation, int __totalMatches)
     {
         std::vector<std::pair<double, double>> results{};
+        std::vector<std::future<std::pair<double, double>>> threads{};
 
         for (int i = 0; i < __totalMatches; i++)
         {
-            results.push_back(_match(__whitePopulation[i], __blackPopulation[i]));
+            threads.push_back(std::async(std::launch::async, &Fitness::_match, std::ref(*this), std::ref(__whitePopulation[i]), std::ref(__blackPopulation[i])));
+        }
+
+        for (int i = 0; i < __totalMatches; i++)
+        {
+            results.push_back(threads[i].get());
         }
 
         return results;

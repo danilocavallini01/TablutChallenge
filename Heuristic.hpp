@@ -2,6 +2,7 @@
 #define HEURISTIC
 
 #include "Tablut.h"
+#include "MoveGenerator.hpp"
 
 #include <array>
 #include <vector>
@@ -13,6 +14,7 @@
 
 // Forward Declaration
 class Tablut;
+class MoveGenerator;
 
 /* -------------------------------
         MUST IMPLEMENT QUICK HEURISTIC WHEN TRAINING IS COMPLETED
@@ -33,7 +35,7 @@ class Tablut;
  8  - E E C C C E E -
 
 */
-const int TOTAL_WEIGHTS = 38;
+const int TOTAL_WEIGHTS = 40;
 
 typedef std::tuple<Pos, Pos, Pos, Pos> KillerMove;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
@@ -53,20 +55,18 @@ typedef std::pair<int, int> WeightBounds;
     5-12: king position weight
     13-23: white pieces position weight
     24-37: black pieces position weight
-
+    38: white restricting black weight
+    39: black restricting white weight
 */
 
 // HEURISTIC WEIGHTS BOUNDS
 const int WIN_WEIGHT = 100000;
 const int DRAW_WEIGHT = 0;
 
-const int BOUND = 300;
-const int LOWER_BOUND = 70;
-
-const WeightBounds positiveBound = {0, BOUND};
-const WeightBounds negativeBound = {-BOUND, 0};
-const WeightBounds neutralBound = {-BOUND / 2, BOUND / 2};
-const WeightBounds neutralLowerBound = {-LOWER_BOUND / 2, LOWER_BOUND / 2};
+// WEIGHT BOUND SCALE
+const int BIG_BOUND = 300;
+const int MEDIUM_BOUND = 170;
+const int LITTLE_BOUND = 40;
 
 // KILLER MOVES TOTAL SLOT
 const int KILLER_MOVES_SLOT = 2;
@@ -174,7 +174,12 @@ public:
         // NO GAME STATE FOUND CASE
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__color ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + 
+                __t._kills * (__color ? _weights[2] : _weights[3]) 
+                + _weights[4] * kingMovements(__t) 
+                + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t)
+                + (__t._isWhiteTurn ? _weights[38] : _weights[39]) * restrictingPosition(__t);
+
             score = __color ? score - depthPenality : score + depthPenality;
         }
 
@@ -194,6 +199,7 @@ public:
             {
                 // MUST IMPROVE DRAW WEIGHT
                 score = DRAW_WEIGHT;
+                score = __color ? score - depthPenality : score + depthPenality;
             }
             // WIN CASE
             else
@@ -201,9 +207,12 @@ public:
                 score = __t._gameState == GAME_STATE::WHITEWIN ? HEURISTIC::WIN_WEIGHT - depthPenality : -HEURISTIC::WIN_WEIGHT + depthPenality;
             }
         }
+        // NO GAME STATE FOUND CASE
         else
         {
-            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount + __t._kills * (__color ? _weights[2] : _weights[3]) + _kingPosHeuristic[__t._kingX][__t._kingY];
+            score = _weights[0] * __t._whiteCount + _weights[1] * __t._blackCount 
+            + __t._kills * (__color ? _weights[2] : _weights[3]) + _weights[4] * kingMovements(__t) 
+            + _kingPosHeuristic[__t._kingX][__t._kingY] + positionsWeightSum(__t);
             score += computeKillerMovesScore(__t, __depth, __color);
             score = __color ? score - depthPenality : score + depthPenality;
         }
@@ -299,36 +308,11 @@ public:
     */
     int kingMovements(Tablut &__t)
     {
-        int score = 0;
+        return MoveGenerator::countKingLegalMoves(__t);
+    }
 
-        int x = __t._kingX;
-        int y = __t._kingY;
-
-        // CHECK LEFT
-        if (y >= FIRST_COL && __t._board[x][y - 1] == C::EMPTY && tablutStructure[x][y - 1] < 2)
-        {
-            score++;
-        }
-
-        // CHECK RIGHT
-        if (y <= LAST_COL && __t._board[x][y + 1] == C::EMPTY && tablutStructure[x][y + 1] < 2)
-        {
-            score++;
-        }
-
-        // CHECK UP
-        if (x >= FIRST_ROW && __t._board[x - 1][y] == C::EMPTY && tablutStructure[x - 1][y] < 2)
-        {
-            score++;
-        }
-
-        // CHECK DOWN
-        if (x <= LAST_COL && __t._board[x + 1][y] == C::EMPTY && tablutStructure[x + 1][y] < 2)
-        {
-            score++;
-        }
-
-        return score;
+    int restrictingPosition(Tablut &__t) {
+        return MoveGenerator::countLegalMoves(__t);
     }
 
     // Sum of all position weights used to evaluate a tablut
@@ -404,28 +388,56 @@ public:
         }
     }
 
-    static WeightBounds getWeightBounds(int index)
+    /*
+        Return the minimum and maximum value associated to the specified weight of the weights
+    */
+    static WeightBounds getWeightBounds(int __index)
     {
         // WHITE PIECES / WHITE KILLS / KING SPACE WEIGHT
-        if (index == 0 || index == 2 || index == 4)
+        if (__index == 0 || __index == 2 || __index == 4)
         {
-            return positiveBound;
+            return positiveBound(BIG_BOUND);
         }
         // BLACK PIECES / BLACK KILLS
-        else if (index == 1 || index == 3)
+        else if (__index == 1 || __index == 3)
         {
-            return negativeBound;
+            return negativeBound(BIG_BOUND);
         }
         // KING POSITION WEIGHT
-        else if (index >= 5 && index <= 12)
+        else if (__index >= 5 && __index <= 12)
         {
-            return neutralBound;
+            return neutralBound(BIG_BOUND);
+        }
+        // RESCTRING WHITE WEIGHT POSITION
+        else if (__index == 38)
+        {
+            return negativeBound(LITTLE_BOUND);
+        }
+        // RESCTRING WHITE WEIGHT POSITION
+        else if (__index == 39)
+        {
+            return positiveBound(LITTLE_BOUND);
         }
         // POSITIONS WEIGHT
         else
         {
-            return neutralLowerBound;
+            return neutralBound(MEDIUM_BOUND);
         }
+    }
+
+    static WeightBounds positiveBound(int __bound)
+    {
+        return {0, __bound};
+    }
+
+    static WeightBounds negativeBound(int __bound)
+    {
+        return {-__bound, 0};
+    }
+
+    static WeightBounds neutralBound(int __bound)
+    {
+        return {-__bound / 2, __bound / 2};
     }
 };
 

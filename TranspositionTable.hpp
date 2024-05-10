@@ -2,6 +2,7 @@
 #define TRANSPOSITION_TABLE
 
 #include "Zobrist.hpp"
+#include "Interfaces/ITranspositionTable.hpp"
 
 #include <unordered_map>
 #include <optional>
@@ -37,7 +38,8 @@ enum ENTRY : int
 
 typedef std::tuple<int, int, FLAG, bool> Entry;
 
-class TranspositionTable
+
+class TranspositionTable : public ITranspositionTable<Entry, ZobristKey>
 {
 private:
     boost::unordered::concurrent_flat_map<ZobristKey, Entry> _map;
@@ -77,11 +79,6 @@ public:
         _map.clear();
         resetStat();
     }
-
-    /*
-        Remove all transposition table entries whos depth is lower than
-        the specified threshold
-    */
 
     void cacheHit()
     {

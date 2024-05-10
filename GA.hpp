@@ -24,7 +24,6 @@ private:
     int _N;
     double _mutationProb;
     int _mutationFactor;
-    int _lowerMutationFactor;
     int _tournSize;
     int _maxGeneration;
     int _totalWeights;
@@ -71,10 +70,17 @@ private:
             add = {};
 
             tokenized = _tokenize(line, re);
+            int j;
 
-            for (int i = 0; i < tokenized.size(); i++)
+            for (j = 0; j < tokenized.size(); j++)
             {
-                add[i] = std::stoi(tokenized.at(i));
+                add[j] = std::stoi(tokenized.at(j));
+            }
+
+            // NOT ENOUGH WEIGTHS IN MODEL -> RANDOMLY GENERATING GENES
+            for (j; j < _totalWeights; j++)
+            {
+                add[j] = _randomGenerateGenes(j);
             }
 
             _whitePopulation.push_back(add);
@@ -86,10 +92,17 @@ private:
             add = {};
 
             tokenized = _tokenize(line, re);
+            int j;
 
-            for (int i = 0; i < tokenized.size(); i++)
+            for (j = 0; j < tokenized.size(); j++)
             {
-                add[i] = std::stoi(tokenized.at(i));
+                add[j] = std::stoi(tokenized.at(j));
+            }
+
+            // NOT ENOUGH WEIGTHS IN MODEL -> RANDOMLY GENERATING GENES
+            for (j; j < _totalWeights; j++)
+            {
+                add[j] = _randomGenerateGenes(j);
             }
 
             _blackPopulation.push_back(add);
@@ -183,7 +196,6 @@ private:
         }
 
         std::cout << "FILE MODEL DOESN'T EXIST -> CREATING RANDOM GENES" << std::endl;
-        std::uniform_int_distribution<int> distribution;
 
         // Generating random weights from uniform distribution
         for (int i = 0; i < _N; i++)
@@ -192,8 +204,7 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                _calculateMutationFactor(distribution, j);
-                add[j] = distribution(_rd);
+                add[j] = _randomGenerateGenes(j);
             }
 
             _whitePopulation.push_back(add);
@@ -205,12 +216,22 @@ private:
 
             for (int j = 0; j < _totalWeights; j++)
             {
-                _calculateMutationFactor(distribution, j);
-                add[j] = distribution(_rd);
+
+                add[j] = _randomGenerateGenes(j);
             }
 
             _blackPopulation.push_back(add);
         }
+    }
+
+    /*
+        Generate a random gene for a specified index within is associated bound
+    */
+    int _randomGenerateGenes(int __index)
+    {
+        WeightBounds bound = Heuristic::getWeightBounds(__index);
+        std::uniform_int_distribution<int> distribution = std::uniform_int_distribution<int>(bound.first, bound.second);
+        return distribution(_rd);
     }
 
     /*
@@ -235,7 +256,7 @@ private:
     */
     void _singleTournamentSelection(Weights &__whiteParent, Weights &__blackParent, std::vector<std::pair<double, double>> &__fitnesses)
     {
-        std::uniform_int_distribution<int> distribution(0, _N);
+        std::uniform_int_distribution<int> distribution(0, _N - 1);
 
         Weights bestWhitePlayer;
         int bestWhitePlayerScore;
@@ -255,11 +276,13 @@ private:
             if (i == 0 || __fitnesses[selectedWhitePlayer].first > bestWhitePlayerScore)
             {
                 bestWhitePlayer = _whitePopulation[selectedWhitePlayer];
+                bestWhitePlayerScore = __fitnesses[selectedWhitePlayer].first;
             }
 
             if (i == 0 || __fitnesses[selectedBlackPlayer].second > bestBlackPlayerScore)
             {
                 bestBlackPlayer = _blackPopulation[selectedBlackPlayer];
+                bestBlackPlayerScore = __fitnesses[selectedBlackPlayer].second;
             }
         }
 
@@ -268,7 +291,7 @@ private:
     }
 
     /*
-        In uniform crossover,  each bit is chosen from either parent with equal probability.
+        In uniform crossover, each bit is chosen from either parent with equal probability.
         In this, we essentially flip a coin for each chromosome to decide whether or not it will be included in the off-spring.
     */
 
@@ -300,26 +323,39 @@ private:
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
-        std::uniform_int_distribution<int> distribution;
 
         for (int i = 0; i < _totalWeights; i++)
         {
             if (mutationProbDistribution(_rd) <= _mutationProb)
             {
-                _calculateMutationFactor(distribution, i);
-                __offspring[i] = distribution(_rd);
+                __offspring[i] = _mutateOffspring(__offspring[i], i);
             }
         }
     }
 
     /*
-        Return a different mutation factor based on the index of the targeted weight
+        Mutate a single gene of offspring by checking the bound of the specified Weight and by changing it
+        by max +-10% of its bound
     */
-    void _calculateMutationFactor(std::uniform_int_distribution<int> &__distribution, int index)
+    int _mutateOffspring(int __gene, int __index)
     {
-        WeightBounds bound = Heuristic::getWeightBounds(index);
-        __distribution = std::uniform_int_distribution<int>(bound.first, bound.second);
-    };
+        WeightBounds bound = Heuristic::getWeightBounds(__index);
+        int boundDifference = std::abs((bound.second - bound.first) / _mutationFactor);
+        std::uniform_int_distribution<int> distribution{std::uniform_int_distribution<int>(-boundDifference, boundDifference)};
+
+        __gene += distribution(_rd);
+
+        if (__gene < bound.first)
+        {
+            return bound.first;
+        }
+        if (__gene > bound.second)
+        {
+            return bound.second;
+        }
+
+        return __gene;
+    }
 
     /*
         Select the best half of new population and best half of the old population to create the new generation
@@ -415,11 +451,10 @@ private:
     }
 
 public:
-    GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.15,
-       int __mutationFactor = 60, int __tournSize = 3, int __generation = 10) : _N(__N),
+    GA(int __maxDepth = 7, bool __verbose = false, int __N = MAX_THREADS, double __mutationProb = 0.15,
+       int __mutationFactor = 10, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
-                                                                                _mutationFactor(__mutationFactor),
-                                                                                _lowerMutationFactor(__mutationFactor / 3),
+                                                                                _mutationFactor(100 / __mutationFactor),
                                                                                 _tournSize(__tournSize),
                                                                                 _maxGeneration(__generation),
                                                                                 _totalWeights(TOTAL_WEIGHTS),
@@ -477,7 +512,13 @@ public:
             newWhitePopulation = {};
             newBlackPopulation = {};
 
-            for (int j = 0; newWhitePopulation.size() < _N; j++)
+            whiteOffspring1 = {};
+            whiteOffspring2 = {};
+
+            blackOffspring1 = {};
+            blackOffspring2 = {};
+
+            while (newWhitePopulation.size() < _N)
             {
                 // Select parents
                 _tournamentSelection(whiteParents, blackParents, oldResults);
@@ -501,7 +542,6 @@ public:
 
             std::cout << "---------NEW POPULATION CREATED---------" << std::endl;
             results = _fitnessFn.train(newWhitePopulation, newBlackPopulation, _N);
-
 
             // reset new Results
             whiteResults = {};

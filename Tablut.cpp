@@ -11,9 +11,104 @@ Tablut::Tablut(const Tablut &__startFrom)
     std::memcpy(this, &__startFrom, sizeof(Tablut));
 }
 
+void Tablut::addDatasToTablut(Tablut &__t, std::array<ZobristKey, MAX_DRAW_LOG> __hashes, int __hashesIndex, int __turn)
+{
+    __t._pastHashes = __hashes;
+    __t._turn = __turn;
+    __t._pastHashesIndex = __hashesIndex;
+}
+
 Tablut Tablut::fromJson(const std::string &__json)
 {
-    std::cout << __json << std::endl;
+    Tablut t = Tablut();
+
+    json jsonValue = json::parse(__json);
+
+    // -- TURN READ --------------
+    const std::string turn = jsonValue["turn"];
+
+    if (turn == "BLACKWIN" || turn == "WHITEWIN" || turn == "DRAW")
+    {
+        std::cout << "------- GAME ENDED -------" << std::endl;
+        exit(EXIT_SUCCESS);
+    }
+
+    if (turn.at(0) == 'W')
+    {
+        t._isWhiteTurn = true;
+    }
+    else
+    {
+        t._isWhiteTurn = false;
+    }
+
+    // -- TURN READ -------------- END
+    // -- BOARD READ -------------
+
+    Pos rowIndex = 0;
+    Pos colIndex = 0;
+
+    t._whiteCount = 0;
+    t._blackCount = 0;
+
+    t._x = -1;
+    t._y = -1;
+
+    t._oldX = -1;
+    t._oldY = -1;
+
+    t._kills = 0;
+
+    t._gameState = GAME_STATE::NONE;
+
+    t._kingMovements = 0;
+    t._turn = 0;
+
+    t._score = 0;
+
+    t._checkerPositions = {};
+    t._checkerPositionIndex = 0;
+
+    t._hash = 0;
+    t._pastHashes = {};
+    t._pastHashesIndex = 0;
+
+    for (auto &row : jsonValue["board"])
+    {
+        for (std::string cell : row)
+        {
+            char cellStart = cell.at(0);
+
+            if (cellStart == 'E')
+            {
+                t._board[rowIndex][colIndex] = C::EMPTY;
+            }
+            else if (cellStart == 'W')
+            {
+                t._whiteCount++;
+                t._checkerPositions[t._checkerPositionIndex++] = {rowIndex, colIndex};
+                t._board[rowIndex][colIndex] = C::WHITE;
+            }
+            else if (cellStart == 'B')
+            {
+                t._blackCount++;
+                t._checkerPositions[t._checkerPositionIndex++] = {rowIndex, colIndex};
+                t._board[rowIndex][colIndex] = C::BLACK;
+            }
+            else if (cellStart == 'K')
+            {
+                t._kingX = colIndex;
+                t._kingY = rowIndex;
+                t._board[rowIndex][colIndex] = C::KING;
+            }
+
+            colIndex++;
+        }
+        colIndex = 0;
+        rowIndex++;
+    }
+
+    return t;
 }
 
 Tablut Tablut::getStartingPosition()
@@ -30,8 +125,8 @@ Tablut Tablut::getStartingPosition()
 
     t._isWhiteTurn = true;
 
-    t._whiteCount = 8U;
-    t._blackCount = 16U;
+    t._whiteCount = 8;
+    t._blackCount = 16;
 
     t._x = 0;
     t._y = 0;

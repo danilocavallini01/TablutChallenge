@@ -10,6 +10,9 @@
 #include <chrono>
 #include <vector>
 #include <deque>
+#include <Json/json.hpp>
+
+using json = nlohmann::json;
 
 typedef uint64_t ZobristKey;
 
@@ -276,6 +279,7 @@ public:
 
     // Constructor from json
     static Tablut fromJson(const std::string &__json);
+    static void addDatasToTablut(Tablut &__t, std::array<ZobristKey, MAX_DRAW_LOG> __hashes, int __hashesIndex, int __turn);
 
     // Tablut with starting position set
     static Tablut getStartingPosition();
@@ -294,6 +298,14 @@ public:
     inline std::tuple<Pos, Pos, Pos, Pos> getMove()
     {
         return {_oldX, _oldY, _x, _y};
+    }
+
+    inline std::array<ZobristKey, MAX_DRAW_LOG> getPastMoves() {
+        return _pastHashes;
+    }
+
+    inline int getPastMovesIndex() {
+        return _pastHashesIndex;
     }
 
     // Tell if someone won, lost or drawed

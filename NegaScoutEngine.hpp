@@ -17,6 +17,7 @@ public:
     Tablut Search(Tablut &__startingPosition)
     {
         reset();
+        resetTranspositionTable();
 
         NegaScout(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
 
@@ -26,6 +27,7 @@ public:
     Tablut ParallelSearch(Tablut &__startingPosition, int __threads = MAX_THREADS)
     {
         reset();
+        resetTranspositionTable();
 
         std::vector<Tablut> moves;
         std::vector<std::future<int>> results;
@@ -35,7 +37,8 @@ public:
         _bestScore = BOTTOM_SCORE;
         int alpha = BOTTOM_SCORE;
         int beta = TOP_SCORE;
-
+        int b = beta;
+        
         int v;
 
         // GENERATE ALL LEGAL MOVES
@@ -51,7 +54,7 @@ public:
         {
             for (int i = 0; i < __threads && i + t < moves.size(); i++)
             {
-                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScout, this, std::ref(moves[i + t]), _maxDepth - 1, -beta, -alpha, !color));
+                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScout, this, std::ref(moves[i + t]), _maxDepth - 1, -b, -alpha, !color));
             }
 
             for (int i = 0; i < results.size(); i++)
@@ -70,6 +73,8 @@ public:
                 }
 
                 alpha = std::max(alpha, v);
+
+                b = alpha + 1;
             }
 
             results.clear();
@@ -103,7 +108,6 @@ public:
 
         // SORT MOVES
         sortMoves(moves, _maxDepth, color);
-        std::reverse(std::begin(moves), std::end(moves));
 
         // TIME LIMIT SUBDIVISION
         int totalMoves = moves.size();
@@ -117,11 +121,7 @@ public:
             // if last move check deeper
             if (totalMoves <= __threads)
             {
-                if (_stopWatch.getTimeLimit() > 30000)
-                {
-                    _maxDepth += 2;
-                }
-                else if (_stopWatch.getTimeLimit() > 10000)
+                if (_stopWatch.getTimeLimit() > 20000)
                 {
                     _maxDepth += 1;
                 }

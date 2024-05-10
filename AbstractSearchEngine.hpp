@@ -28,7 +28,7 @@ const int TOP_SCORE(10000000);
 
 // Default depth mainly used for time limited algorithm
 const int MAX_DEFAULT_DEPTH = 7;
-const int MAX_DEFAULT_QSEARCH_DEPTH = 5;
+const int MAX_DEFAULT_QSEARCH_DEPTH = 3;
 
 // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
 const float MAX_TIME_ERROR = 20.0;
@@ -48,9 +48,6 @@ class AbstractSearchEngine
 protected:
     // Heuristic function: gives score to each Board position
     Heuristic _heuristic;
-
-    // MoveGenerator algorithm to create all possible tablut moves and hashes for the transposition Table
-    MoveGenerator _moveGenerator;
 
     // Transposition table, used to store previous seen _board positions so we dont re-evaluate
     TranspositionTable _transpositionTable;
@@ -95,11 +92,9 @@ protected:
 
 public:
     explicit AbstractSearchEngine(int __maxDepth = MAX_DEFAULT_DEPTH, int __quiesceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH, bool __colored = false,
-                                  Heuristic __heuristic = Heuristic(), Zobrist __zobrist = Zobrist(),
-                                  MoveGenerator __moveGenerator = MoveGenerator(), TranspositionTable __transpositionTable = TranspositionTable())
+                                  Heuristic __heuristic = Heuristic(), Zobrist __zobrist = Zobrist(), TranspositionTable __transpositionTable = TranspositionTable())
         : _heuristic(__heuristic),
           _zobrist(__zobrist),
-          _moveGenerator(__moveGenerator),
           _transpositionTable(__transpositionTable),
           _maxDepth(__maxDepth),
           _quiesceMaxDepth(-__quiesceMaxDepth),
@@ -111,6 +106,8 @@ public:
 
     virtual Tablut Search(Tablut &__startingPosition) = 0;
     virtual Tablut ParallelSearch(Tablut &__startingPosition, int __threads = MAX_THREADS) = 0;
+    virtual Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &_globalTimer, int __threads = MAX_THREADS) = 0;
+
     virtual int Quiesce(Tablut &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
 
     int evaluate(Tablut &__move, int __depth, bool __color)
@@ -134,7 +131,7 @@ public:
 
     void getMoves(Tablut &__move, std::vector<Tablut> &__moves)
     {
-        _moveGenerator.generateLegalMoves(__move, __moves);
+        MoveGenerator::generateLegalMoves(__move, __moves);
     }
 
     void storeKillerMove(Tablut &__t, int __depth)
@@ -153,9 +150,9 @@ public:
         out << "TOTAL MOVES CHECKED: " << __engine.getTotalMoves() << ",Q: " << __engine.getQTotalMoves() << std::endl;
         out << "TOTAL CUTOFFS ";
 
-        for (int i = 0; i < __engine._maxDepth; i++)
+        for (int i = 1; i < __engine._maxDepth; i++)
         {
-            out << __engine.getCutOffs(i) << ",";
+            out << "D[" << i << "]:" << __engine.getCutOffs(i) << ",";
         }
 
         out << std::endl;
