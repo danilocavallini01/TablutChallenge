@@ -79,11 +79,7 @@ Tablut Tablut::fromJson(const std::string &__json)
         {
             char cellStart = cell.at(0);
 
-            if (cellStart == 'E')
-            {
-                t._board[rowIndex][colIndex] = C::EMPTY;
-            }
-            else if (cellStart == 'W')
+            if (cellStart == 'W')
             {
                 t._whiteCount++;
                 t._checkerPositions[t._checkerPositionIndex++] = {rowIndex, colIndex};
@@ -97,13 +93,18 @@ Tablut Tablut::fromJson(const std::string &__json)
             }
             else if (cellStart == 'K')
             {
-                t._kingX = colIndex;
-                t._kingY = rowIndex;
+                t._kingX = rowIndex;
+                t._kingY = colIndex;
                 t._board[rowIndex][colIndex] = C::KING;
+            }
+            else
+            {
+                t._board[rowIndex][colIndex] = C::EMPTY;
             }
 
             colIndex++;
         }
+
         colIndex = 0;
         rowIndex++;
     }

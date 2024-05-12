@@ -38,7 +38,7 @@ public:
         int alpha = BOTTOM_SCORE;
         int beta = TOP_SCORE;
         int b = beta;
-        
+
         int v;
 
         // GENERATE ALL LEGAL MOVES
@@ -95,9 +95,6 @@ public:
         const int originalDepth = _maxDepth;
 
         _bestScore = BOTTOM_SCORE;
-        int alpha = BOTTOM_SCORE;
-        int beta = TOP_SCORE;
-        int b = beta;
         int v;
 
         // GENERATE ALL LEGAL MOVES
@@ -118,18 +115,9 @@ public:
             _computeSliceTimeLimit(_globalTimer, _stopWatch, totalMoves, __threads);
             _stopWatch.start();
 
-            // if last move check deeper
-            if (totalMoves <= __threads)
-            {
-                if (_stopWatch.getTimeLimit() > 20000)
-                {
-                    _maxDepth += 1;
-                }
-            }
-
             for (int i = 0; i < __threads && i + t < moves.size(); i++)
             {
-                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScoutTimeLimited, this, std::ref(moves[i + t]), _maxDepth - 1, -beta, -alpha, !color));
+                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScoutTimeLimited, this, std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE, TOP_SCORE, !color));
             }
 
             for (int i = 0; i < results.size(); i++)
@@ -141,10 +129,6 @@ public:
                     _bestMove = moves[i + t];
                     _bestScore = v;
                 }
-
-                alpha = std::max(alpha, v);
-
-                b = alpha + 1;
             }
 
             totalMoves -= __threads;
@@ -522,15 +506,13 @@ public:
         std::vector<Tablut> moves;
         Tablut move;
 
-        // --------TRANSPOSITION TABLE LOOKUP -------- END
+        score = BOTTOM_SCORE;
+        b = __beta;
 
         if (_stopWatch.isTimeouted() || __currentMove.isGameOver() || __depth == 0)
         {
             return QuiesceTimeLimited(__currentMove, __depth, __alpha, __beta, __color);
         }
-
-        score = BOTTOM_SCORE;
-        b = __beta;
 
         getMoves(__currentMove, moves);
 

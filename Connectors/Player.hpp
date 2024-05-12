@@ -23,14 +23,18 @@ namespace Connectors
 
     const std::string name = "IMPOSTOR";
 
-    const int _maxDepth = 6;
-    const int _timeout = 60000;
+    const int _maxDepth = 7;
+    const int _qDepth = 1;
+    // Time limit of 60 seconds
+    const int _timeout = 59500;
 
-    const Weights _whiteWeight = {280, -297, 73, -160, 259, 150, 17, 117, 62, 107, 28, -31, 95, 13, 54, 26, -8, 29, -32, -77, -55, 41, 6, -43, -16, -24, -24, 47, 27, 46, 4, 15, 80, -21, -7, -15, -15, 69};
-    const Weights _blackWeight = {300, -300, 73, -104, 259, 132, 17, 117, 65, 69, 28, -13, 79, 13, 55, 16, 5, 29, -24, -77, -45, 57, 10, -51, -18, -24, -28, 38, 31, 62, -11, 33, -61, -36, 17, -15, -6, 69};
+    const Weights _whiteWeight = {256, -297, 46, -161, 257, 150, 14, 109, 25, 101, 47, -24, 61, 39, 54, 7, -26, 33, -32, -77, -53, 36, 16, -51, -18, -22, -24, 32, 31, 52, -14, 40, -63, -18, -18, -12, -12, 69, -22, 14};
+    const Weights _blackWeight = {278, -183, 158, -195, 165, 59, 53, 52, 68, -63, 23, 51, 15, 76, -26, -49, 40, -49, 57, -79, 30, -12, 4, 29, 12, -42, -44, 24, 62, 71, 2, -41, -39, -39, -3, -79, -65, -78, 0, 33};
 
     const Heuristic _whiteH{_whiteWeight};
     const Heuristic _blackH{_blackWeight};
+
+    const bool _verbose = true;
 
     class Player
     {
@@ -46,7 +50,8 @@ namespace Connectors
                                                                                                  _hasher(__hasher),
                                                                                                  _engine(__engine){};
 
-        Player(Connection __socket, COLOR __color) : Player(__socket, __color, Zobrist(), NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth))
+        Player(Connection __socket, COLOR __color) : Player(__socket, __color, Zobrist(), 
+        NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
         {
         }
 
@@ -54,6 +59,10 @@ namespace Connectors
         {
             _socket.socketClose();
         };
+
+        /*
+            Construct a Player instance based on the ip and player color given as parameter
+        */
 
         static Player of(std::string __ipAddress, std::string __color)
         {
@@ -72,6 +81,11 @@ namespace Connectors
             throw std::runtime_error("Color parameter must be either WHITE or BLACK");
         }
 
+        /*
+            Start the game loop
+            every loop cycle read the json string given from the server, parse the string into a Tablut
+            and compute the move with the SearchEngine if the turn is the current player turn
+        */
         void play()
         {
             bool gameContinue = true;
@@ -89,8 +103,12 @@ namespace Connectors
 
                 if (_color == COLOR::WHITE)
                 {
-                    std::cout << "FROM MOVE" << std::endl;
-                    board.print();
+                    if (_verbose)
+                    {
+                        std::cout << "FROM MOVE" << std::endl;
+                        board.print();
+                    }
+
                     sendMove(board);
                 }
 
@@ -99,8 +117,11 @@ namespace Connectors
 
                 if (_color == COLOR::BLACK)
                 {
-                    std::cout << "FROM MOVE" << std::endl;
-                    board.print();
+                    if (_verbose)
+                    {
+                        std::cout << "FROM MOVE" << std::endl;
+                        board.print();
+                    }
                     sendMove(board);
                 }
             }
@@ -110,22 +131,37 @@ namespace Connectors
         {
             __hashes[__hashesIndex] = _hasher.hash(__board, false);
             __board._turn = __turn;
+            __board._pastHashes = __hashes;
         }
 
+        /*
+            Compute the move with the search engine
+            Send a single move by parsing mine implmentation of move so <fromx,fromy,tox,toy> all integers
+            into a standard Tablut move ( es. e5 e3 )
+        */
         void sendMove(Tablut &__board)
         {
             StopWatch timer = StopWatch(_timeout);
 
             // BEST MOVE SEARCH
             timer.start();
-            Tablut bestMove = _engine.ParallelSearch(__board);
+            Tablut bestMove = _engine.TimeLimitedSearch(__board, timer);
 
-            bestMove.print();
-            _engine.print();
+            if (_verbose)
+            {
+                std::cout << "TIME TAKEN: " << _timeout - timer.getRemainingTime() << std::endl;
+                bestMove.print();
+                _engine.print();
+            }
+
+            timer.reset();
 
             // MOVE PARSING AND SEND
             std::string parsedMove = Player::toStandardMove(bestMove.getMove());
-            std::cout << parsedMove << std::endl;
+            if (_verbose)
+            {
+                std::cout << parsedMove << std::endl;
+            }
             _socket.send(parsedMove);
         }
 

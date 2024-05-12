@@ -27,7 +27,7 @@ public:
     ~Fitness(){};
 
 private:
-    void printStats(AbstractSearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
+    void static printStats(AbstractSearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
     {
         __engine.print();
 
