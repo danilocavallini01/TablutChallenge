@@ -1,7 +1,7 @@
 #ifndef HEURISTIC
 #define HEURISTIC
 
-#include "Tablut.h"
+#include "Tablut.hpp"
 #include "MoveGenerator.hpp"
 
 #include <array>

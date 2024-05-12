@@ -1,8 +1,9 @@
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
 
-#include "Tablut.h"
 #include "Interfaces/IZobrist.hpp"
+#include "Tablut.hpp"
+
 #include <cstdint>
 #include <random>
 #include <ctime>
@@ -12,7 +13,7 @@ class Tablut;
 
 typedef uint64_t ZobristKey;
 
-class Zobrist
+class Zobrist : public IZobrist<ZobristKey, Tablut>
 {
 private:
     // Table containing all random bitstring for all positions DIM x DIM and for all type of pieces: 3 total ( WHITE, BLACK, KING )
@@ -48,14 +49,14 @@ public:
     ~Zobrist() {}
 
     // Give hash by calculating XOR of all
-    ZobristKey hash(const Tablut &__t, bool colored = false) const
+    ZobristKey hash(const Tablut &__t, bool __colored = false) const override
     {
         ZobristKey hashKey = 0;
 
         std::pair<Pos, Pos> position;
         Pos x, y;
 
-        if (colored)
+        if (__colored)
         {
             if (__t._isWhiteTurn)
             {

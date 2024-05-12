@@ -1,7 +1,7 @@
 #ifndef FITNESS
 #define FITNESS
 
-#include "Tablut.h"
+#include "Tablut.hpp"
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
 #include "AbstractSearchEngine.hpp"

@@ -1,7 +1,7 @@
 #ifndef ABSTRACT_SEARCH_ENGINE
 #define ABSTRACT_SEARCH_ENGINE
 
-#include "Tablut.h"
+#include "Tablut.hpp"
 #include "Heuristic.hpp"
 #include "MoveGenerator.hpp"
 #include "TranspositionTable.hpp"
@@ -46,7 +46,7 @@ std::atomic<int> _cutOffs[MAX_DEFAULT_DEPTH];
 class AbstractSearchEngine
 {
 protected:
-    // Heuristic function: gives score to each Board position
+    // Heuristic function: gives score to each std::array<std::array<C, DIM>, DIM> position
     Heuristic _heuristic;
 
     // Transposition table, used to store previous seen _board positions so we dont re-evaluate
@@ -56,7 +56,7 @@ protected:
     StopWatch _stopWatch;
     StopWatch _globalRemainingTime;
 
-    // To Check Board and hash current game boards
+    // To Check std::array<std::array<C, DIM>, DIM> and hash current game boards
     Zobrist _zobrist;
 
     // _maxDepth set by the last method that invoked a XXSearch() Function

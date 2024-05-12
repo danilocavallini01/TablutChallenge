@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "Connection.hpp"
-#include "../Tablut.h"
+#include "../Tablut.hpp"
 #include "../Heuristic.hpp"
 #include "../NegaScoutEngine.hpp"
 #include "../Zobrist.hpp"

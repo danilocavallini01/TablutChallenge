@@ -144,7 +144,7 @@ private:
         _writePopulationToFile(fileName);
     }
 
-    void _backupFitnesses()
+    void _backupFitnesses(std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
     {
         std::cout << "BACKUPPING FITNESSES" << std::endl;
 
@@ -159,7 +159,7 @@ private:
         std::string fileName = "LOG_" + _fileModelName + "_" + timeStamp;
         fileName = _computeFitnessFileName(fileName);
 
-        _writePopulationToFile(fileName);
+        _writeFitnessesToFile(fileName, __whiteResults, __blackResults);
     }
 
     void _writePopulationToFile(std::string &__fileName)
@@ -603,7 +603,7 @@ public:
             std::cout << "---------NEW GENERATION CREATED---------" << std::endl;
             _printGenes();
             _backupPopulation();
-            _backupFitnesses();
+            _backupFitnesses(whiteResults, blackResults);
 
             // Set current population as old Population
             oldResults = results;

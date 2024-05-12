@@ -6,7 +6,7 @@ class IZobrist
 {
 public:
     virtual ~IZobrist() {}
-    virtual Key hash(const GameState &__game) = 0;
+    virtual Key hash(const GameState &__game, bool __colored ) const = 0;
 };
 
 #endif

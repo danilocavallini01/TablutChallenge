@@ -1,8 +1,8 @@
 #ifndef TRANSPOSITION_TABLE
 #define TRANSPOSITION_TABLE
 
-#include "Zobrist.hpp"
 #include "Interfaces/ITranspositionTable.hpp"
+#include "Zobrist.hpp"
 
 #include <unordered_map>
 #include <optional>
@@ -37,7 +37,6 @@ enum ENTRY : int
 */
 
 typedef std::tuple<int, int, FLAG, bool> Entry;
-
 
 class TranspositionTable : public ITranspositionTable<Entry, ZobristKey>
 {
