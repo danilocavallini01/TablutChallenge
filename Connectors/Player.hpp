@@ -50,8 +50,8 @@ namespace Connectors
                                                                                                  _hasher(__hasher),
                                                                                                  _engine(__engine){};
 
-        Player(Connection __socket, COLOR __color) : Player(__socket, __color, Zobrist(), 
-        NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
+        Player(Connection __socket, COLOR __color) : Player(__socket, __color, Zobrist(),
+                                                            NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
         {
         }
 
@@ -88,12 +88,13 @@ namespace Connectors
         */
         void play()
         {
+            std::cout << "WAITING FOR SERVER INPUT" << std::endl;
             bool gameContinue = true;
 
             Tablut board = Tablut::getStartingPosition();
             std::array<ZobristKey, MAX_DRAW_LOG> hashes = {};
             int hashesIndex = 0;
-            int turn = 1;
+            int turn = 0;
 
             while (gameContinue)
             {
@@ -109,6 +110,7 @@ namespace Connectors
                         board.print();
                     }
 
+                    std::cout << "TURN: " << turn << std::endl;
                     sendMove(board);
                 }
 
@@ -129,6 +131,8 @@ namespace Connectors
 
         void updateGameBoard(Tablut &__board, std::array<ZobristKey, MAX_DRAW_LOG> &__hashes, int __hashesIndex, int __turn)
         {
+            // RESET HASHES INDEX IF EXCEED MAX_DRAW_LOG LENGTH
+            __hashesIndex = __hashesIndex % MAX_DRAW_LOG;
             __hashes[__hashesIndex] = _hasher.hash(__board, false);
             __board._turn = __turn;
             __board._pastHashes = __hashes;

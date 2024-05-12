@@ -67,7 +67,7 @@ namespace Connectors
 
             // INIZIALIZING CLIENT SOCKET
             _sd = socket(AF_INET, SOCK_STREAM, 0);
-          
+
             if (_sd < 0)
             {
                 perror("SOCKET INITIALIZE ERROR (BAD DESCRIPTOR)");
@@ -90,12 +90,13 @@ namespace Connectors
         {
             close(_sd);
         }
-        
+
         // DECLARE PLAYER NAME TO SERVER
         void declareName()
         {
             std::string msg = {'"' + _name + '"'};
             send(msg);
+            std::cout << "CONNECTED TO SERVER AS " << _name << std::endl;
         }
 
         /*

@@ -11,13 +11,6 @@ Tablut::Tablut(const Tablut &__startFrom)
     std::memcpy(this, &__startFrom, sizeof(Tablut));
 }
 
-void Tablut::addDatasToTablut(Tablut &__t, std::array<ZobristKey, MAX_DRAW_LOG> __hashes, int __hashesIndex, int __turn)
-{
-    __t._pastHashes = __hashes;
-    __t._turn = __turn;
-    __t._pastHashesIndex = __hashesIndex;
-}
-
 Tablut Tablut::fromJson(const std::string &__json)
 {
     Tablut t = Tablut();

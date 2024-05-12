@@ -268,8 +268,11 @@ public:
         out << "blackCheckers: " << unsigned(__tablut._blackCount) << std::endl;
         out << "kingPosition: " << int(__tablut._kingX) << "-" << int(__tablut._kingY) << std::endl;
         out << "kills: " << __tablut._kills << std::endl;
-        out << "checkerMovedTo: " << int(__tablut._x) << "-" << int(__tablut._y) << std::endl;
-        out << "checkerMovedFrom: " << int(__tablut._oldX) << "-" << int(__tablut._oldY) << std::endl;
+        if (int(__tablut._x) >= 0)
+        {
+            out << "checkerMovedTo: " << int(__tablut._x) << "-" << int(__tablut._y) << std::endl;
+            out << "checkerMovedFrom: " << int(__tablut._oldX) << "-" << int(__tablut._oldY) << std::endl;
+        }
 
         return out;
     }
@@ -279,7 +282,6 @@ public:
 
     // Constructor from json
     static Tablut fromJson(const std::string &__json);
-    static void addDatasToTablut(Tablut &__t, std::array<ZobristKey, MAX_DRAW_LOG> __hashes, int __hashesIndex, int __turn);
 
     // Tablut with starting position set
     static Tablut getStartingPosition();
@@ -300,11 +302,13 @@ public:
         return {_oldX, _oldY, _x, _y};
     }
 
-    inline std::array<ZobristKey, MAX_DRAW_LOG> getPastMoves() {
+    inline std::array<ZobristKey, MAX_DRAW_LOG> getPastMoves()
+    {
         return _pastHashes;
     }
 
-    inline int getPastMovesIndex() {
+    inline int getPastMovesIndex()
+    {
         return _pastHashesIndex;
     }
 
