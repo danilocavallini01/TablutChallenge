@@ -33,6 +33,7 @@ private:
 
     std::string _fileModelName;
     std::string _backupDir;
+    std::string _fitnessBackupDir;
 
     std::vector<Weights> _whitePopulation;
     std::vector<Weights> _blackPopulation;
@@ -111,7 +112,13 @@ private:
 
     void _writeModelToFile()
     {
-        std::string fileName = _fileModelName;
+        std::string fileName = std::filesystem::current_path().string() + separator() + _fileModelName;
+        _writePopulationToFile(fileName);
+    }
+
+    std::string _computeFitnessFileName(std::string &__fileName)
+    {
+        return std::filesystem::current_path().string() + separator() + _fitnessBackupDir + separator() + __fileName;
     }
 
     std::string _computeFileName(std::string &__fileName)
@@ -133,6 +140,24 @@ private:
 
         std::string fileName = "LOG_" + _fileModelName + "_" + timeStamp;
         fileName = _computeFileName(fileName);
+
+        _writePopulationToFile(fileName);
+    }
+
+    void _backupFitnesses()
+    {
+        std::cout << "BACKUPPING FITNESSES" << std::endl;
+
+        // GETTING CURRENT TIMEZONED TIME
+        std::time_t result = std::time(nullptr);
+        std::string timeStamp = std::ctime(&result);
+
+        // FORMATTING ALL FILES WITH UNDERSCORE
+        std::replace(timeStamp.begin(), timeStamp.end(), ':', '_');
+        std::replace(timeStamp.begin(), timeStamp.end(), ' ', '_');
+
+        std::string fileName = "LOG_" + _fileModelName + "_" + timeStamp;
+        fileName = _computeFitnessFileName(fileName);
 
         _writePopulationToFile(fileName);
     }
@@ -171,6 +196,51 @@ private:
 
             fileModel << line << std::endl;
         }
+    }
+
+    void _writeFitnessesToFile(std::string &__fileName, std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
+    {
+        std::ofstream fileModel(__fileName, std::ios::trunc);
+        std::string line;
+
+        if (!fileModel.is_open())
+        {
+            std::cout << "UNABLE TO OPEN WRITE FILE -> ABORTING" << std::endl;
+            return;
+        }
+
+        _writeFitnessToStream(fileModel, __whiteResults, __blackResults);
+    }
+
+    void _writeFitnessToStream(std::ostream &out, std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
+    {
+        out << "---------WHITE POPULATION---------" << std::endl;
+        for (int i = 0; i < __whiteResults.size(); i++)
+        {
+            out << "WHITE[" << i << "]: ";
+            for (int j = 0; j < _totalWeights; j++)
+            {
+                out << __whiteResults.at(i).first[j] << ",";
+            }
+
+            out << std::endl;
+            out << "FITNESS[" << __whiteResults.at(i).second << "]: ";
+            out << std::endl;
+        }
+        out << "---------BLACK POPULATION---------" << std::endl;
+        for (int i = 0; i < __blackResults.size(); i++)
+        {
+            out << "BLACK[" << i << "]: ";
+            for (int j = 0; j < _totalWeights; j++)
+            {
+                out << __blackResults.at(i).first[j] << ",";
+            }
+
+            out << std::endl;
+            out << "FITNESS[" << __blackResults.at(i).second << "]: ";
+            out << std::endl;
+        }
+        out << "---------END OF BLACK POPULATION---------" << std::endl;
     }
 
     char separator()
@@ -344,7 +414,7 @@ private:
         std::uniform_int_distribution<int> distribution{std::uniform_int_distribution<int>(-boundDifference, boundDifference)};
 
         __gene += distribution(_rd);
-    
+
         if (__gene < bound.first)
         {
             return bound.first;
@@ -421,46 +491,21 @@ private:
 
     void _printFitnesses(std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
     {
-        std::cout << "---------WHITE POPULATION---------" << std::endl;
-        for (int i = 0; i < __whiteResults.size(); i++)
-        {
-            std::cout << "WHITE[" << i << "]: ";
-            for (int j = 0; j < _totalWeights; j++)
-            {
-                std::cout << __whiteResults.at(i).first[j] << ",";
-            }
-
-            std::cout << std::endl;
-            std::cout << "FITNESS[" << __whiteResults.at(i).second << "]: ";
-            std::cout << std::endl;
-        }
-        std::cout << "---------BLACK POPULATION---------" << std::endl;
-        for (int i = 0; i < __blackResults.size(); i++)
-        {
-            std::cout << "BLACK[" << i << "]: ";
-            for (int j = 0; j < _totalWeights; j++)
-            {
-                std::cout << __blackResults.at(i).first[j] << ",";
-            }
-
-            std::cout << std::endl;
-            std::cout << "FITNESS[" << __blackResults.at(i).second << "]: ";
-            std::cout << std::endl;
-        }
-        std::cout << "---------END OF BLACK POPULATION---------" << std::endl;
+        _writeFitnessToStream(std::cout, __whiteResults, __blackResults);
     }
 
 public:
     GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.15,
        int __mutationFactor = 5, int __tournSize = 3, int __generation = 10) : _N(__N),
-                                                                                _mutationProb(__mutationProb),
-                                                                                _mutationFactor(100 / __mutationFactor),
-                                                                                _tournSize(__tournSize),
-                                                                                _maxGeneration(__generation),
-                                                                                _totalWeights(TOTAL_WEIGHTS),
-                                                                                _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
-                                                                                _fileModelName("tablutGaModel.model"),
-                                                                                _backupDir("backup")
+                                                                               _mutationProb(__mutationProb),
+                                                                               _mutationFactor(100 / __mutationFactor),
+                                                                               _tournSize(__tournSize),
+                                                                               _maxGeneration(__generation),
+                                                                               _totalWeights(TOTAL_WEIGHTS),
+                                                                               _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
+                                                                               _fileModelName("tablutGaModel.model"),
+                                                                               _backupDir("backup"),
+                                                                               _fitnessBackupDir("fitness")
     {
 
         std::random_device _rd{"/dev/urandom"};
@@ -558,6 +603,7 @@ public:
             std::cout << "---------NEW GENERATION CREATED---------" << std::endl;
             _printGenes();
             _backupPopulation();
+            _backupFitnesses();
 
             // Set current population as old Population
             oldResults = results;

@@ -348,26 +348,6 @@ public:
         return false;
     }
 
-    inline CHECKER getLeftChecker(Pos __by = 1) const
-    {
-        return _board[_x][_y - __by];
-    }
-
-    inline CHECKER getRightChecker(Pos __by = 1) const
-    {
-        return _board[_x][_y + __by];
-    }
-
-    inline CHECKER getUpChecker(Pos __by = 1) const
-    {
-        return _board[_x - __by][_y];
-    }
-
-    inline CHECKER getDownChecker(Pos __by = 1) const
-    {
-        return _board[_x + __by][_y];
-    }
-
     inline bool kingIsInThrone() const
     {
         return _kingX == 4 && _kingY == 4;
@@ -519,6 +499,27 @@ public:
     inline bool checkIfKingThreatened() const
     {
         return kingIsInThrone() || isKingNearThrone();
+    }
+
+
+    inline CHECKER getLeftChecker(Pos __by = 1) const
+    {
+        return _board[_x][_y - __by];
+    }
+
+    inline CHECKER getRightChecker(Pos __by = 1) const
+    {
+        return _board[_x][_y + __by];
+    }
+
+    inline CHECKER getUpChecker(Pos __by = 1) const
+    {
+        return _board[_x - __by][_y];
+    }
+
+    inline CHECKER getDownChecker(Pos __by = 1) const
+    {
+        return _board[_x + __by][_y];
     }
 
     inline void killLeft()
