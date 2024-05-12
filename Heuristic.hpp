@@ -64,7 +64,7 @@ const int WIN_WEIGHT = 100000;
 const int DRAW_WEIGHT = 0;
 
 // WEIGHT BOUND SCALE
-const int BIG_BOUND = 300;
+const int BIG_BOUND = 350;
 const int MEDIUM_BOUND = 170;
 const int LITTLE_BOUND = 40;
 

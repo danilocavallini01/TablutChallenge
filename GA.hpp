@@ -344,7 +344,7 @@ private:
         std::uniform_int_distribution<int> distribution{std::uniform_int_distribution<int>(-boundDifference, boundDifference)};
 
         __gene += distribution(_rd);
-
+    
         if (__gene < bound.first)
         {
             return bound.first;
@@ -452,7 +452,7 @@ private:
 
 public:
     GA(int __maxDepth = 7, bool __verbose = true, int __N = 10, double __mutationProb = 0.15,
-       int __mutationFactor = 10, int __tournSize = 3, int __generation = 10) : _N(__N),
+       int __mutationFactor = 5, int __tournSize = 3, int __generation = 10) : _N(__N),
                                                                                 _mutationProb(__mutationProb),
                                                                                 _mutationFactor(100 / __mutationFactor),
                                                                                 _tournSize(__tournSize),
