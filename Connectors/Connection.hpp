@@ -96,7 +96,7 @@ namespace Connectors
         {
             std::string msg = {'"' + _name + '"'};
             send(msg);
-            std::cout << "CONNECTED TO SERVER AS " << _name << std::endl;
+            std::cout << "CONNECTED TO SERVER WITH NAME [" << _name << "]" << std::endl;
         }
 
         /*

@@ -22,7 +22,11 @@ enum FLAG : uint8_t
     UPPERBOUND = 2U,
 };
 
-// Index for every element of the entry tuple
+/* 
+Entry node of transposition table defined as follow:
+    <SCORE,DEPTH,TT_FLAG,COLOR>
+Index for every element of the entry tuple
+*/
 
 enum ENTRY : int
 {
@@ -31,10 +35,6 @@ enum ENTRY : int
     FLAG_INDEX = 2,
     COLOR_INDEX = 3,
 };
-
-/* Entry node of transposition table defined as follow:
-    <SCORE,DEPTH,TT_FLAG>
-*/
 
 typedef std::tuple<int, int, FLAG, bool> Entry;
 

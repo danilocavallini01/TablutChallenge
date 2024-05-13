@@ -25,8 +25,6 @@ namespace Connectors
 
     const int _maxDepth = 7;
     const int _qDepth = 1;
-    // Time limit of 60 seconds
-    const int _timeout = 59500;
 
     const Weights _whiteWeight = {256, -297, 46, -161, 257, 150, 14, 109, 25, 101, 47, -24, 61, 39, 54, 7, -26, 33, -32, -77, -53, 36, 16, -51, -18, -22, -24, 32, 31, 52, -14, 40, -63, -18, -18, -12, -12, 69, -22, 14};
     const Weights _blackWeight = {278, -183, 158, -195, 165, 59, 53, 52, 68, -63, 23, 51, 15, 76, -26, -49, 40, -49, 57, -79, 30, -12, 4, 29, 12, -42, -44, 24, 62, 71, 2, -41, -39, -39, -3, -79, -65, -78, 0, 33};
@@ -44,14 +42,37 @@ namespace Connectors
         NegaScoutEngine _engine;
         Zobrist _hasher;
 
-    public:
-        Player(Connection __socket, COLOR __color, Zobrist __hasher, NegaScoutEngine __engine) : _socket(__socket),
-                                                                                                 _color(__color),
-                                                                                                 _hasher(__hasher),
-                                                                                                 _engine(__engine){};
+        int _timeout;
 
-        Player(Connection __socket, COLOR __color) : Player(__socket, __color, Zobrist(),
-                                                            NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
+    public:
+        Player(Connection __socket, COLOR __color, int __timeout, Zobrist __hasher, NegaScoutEngine __engine) : _socket(__socket),
+                                                                                                                _color(__color),
+                                                                                                                _hasher(__hasher),
+                                                                                                                _engine(__engine)
+        {
+            std::cout << std::endl
+                      << "LOADED " << (__color == COLOR::WHITE ? "WHITE" : "BLACK") << " HEURISTIC " << std::endl;
+
+            std::cout << "[";
+            if (__color == COLOR::WHITE)
+            {
+                for (int weight : _whiteWeight)
+                {
+                    std::cout << weight << ",";
+                }
+            }
+            else
+            {
+                for (int weight : _blackWeight)
+                {
+                    std::cout << weight << ",";
+                }
+            }
+            std::cout << "]" << std::endl;
+        };
+
+        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 500, Zobrist(),
+                                                                           NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
         {
         }
 
@@ -64,18 +85,18 @@ namespace Connectors
             Construct a Player instance based on the ip and player color given as parameter
         */
 
-        static Player of(std::string __ipAddress, std::string __color)
+        static Player of(std::string __ipAddress, std::string __color, std::string __timeout)
         {
             std::transform(__color.begin(), __color.end(), __color.begin(), ::toupper);
 
             if (__color == "WHITE")
             {
-                return Player(Connection(name, __ipAddress, true), COLOR::WHITE);
+                return Player(Connection(name, __ipAddress, true), COLOR::WHITE, stoi(__timeout) * 1000);
             }
 
             if (__color == "BLACK")
             {
-                return Player(Connection(name, __ipAddress, false), COLOR::BLACK);
+                return Player(Connection(name, __ipAddress, false), COLOR::BLACK, stoi(__timeout) * 1000);
             }
 
             throw std::runtime_error("Color parameter must be either WHITE or BLACK");
