@@ -23,8 +23,12 @@ namespace Connectors
 
     const std::string name = "IMPOSTOR";
 
-    const int _maxDepth = 7;
-    const int _qDepth = 2;
+    const int _maxWDepth = 7;
+    const int _qWDepth = 2;
+
+    const int _maxBDepth = 6;
+    const int _qBDepth = 2;
+
 
     const Weights _whiteWeight = {247, -297, 114, -160, 260, 116, 21, 115, 64, 102, 67, -15, 116, 26, 44, 7, -6, 27, -27, -84, -39, 38, 18, -44, -23, -17, -24, 34, 62, 48, -29, 53, -69, -19, -14, -14, -27, 63, -15, 5};
     const Weights _blackWeight = {299, -160, 191, -213, 260, 61, 57, 38, 53, -82, 38, 27, 12, 71, -31, -46, 19, -52, 57, -79, 26, -2, 1, 43, 22, -54, -38, 24, 69, 85, 7, -41, -24, -18, 18, -68, -83, -81, -1, 25};
@@ -72,8 +76,8 @@ namespace Connectors
             std::cout << "]" << std::endl;
         };
 
-        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 1500, Zobrist(),
-                                                                           NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
+        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 1500, Zobrist(), 
+        _color == COLOR::WHITE ? NegaScoutEngine(Heuristic(_whiteH), _hasher, _maxWDepth, _qWDepth) : NegaScoutEngine(Heuristic(_blackH), _hasher, _maxBDepth, _qBDepth))
         {
         }
 

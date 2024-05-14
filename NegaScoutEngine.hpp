@@ -505,6 +505,7 @@ public:
 
             if (v > score)
             {
+               
                 if (__depth == _maxDepth)
                 {
                     _bestScore = v;
