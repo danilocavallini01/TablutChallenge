@@ -87,57 +87,11 @@ public:
     {
         reset();
 
-        std::vector<Tablut> moves;
-        std::vector<std::future<int>> results;
+        _stopWatch = _globalTimer;
 
-        const bool color = __startingPosition._isWhiteTurn;
-
-        const int originalDepth = _maxDepth;
-
-        _bestScore = BOTTOM_SCORE;
-        int v;
-
-        // GENERATE ALL LEGAL MOVES
-        getMoves(__startingPosition, moves);
-
-        // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
-        addHashToMoves(moves);
-
-        // SORT MOVES
-        sortMoves(moves, _maxDepth, color);
-
-        // TIME LIMIT SUBDIVISION
-        int totalMoves = moves.size();
-
-        for (int t = 0; t < moves.size(); t += __threads)
-        {
-            // DIVIDE TIME BY GROUP OF THREADS, APPLY A TOLERANCE OF N% FOR EVERY GROUP OF THREAD;
-            _computeSliceTimeLimit(_globalTimer, _stopWatch, totalMoves, __threads);
-            _stopWatch.start();
-
-            for (int i = 0; i < __threads && i + t < moves.size(); i++)
-            {
-                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScoutTimeLimited, this, std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE, TOP_SCORE, !color));
-            }
-
-            for (int i = 0; i < results.size(); i++)
-            {
-                v = -results[i].get();
-
-                if (v > _bestScore || t + i == 0)
-                {
-                    _bestMove = moves[i + t];
-                    _bestScore = v;
-                }
-            }
-
-            totalMoves -= __threads;
-
-            results.clear();
-            _stopWatch.reset();
-        }
-
-        _maxDepth = originalDepth;
+        _stopWatch.start();
+        NegaScoutTimeLimited(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
+        _stopWatch.reset();
 
         return _bestMove;
     }
@@ -578,121 +532,32 @@ public:
 // NEGASCOUT __________________________________________
 /*
 
-    int NegaScoutTimeLimited(Tablut &__currentMove, const int __depth, int __alpha, int __beta)
-    {
-        _totalMoves++;
 
-        const int alphaOrigin = __alpha;
-        int score = BOTTOM_SCORE;
-        int b;
-        int v;
+    Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &_globalTimer, int __threads = MAX_THREADS)
+    {
+        reset();
 
         std::vector<Tablut> moves;
-        Tablut move;
-
-        if (_stopWatch.isTimeouted() || __currentMove.isGameOver() || __depth == 0)
-        {
-            return _heuristic.evaluate(__currentMove, true);
-        }
-
-        score = BOTTOM_SCORE;
-        b = __beta;
-
-        _moveGenerator.generateLegalMoves(__currentMove, moves);
-
-        // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
-        for (auto &nextTablut : moves)
-        {
-            _zobrist.addHash(nextTablut);
-            nextTablut.checkWinState();
-        }
-
-        // LOSE BY NO MOVE LEFT
-        if (moves.size() == 0)
-        {
-            if (__currentMove._isWhiteTurn)
-            {
-                __currentMove._gameState = GAME_STATE::BLACKWIN;
-            }
-            else
-            {
-                __currentMove._gameState = GAME_STATE::WHITEWIN;
-            }
-
-            return _heuristic.evaluate(__currentMove, true);
-        }
-
-        // SORT MOVES
-        _heuristic.sortMoves(moves, true);
-
-        // NEGASCOUT CORE ENGINE
-        for (int i = 0; i < moves.size(); i++)
-        {
-            move = moves[i];
-            v = -NegaScoutTimeLimited(move, __depth - 1, -b, -__alpha);
-
-            if (v > __alpha && v < __beta && i > 0)
-            {
-                v = -NegaScoutTimeLimited(move, __depth - 1, -__beta, -v);
-            }
-
-            if (v > score)
-            {
-                if (__depth == _maxDepth)
-                {
-                    _bestScore = v;
-                }
-                score = v;
-            }
-
-            __alpha = std::max(__alpha, v);
-
-            if (__alpha >= __beta)
-            {
-                _cutOffs[__depth]++;
-                break;
-            }
-
-            b = __alpha + 1;
-        }
-
-        return score;
-    }
-
-
-
-     Tablut NegaScoutSearchTimeLimited(Tablut &__startingPosition, StopWatch &_globalTimer, const int __threads)
-    {
-        _maxDepth = MAX_DEFAULT_DEPTH;
-        _totalMoves = 0;
-        _resetCutoffs();
-
-        ZobristKey hash;
-
-        std::vector<Tablut> moves;
-        Tablut bestMove;
         std::vector<std::future<int>> results;
 
-        int totalMoves;
+        const bool color = __startingPosition._isWhiteTurn;
+
+        const int originalDepth = _maxDepth;
 
         _bestScore = BOTTOM_SCORE;
         int v;
 
         // GENERATE ALL LEGAL MOVES
-        _moveGenerator.generateLegalMoves(__startingPosition, moves);
+        getMoves(__startingPosition, moves);
 
         // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
-        for (auto &nextTablut : moves)
-        {
-            _zobrist.addHash(nextTablut);
-            nextTablut.checkWinState();
-        }
+        addHashToMoves(moves);
 
         // SORT MOVES
-        _heuristic.sortMoves(moves, true);
+        sortMoves(moves, _maxDepth, color);
 
         // TIME LIMIT SUBDIVISION
-        totalMoves = moves.size();
+        int totalMoves = moves.size();
 
         for (int t = 0; t < moves.size(); t += __threads)
         {
@@ -702,16 +567,16 @@ public:
 
             for (int i = 0; i < __threads && i + t < moves.size(); i++)
             {
-                results.push_back(std::async(std::launch::async, &NegaScoutTimeLimited, std::ref(*this), std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE, TOP_SCORE));
+                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScoutTimeLimited, this, std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE, TOP_SCORE, !color));
             }
 
             for (int i = 0; i < results.size(); i++)
             {
                 v = -results[i].get();
 
-                if (v > _bestScore)
+                if (v > _bestScore || t + i == 0)
                 {
-                    bestMove = moves[i + t];
+                    _bestMove = moves[i + t];
                     _bestScore = v;
                 }
             }
@@ -722,7 +587,9 @@ public:
             _stopWatch.reset();
         }
 
-        return bestMove;
+        _maxDepth = originalDepth;
+
+        return _bestMove;
     }
 
 */

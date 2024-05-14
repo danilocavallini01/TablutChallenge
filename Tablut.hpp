@@ -541,6 +541,24 @@ public:
         return {_oldX, _oldY, _x, _y};
     }
 
+    static std::string toStandardMove(std::tuple<int, int, int, int> __move, bool isWhite)
+    {
+        std::string from = "", to = "";
+
+        from += char(std::get<1>(__move) + 97);
+        from += char(std::get<0>(__move) + 49);
+
+        to += char(std::get<3>(__move) + 97);
+        to += char(std::get<2>(__move) + 49);
+
+        json JSON = {
+            {"from", from},
+            {"to", to},
+            {"turn", isWhite ? "WHITE" : "BLACK"}};
+
+        return JSON.dump();
+    }
+
     std::array<ZobristKey, MAX_DRAW_LOG> getPastMoves()
     {
         return _pastHashes;

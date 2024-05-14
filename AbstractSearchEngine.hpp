@@ -27,7 +27,7 @@ const int BOTTOM_SCORE(-10000000);
 const int TOP_SCORE(10000000);
 
 // Default depth mainly used for time limited algorithm
-const int MAX_DEFAULT_DEPTH = 7;
+const int MAX_DEFAULT_DEPTH = 10;
 const int MAX_DEFAULT_QSEARCH_DEPTH = 2;
 
 // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)

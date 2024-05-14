@@ -24,15 +24,15 @@ namespace Connectors
     const std::string name = "IMPOSTOR";
 
     const int _maxDepth = 7;
-    const int _qDepth = 1;
+    const int _qDepth = 2;
 
-    const Weights _whiteWeight = {256, -297, 46, -161, 257, 150, 14, 109, 25, 101, 47, -24, 61, 39, 54, 7, -26, 33, -32, -77, -53, 36, 16, -51, -18, -22, -24, 32, 31, 52, -14, 40, -63, -18, -18, -12, -12, 69, -22, 14};
-    const Weights _blackWeight = {278, -183, 158, -195, 165, 59, 53, 52, 68, -63, 23, 51, 15, 76, -26, -49, 40, -49, 57, -79, 30, -12, 4, 29, 12, -42, -44, 24, 62, 71, 2, -41, -39, -39, -3, -79, -65, -78, 0, 33};
+    const Weights _whiteWeight = {247, -297, 114, -160, 260, 116, 21, 115, 64, 102, 67, -15, 116, 26, 44, 7, -6, 27, -27, -84, -39, 38, 18, -44, -23, -17, -24, 34, 62, 48, -29, 53, -69, -19, -14, -14, -27, 63, -15, 5};
+    const Weights _blackWeight = {299, -160, 191, -213, 260, 61, 57, 38, 53, -82, 38, 27, 12, 71, -31, -46, 19, -52, 57, -79, 26, -2, 1, 43, 22, -54, -38, 24, 69, 85, 7, -41, -24, -18, 18, -68, -83, -81, -1, 25};
 
     const Heuristic _whiteH{_whiteWeight};
     const Heuristic _blackH{_blackWeight};
 
-    const bool _verbose = true;
+    const bool _verbose = false;
 
     class Player
     {
@@ -48,7 +48,8 @@ namespace Connectors
         Player(Connection __socket, COLOR __color, int __timeout, Zobrist __hasher, NegaScoutEngine __engine) : _socket(__socket),
                                                                                                                 _color(__color),
                                                                                                                 _hasher(__hasher),
-                                                                                                                _engine(__engine)
+                                                                                                                _engine(__engine),
+                                                                                                                _timeout(__timeout)
         {
             std::cout << std::endl
                       << "LOADED " << (__color == COLOR::WHITE ? "WHITE" : "BLACK") << " HEURISTIC " << std::endl;
@@ -71,7 +72,7 @@ namespace Connectors
             std::cout << "]" << std::endl;
         };
 
-        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 500, Zobrist(),
+        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 1500, Zobrist(),
                                                                            NegaScoutEngine(Heuristic(_color == COLOR::WHITE ? _whiteH : _blackH), _hasher, _maxDepth, _qDepth))
         {
         }
@@ -145,6 +146,8 @@ namespace Connectors
                         std::cout << "FROM MOVE" << std::endl;
                         board.print();
                     }
+
+                    std::cout << "TURN: " << turn << std::endl;
                     sendMove(board);
                 }
             }
@@ -172,9 +175,11 @@ namespace Connectors
             timer.start();
             Tablut bestMove = _engine.TimeLimitedSearch(__board, timer);
 
+            std::cout << "------------------------" << std::endl;
+            std::cout << "TIME TAKEN: " << _timeout - timer.getRemainingTime() << std::endl;
+            std::cout << "------------------------" << std::endl;
             if (_verbose)
             {
-                std::cout << "TIME TAKEN: " << _timeout - timer.getRemainingTime() << std::endl;
                 bestMove.print();
                 _engine.print();
             }
@@ -182,33 +187,13 @@ namespace Connectors
             timer.reset();
 
             // MOVE PARSING AND SEND
-            std::string parsedMove = Player::toStandardMove(bestMove.getMove());
-            if (_verbose)
-            {
-                std::cout << parsedMove << std::endl;
-            }
+            std::string parsedMove = Tablut::toStandardMove(bestMove.getMove(), _color == COLOR::WHITE);
+            std::cout << parsedMove << std::endl;
+
             _socket.send(parsedMove);
         }
 
-        std::string toStandardMove(std::tuple<int, int, int, int> __move)
-        {
-            std::string from = "", to = "";
-
-            from += char(std::get<1>(__move) + 97);
-            from += char(std::get<0>(__move) + 49);
-
-            to += char(std::get<3>(__move) + 97);
-            to += char(std::get<2>(__move) + 49);
-
-            json JSON = {
-                {"from", from},
-                {"to", to},
-                {"turn", _color == WHITE ? "WHITE" : "BLACK"}};
-
-            return JSON.dump();
-        }
-
-        void declareName()
+                void declareName()
         {
             _socket.declareName();
         }
