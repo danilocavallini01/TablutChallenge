@@ -89,9 +89,7 @@ public:
 
         _stopWatch = _globalTimer;
 
-        _stopWatch.start();
         NegaScoutTimeLimited(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
-        _stopWatch.reset();
 
         return _bestMove;
     }
