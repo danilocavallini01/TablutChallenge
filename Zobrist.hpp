@@ -11,9 +11,9 @@
 // Forward Declaration
 class Tablut;
 
-typedef uint64_t ZobristKey;
+using namespace AI::Interface;
 
-class Zobrist : public IZobrist<ZobristKey, Tablut>
+class Zobrist : public IZobrist<Tablut, ZobristKey>
 {
 private:
     // Table containing all random bitstring for all positions DIM x DIM and for all type of pieces: 3 total ( WHITE, BLACK, KING )
@@ -92,12 +92,13 @@ public:
         return hashKey;
     }
 
-    /*
-        Add hash computed by this Zobrist function and add the computed kyes to the GameState
+    /**
+     * @brief Add hash computed by this Zobrist function and add the computed kyes to the GameState
         If the Search Algorithm also consider current turn into keys then compute the 2 different values
         Specified by the @var colored
-    */
-
+     * 
+     * @param __t the gamestate that need the hash
+     */
     void addHash(Tablut &__t)
     {
         ZobristKey hash = Zobrist::hash(__t, false);

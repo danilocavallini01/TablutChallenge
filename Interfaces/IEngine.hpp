@@ -8,44 +8,72 @@
 // Forward Declaration
 class StopWatch;
 
-template <typename GameState>
-class IEngine
+namespace AI
 {
-protected:
-    virtual void _resetCutoffs() = 0;
-    virtual void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads) = 0;
+    namespace Interface
+    {
+        template <typename GameState>
+        class IEngine
+        {
+        protected:
+            virtual void _resetCutoffs() = 0;
+            virtual void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads) = 0;
 
-public:
-    virtual ~IEngine(){};
+        public:
+            virtual ~IEngine(){};
 
-    // SEARCHES
-    virtual GameState Search(GameState &__startingPosition) = 0;
-    virtual GameState ParallelSearch(GameState &__startingPosition, int __threads) = 0;
-    virtual GameState TimeLimitedSearch(GameState &__startingPosition, StopWatch &_globalTimer, int __threads) = 0;
+            // SEARCHES
 
-    // Q SEARCH
-    virtual int Quiesce(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
-    virtual int QuiesceTimeLimited(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
+            /**
+             * @brief Search in the state space the solution using a sequential procedure
+             *      the best result is returned at the end
+             *
+             * @param __startingPosition where to start searching throught the state spaces
+             * @return GameState the best solution found
+             */
+            virtual GameState Search(GameState &__startingPosition) = 0;
+            virtual GameState ParallelSearch(GameState &__startingPosition, int __threads) = 0;
+            virtual GameState TimeLimitedSearch(GameState &__startingPosition, StopWatch &_globalTimer, int __threads) = 0;
 
-   
-    // KILLER MOVES
-    virtual void sortMoves(std::vector<GameState> &__moves, int __depth, bool __color) = 0;
-    virtual void getMoves(GameState &__move, std::vector<GameState> &__moves) = 0;
-    virtual void storeKillerMove(GameState &__t, int __depth) = 0;
+            // Q SEARCH
 
- // UTILITIES
-    virtual int evaluate(GameState &__move, int __depth, bool __color) = 0;
-    virtual void addHashToMoves(std::vector<GameState> &__moves) = 0;
-    virtual void print() = 0;
-    virtual void printHeuristic() = 0;
-    virtual int getBestScore() const = 0;
-    virtual int getTotalMoves() const = 0;
-    virtual int getQTotalMoves() const = 0;
-    virtual int getCutOffs(int __index) const = 0;
-    virtual void resetTranspositionTable() = 0;
+            /**
+             * @brief Quiescence Search Algorithm, addinitional deeper search when reaching leafs in state space trees
+             * usually search only the "non quiesce" moves ( kills or game ends )
+             *
+             * @param __currentMove where to start the q search
+             * @param __qDepth how deep we are in the trees
+             * @param __alpha alpha value
+             * @param __beta beta value
+             * @param __color current game state color
+             * @return int
+             */
+            virtual int Quiesce(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
+            virtual int QuiesceTimeLimited(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
 
-    virtual void reset() = 0;
-    virtual void resetStats() = 0;
-};
+            // KILLER MOVES
 
+            virtual void getMoves(GameState &__move, std::vector<GameState> &__moves) = 0;
+            virtual void storeKillerMove(GameState &__t, int __depth) = 0;
+
+            // USED IN SEARCH ALGORITHM
+            virtual void sortMoves(std::vector<GameState> &__moves, int __depth, bool __color) = 0;
+            virtual int evaluate(GameState &__move, int __depth, bool __color) = 0;
+            virtual void addHashToMoves(std::vector<GameState> &__moves) = 0;
+
+            // UTILITIES
+            virtual void print() = 0;
+            virtual void printHeuristic() = 0;
+            virtual int getBestScore() const = 0;
+            virtual int getTotalMoves() const = 0;
+            virtual int getQTotalMoves() const = 0;
+            virtual int getCutOffs(int __index) const = 0;
+            virtual void resetTranspositionTable() = 0;
+
+            virtual void reset() = 0;
+            virtual void resetStats() = 0;
+        };
+
+    }
+}
 #endif

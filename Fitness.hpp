@@ -12,16 +12,23 @@
 #include <cstdlib>
 #include <ctime>
 
+const int DEFAULT_MAX_DEPTH = 7;
+const int DEFAULT_MAX_QDEPTH = 2;
+
 class Fitness
 {
 private:
     int _maxDepth;
+    int _maxQDepth;
     int _maxIterations;
     bool _verbose;
 
 public:
-    Fitness(int __maxDepth = 7, int __maxIterations = 250, bool __verbose = true) : _maxDepth(__maxDepth), _maxIterations(__maxIterations), _verbose(__verbose){};
-    Fitness(bool __verbose) : Fitness(7, 250, __verbose){};
+    Fitness(int __maxDepth = DEFAULT_MAX_DEPTH, int __maxQDepth = DEFAULT_MAX_QDEPTH, int __maxIterations = 250, bool __verbose = true) : _maxDepth(__maxDepth),
+                                                                                                                                          _maxQDepth(__maxQDepth),
+                                                                                                                                          _maxIterations(__maxIterations),
+                                                                                                                                          _verbose(__verbose){};
+    Fitness(bool __verbose) : Fitness(DEFAULT_MAX_DEPTH, DEFAULT_MAX_QDEPTH, 250, __verbose){};
     ~Fitness(){};
 
 private:
@@ -41,8 +48,8 @@ private:
         Zobrist hasher = Zobrist();
 
         // Setup new search engine with the given weights heuristic
-        NegaScoutEngine searchEngineWhite = NegaScoutEngine(Heuristic(__white), hasher, _maxDepth);
-        NegaScoutEngine searchEngineBlack = NegaScoutEngine(Heuristic(__black), hasher, _maxDepth);
+        NegaScoutEngine searchEngineWhite = NegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__white), hasher);
+        NegaScoutEngine searchEngineBlack = NegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__black), hasher);
 
         for (int n : __white)
             std::cout << n << ' ';

@@ -1,14 +1,13 @@
 #ifndef HEURISTIC
 #define HEURISTIC
 
+#include "Interfaces/IHeuristic.hpp"
 #include "Tablut.hpp"
 #include "MoveGenerator.hpp"
 
 #include <array>
-#include <vector>
 #include <algorithm>
 #include <iostream>
-#include <vector>
 #include <atomic>
 #include <mutex>
 
@@ -16,10 +15,9 @@
 class Tablut;
 class MoveGenerator;
 
-/* -------------------------------
-        MUST IMPLEMENT QUICK HEURISTIC WHEN TRAINING IS COMPLETED
-   -------------------------------
-*/
+using namespace AI::Interface;
+using namespace AI::Define;
+
 
 // Matrix representing the distance ( in number of moves ) in every cell from the nearest camp
 /*--0 1 2 3 4 5 6 7 8
@@ -37,7 +35,6 @@ class MoveGenerator;
 */
 const int TOTAL_WEIGHTS = 40;
 
-typedef std::tuple<Pos, Pos, Pos, Pos> KillerMove;
 typedef std::array<int, TOTAL_WEIGHTS> Weights;
 typedef std::array<std::array<int, DIM>, DIM> BoardWeights;
 typedef std::pair<int, int> WeightBounds;
@@ -72,10 +69,11 @@ const int LITTLE_BOUND = 40;
 const int KILLER_MOVES_SLOT = 2;
 const int MAX_KILLER_MOVES_DEPTH = 15;
 
+// KILLER MOVES DATABASE
 std::atomic<int> _killerMovesHit;
 std::mutex _mtxKillerMoveStore;
 
-class Heuristic
+class Heuristic: public IHeuristic<Tablut>
 {
 private:
     Weights _weights;
@@ -84,7 +82,7 @@ private:
     BoardWeights _blackPosHeuristic;
 
     // Killer moves set
-    std::array<std::array<KillerMove, KILLER_MOVES_SLOT>, MAX_KILLER_MOVES_DEPTH> _killerMoves;
+    std::array<std::array<StandardMove, KILLER_MOVES_SLOT>, MAX_KILLER_MOVES_DEPTH> _killerMoves;
     std::array<int, MAX_KILLER_MOVES_DEPTH> _killerMovesIndex;
 
     void _killerMoveHit()
@@ -150,7 +148,16 @@ public:
         }};
     }
 
-    // Evaluate a tablut with all weights defined in this classes
+   /**
+     * @brief Heavy evaluation of the state, every possible weight is used to score the game state
+     * if end game occur, give a fixed score to the state
+     * 
+     * @param __t game state to evaluate
+     * @param __depth current depth of the game state
+     * @param __color evaluation color
+     * @param __colored tell if evaluation must be done by the perspective of the current player
+     * @return int 
+     */
     int evaluate(Tablut &__t, int __depth, bool __color = true, bool __colored = false)
     {
         int score;
@@ -186,7 +193,17 @@ public:
         return __colored ? (__color ? score : -score) : score;
     }
 
-    // Fast evaluate a Tablut, used mainly for move ordering
+    /**
+     * @brief Fast evaluation of the game state, the score is the same as the @see evaluate function
+     * but the @see restrictPosition function is not considered
+     * KIller moves bonuses are considered in this evaluation
+     * 
+     * @param __t game state to evaluate
+     * @param __depth current depth of the game state
+     * @param __color evaluation color
+     * @param __colored tell if evaluation must be done by the perspective of the current player
+     * @return int 
+     */
     int quickEvaluate(Tablut &__t, int __depth, bool __color = true, bool __colored = false)
     {
         int score;
@@ -220,12 +237,15 @@ public:
         return __colored ? (__color ? score : -score) : score;
     }
 
-    /*
-        Function used to store a move killer into the killer moves
+    /**
+     * @brief Function used to store a move killer into the killer moves
         When at a given depth the array is not full simply push a killer move into the first slot
         In alternative slide all the old killer moves and put the new one on top of the array
-    */
-    void storeKillerMove(KillerMove &__kMove, int __depth)
+     * 
+     * @param __kMove killer move to store
+     * @param __depth killer move's depth
+     */
+    void storeKillerMove(StandardMove &__kMove, int __depth)
     {
         _mtxKillerMoveStore.lock();
         if (_killerMovesIndex[__depth] < KILLER_MOVES_SLOT)
@@ -243,11 +263,15 @@ public:
         _mtxKillerMoveStore.unlock();
     }
 
-    /*
-        Tells if a move is a store killer move of a specified depth
+    /**
+     * @brief Tells if a move is a store killer move of a specified depth
         Return the index of the killer moves if its found, if not returns -1
-    */
-    int isKillerMove(KillerMove &__kMove, int __depth)
+     * 
+     * @param __kMove killer move to check
+     * @param __depth current depth of evaluation
+     * @return int - index of killer moves if found, otherwhise -1
+     */
+    int isKillerMove(StandardMove &__kMove, int __depth)
     {
         for (int i = 0; i < _killerMovesIndex[__depth]; i++)
         {
@@ -259,13 +283,15 @@ public:
         return -1;
     }
 
-    /*
-        Gives a bonus score based on if a move is a killer move
-    */
+    /**
+     * @brief  Gives a bonus score based on if a move is a killer move
+     * 
+     * @return int - the bonus score
+     */
     int computeKillerMovesScore(Tablut &__t, int __depth, bool __color)
     {
         // KILLER MOVES
-        KillerMove move = __t.getMove();
+        StandardMove move = __t.getMove();
         int killerIndex = isKillerMove(move, __depth);
 
         if (killerIndex == -1)
@@ -283,16 +309,20 @@ public:
         return __color ? 2000 : -2000;
     }
 
-    // Get total killer moves hit
+    /**
+     * @brief Get the total hit to stored killer moves
+     * 
+     * @return int - total hit
+     */
     int getKillerMovesHits() const
     {
         return _killerMovesHit;
     }
 
-    /*
-        Reset all killer moves, dont need to clean all killer moves array,
-        by clearing only the index array, when new killer moves will be added they'll overwrite
-        the old invalid entries
+    /**
+     * @brief Reset all killer moves, dont need to clean all killer moves array,
+     * by clearing only the index array, when new killer moves will be added they'll overwrite
+     * the old invalid entries
     */
     void resetKillerMoves()
     {
@@ -353,7 +383,15 @@ public:
         return __t1._score < __t2._score;
     }
 
-    // Sorting moves algorithm, first evaluate the score of every Tablut then it proceed to Sort them
+    /**
+     * @brief Sort moves by using the @see compare function, move ordering used in search algorithm
+     * to produce cutoffs as soon as possible to reduce space state search
+     * 
+     * @param __moves moves to order
+     * @param __depth current depth, used in evaluation to penalize deeper moves
+     * @param __whiteEvaluate current color
+     * @param __colored tell if evaluation should be colored or not ( means that result is related to the player current turn )
+     */
     void sortMoves(std::vector<Tablut> &__moves, int __depth, bool __whiteEvaluate = true, bool __colored = false)
     {
         for (Tablut &move : __moves)

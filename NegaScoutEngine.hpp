@@ -3,15 +3,26 @@
 
 #include "Abstract/AbstractSearchEngine.hpp"
 
+#include "Heuristic.hpp"
+#include "Zobrist.hpp"
+
+using namespace AI::Abstract;
+
 class NegaScoutEngine : public AbstractSearchEngine<Tablut>
 {
 public:
-    NegaScoutEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth = MAX_DEFAULT_DEPTH, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)
-        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist)
+    NegaScoutEngine(int __maxDepth, int __quiescenceMaxDepth, Heuristic __heuristic, Zobrist __zobrist, TranspositionTable<Entry> __table = TranspositionTable<Entry>())
+        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist, __table)
     {
     }
 
     ~NegaScoutEngine(){};
+
+    constexpr NegaScoutEngine &operator=(const NegaScoutEngine &__other)
+    {
+        std::memcpy(this, &__other, sizeof(NegaScoutEngine));
+        return *this;
+    }
 
     // NEGASCOUT __________________________________________
     Tablut Search(Tablut &__startingPosition)
@@ -83,11 +94,11 @@ public:
         return _bestMove;
     }
 
-    Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &_globalTimer, int __threads = MAX_THREADS)
+    Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &__globalTimer, int __threads = MAX_THREADS)
     {
         reset();
 
-        _stopWatch = _globalTimer;
+        _stopWatch = __globalTimer;
 
         NegaScoutTimeLimited(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
 
@@ -503,7 +514,7 @@ public:
 
             if (v > score)
             {
-               
+
                 if (__depth == _maxDepth)
                 {
                     _bestScore = v;
@@ -528,68 +539,4 @@ public:
     }
 };
 
-// NEGASCOUT __________________________________________
-/*
-
-
-    Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &_globalTimer, int __threads = MAX_THREADS)
-    {
-        reset();
-
-        std::vector<Tablut> moves;
-        std::vector<std::future<int>> results;
-
-        const bool color = __startingPosition._isWhiteTurn;
-
-        const int originalDepth = _maxDepth;
-
-        _bestScore = BOTTOM_SCORE;
-        int v;
-
-        // GENERATE ALL LEGAL MOVES
-        getMoves(__startingPosition, moves);
-
-        // CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
-        addHashToMoves(moves);
-
-        // SORT MOVES
-        sortMoves(moves, _maxDepth, color);
-
-        // TIME LIMIT SUBDIVISION
-        int totalMoves = moves.size();
-
-        for (int t = 0; t < moves.size(); t += __threads)
-        {
-            // DIVIDE TIME BY GROUP OF THREADS, APPLY A TOLERANCE OF N% FOR EVERY GROUP OF THREAD;
-            _computeSliceTimeLimit(_globalTimer, _stopWatch, totalMoves, __threads);
-            _stopWatch.start();
-
-            for (int i = 0; i < __threads && i + t < moves.size(); i++)
-            {
-                results.push_back(std::async(std::launch::async, &NegaScoutEngine::NegaScoutTimeLimited, this, std::ref(moves[i + t]), _maxDepth - 1, BOTTOM_SCORE, TOP_SCORE, !color));
-            }
-
-            for (int i = 0; i < results.size(); i++)
-            {
-                v = -results[i].get();
-
-                if (v > _bestScore || t + i == 0)
-                {
-                    _bestMove = moves[i + t];
-                    _bestScore = v;
-                }
-            }
-
-            totalMoves -= __threads;
-
-            results.clear();
-            _stopWatch.reset();
-        }
-
-        _maxDepth = originalDepth;
-
-        return _bestMove;
-    }
-
-*/
 #endif

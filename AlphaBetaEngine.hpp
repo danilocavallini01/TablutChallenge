@@ -3,21 +3,32 @@
 
 #include "Abstract/AbstractSearchEngine.hpp"
 
+#include "Heuristic.hpp"
+#include "Zobrist.hpp"
+
+using namespace AI::Abstract;
+
 class AlphaBetaEngine : public AbstractSearchEngine<Tablut>
 {
 public:
-    AlphaBetaEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)
-        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, false, __heuristic, __zobrist)
+     AlphaBetaEngine(int __maxDepth, int __quiescenceMaxDepth, Heuristic __heuristic, Zobrist __zobrist, TranspositionTable<Entry> __table = TranspositionTable<Entry>())
+        : AbstractSearchEngine(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist, __table)
     {
     }
 
     ~AlphaBetaEngine(){};
 
+    constexpr AlphaBetaEngine &operator=(const AlphaBetaEngine & __other) {
+        std::memcpy(this, &__other, sizeof(AlphaBetaEngine));
+        return *this;
+    }
+
     // ALPHABETA __________________________________________
 
     Tablut Search(Tablut &__startingPosition) override
     {
-        resetStats();
+        reset();
+        resetTranspositionTable();
 
         AlphaBeta(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
 
@@ -55,7 +66,7 @@ public:
                 __currentMove._gameState = GAME_STATE::WHITEWIN;
             }
 
-            return evaluate(__currentMove, __depth, __color);
+            return Quiesce(__currentMove, __depth, __alpha, __beta, __color);
         }
 
         // SORT MOVES

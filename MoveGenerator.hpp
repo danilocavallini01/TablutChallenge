@@ -11,6 +11,8 @@
 // Forward Declaration
 class Tablut;
 
+using namespace AI::Interface;
+
 class MoveGenerator : public IMoveGenerator<Tablut>
 {
 private:

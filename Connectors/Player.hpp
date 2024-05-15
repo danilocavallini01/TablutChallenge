@@ -4,9 +4,11 @@
 #include <stdexcept>
 
 #include "Connection.hpp"
+
+#include "../NegaScoutEngine.hpp"
+
 #include "../Tablut.hpp"
 #include "../Heuristic.hpp"
-#include "../NegaScoutEngine.hpp"
 #include "../Zobrist.hpp"
 #include "../Heuristic.hpp"
 
@@ -29,7 +31,6 @@ namespace Connectors
     const int _maxBDepth = 6;
     const int _qBDepth = 1;
 
-
     const Weights _whiteWeight = {247, -297, 114, -160, 260, 116, 21, 115, 64, 102, 67, -15, 116, 26, 44, 7, -6, 27, -27, -84, -39, 38, 18, -44, -23, -17, -24, 34, 62, 48, -29, 53, -69, -19, -14, -14, -27, 63, -15, 5};
     const Weights _blackWeight = {299, -160, 191, -213, 260, 61, 57, 38, 53, -82, 38, 27, 12, 71, -31, -46, 19, -52, 57, -79, 26, -2, 1, 43, 22, -54, -38, 24, 69, 85, 7, -41, -24, -18, 18, -68, -83, -81, -1, 25};
 
@@ -49,11 +50,11 @@ namespace Connectors
         int _timeout;
 
     public:
-        Player(Connection __socket, COLOR __color, int __timeout, Zobrist __hasher, NegaScoutEngine __engine) : _socket(__socket),
-                                                                                                                _color(__color),
-                                                                                                                _hasher(__hasher),
-                                                                                                                _engine(__engine),
-                                                                                                                _timeout(__timeout)
+        Player(Connection __socket, COLOR __color, int __timeout, Zobrist __hasher) : _socket(__socket),
+                                                                                      _color(__color),
+                                                                                      _hasher(__hasher),
+                                                                                      _timeout(__timeout),
+                                                                                      _engine(_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher) : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher))
         {
             std::cout << std::endl
                       << "LOADED " << (__color == COLOR::WHITE ? "WHITE" : "BLACK") << " HEURISTIC " << std::endl;
@@ -76,10 +77,7 @@ namespace Connectors
             std::cout << "]" << std::endl;
         };
 
-        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 500, Zobrist(), 
-        _color == COLOR::WHITE ? NegaScoutEngine(Heuristic(_whiteH), _hasher, _maxWDepth, _qWDepth) : NegaScoutEngine(Heuristic(_blackH), _hasher, _maxBDepth, _qBDepth))
-        {
-        }
+        Player(Connection __socket, COLOR __color, int __timeout) : Player(__socket, __color, __timeout - 500, Zobrist()) {}
 
         ~Player()
         {
@@ -175,7 +173,8 @@ namespace Connectors
         {
             StopWatch timer = StopWatch(_timeout);
 
-	    _engine = _color == COLOR::WHITE ? NegaScoutEngine(Heuristic(_whiteH), _hasher, _maxWDepth, _qWDepth) : NegaScoutEngine(Heuristic(_blackH), _hasher, _maxBDepth, _qBDepth);
+            _engine = {_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher) : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher)};
+
             // BEST MOVE SEARCH
             timer.start();
             Tablut bestMove = _engine.TimeLimitedSearch(__board, timer);
@@ -194,10 +193,10 @@ namespace Connectors
             // MOVE PARSING AND SEND
             std::string parsedMove = Tablut::toStandardMove(bestMove.getMove(), _color == COLOR::WHITE);
             std::cout << parsedMove << std::endl;
-	   _socket.send(parsedMove);
+            _socket.send(parsedMove);
         }
 
-                void declareName()
+        void declareName()
         {
             _socket.declareName();
         }

@@ -3,12 +3,18 @@
 
 #include <vector>
 
-template <class GameState>
-class IMoveGenerator
+namespace AI
 {
-public:
-    virtual ~IMoveGenerator(){};
-    static void generateLegalMoves(GameState &__g, std::vector<GameState> &__nexts) {};
-};
+    namespace Interface
+    {
+        template <class GameState>
+        class IMoveGenerator
+        {
+        public:
+            virtual ~IMoveGenerator(){};
+            static void generateLegalMoves(GameState &__game, std::vector<GameState> &__nexts) {};
+        };
+    }
+}
 
 #endif
