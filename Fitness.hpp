@@ -4,8 +4,6 @@
 #include "Tablut.hpp"
 #include "MoveGenerator.hpp"
 #include "Heuristic.hpp"
-#include "AbstractSearchEngine.hpp"
-
 #include "NegaScoutEngine.hpp"
 #include "AlphaBetaEngine.hpp"
 
@@ -27,7 +25,7 @@ public:
     ~Fitness(){};
 
 private:
-    void static printStats(AbstractSearchEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
+    void static printStats(NegaScoutEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
     {
         __engine.print();
 
@@ -173,7 +171,7 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(AbstractSearchEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
+    double _computeFitness(NegaScoutEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;

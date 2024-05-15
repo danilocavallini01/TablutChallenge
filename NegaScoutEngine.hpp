@@ -1,9 +1,9 @@
 #ifndef NEGASCOUT_SEARCH_ENGINE
 #define NEGASCOUT_SEARCH_ENGINE
 
-#include "AbstractSearchEngine.hpp"
+#include "Abstract/AbstractSearchEngine.hpp"
 
-class NegaScoutEngine : public AbstractSearchEngine
+class NegaScoutEngine : public AbstractSearchEngine<Tablut>
 {
 public:
     NegaScoutEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth = MAX_DEFAULT_DEPTH, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)

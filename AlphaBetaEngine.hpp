@@ -1,9 +1,9 @@
 #ifndef ALPHABETA_SEARCH_ENGINE
 #define ALPHABETA_SEARCH_ENGINE
 
-#include "AbstractSearchEngine.hpp"
+#include "Abstract/AbstractSearchEngine.hpp"
 
-class AlphaBetaEngine : public AbstractSearchEngine
+class AlphaBetaEngine : public AbstractSearchEngine<Tablut>
 {
 public:
     AlphaBetaEngine(Heuristic __heuristic, Zobrist __zobrist, int __maxDepth, int __quiescenceMaxDepth = MAX_DEFAULT_QSEARCH_DEPTH)
