@@ -41,7 +41,7 @@ namespace Connectors
     const Heuristic _whiteH{_whiteWeight};
     const Heuristic _blackH{_blackWeight};
 
-    const bool _verbose = false;
+    const bool _verbose = true;
 
     class Player
     {
@@ -177,11 +177,12 @@ namespace Connectors
         {
             StopWatch timer = StopWatch(_timeout);
 
-            _engine = {_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher) : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher)};
+            _engine = {_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher)
+                                              : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher)};
 
             // BEST MOVE SEARCH
             timer.start();
-            Tablut bestMove = _engine.TimeLimitedSearch(__board, timer);
+            Tablut bestMove = _engine.TimeLimitedSlicedSearch(__board, timer, 7);
 
             std::cout << "------------------------" << std::endl;
             std::cout << "TIME TAKEN: " << _timeout - timer.getRemainingTime() << std::endl;

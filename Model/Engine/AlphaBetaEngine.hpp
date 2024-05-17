@@ -10,6 +10,7 @@
 
 using namespace AI::Abstract;
 using namespace AI::Abstract::Engine;
+using namespace AI::Abstract::Define;
 using namespace AI::Interface::Engine;
 
 namespace AI

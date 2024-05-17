@@ -24,15 +24,19 @@ namespace AI
 {
     namespace Abstract
     {
-        // Lowest and Highest scores for alpha and beta initialization
-        const int BOTTOM_SCORE(-10000000);
-        const int TOP_SCORE(10000000);
+        namespace Define
+        {
+            // Lowest and Highest scores for alpha and beta initialization
+            const int BOTTOM_SCORE(-10000000);
+            const int TOP_SCORE(10000000);
 
-        // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
-        const float MAX_TIME_ERROR = 12.0;
+            // Max possible error accepted by time limited search algorithm ( EXPRESSED AS PERCENTAGE: ES. 20% = 20.0)
+            const float MAX_TIME_ERROR = 12.0;
 
-        // Default thread parameter
-        const int MAX_THREADS = int(std::thread::hardware_concurrency());
+            // Default thread parameter
+            const int MAX_THREADS = int(std::thread::hardware_concurrency());
+
+        }
 
         // Total moves
         std::atomic<int> _totalMoves;
@@ -80,7 +84,7 @@ namespace AI
 
             void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads)
             {
-                int slicedTimeLimit = int(float(__globalTimer.getRemainingTime()) / std::ceil(float(__remainingMoves) / float(__threads)) * (100.0 - MAX_TIME_ERROR) / 100.0);
+                int slicedTimeLimit = int(float(__globalTimer.getRemainingTime()) / std::ceil(float(__remainingMoves) / float(__threads)) * (100.0 - Define::MAX_TIME_ERROR) / 100.0);
                 __mustSetTimer.setTimeLimit(slicedTimeLimit);
             }
 
@@ -124,6 +128,12 @@ namespace AI
             void getMoves(G &__move, std::vector<G> &__moves)
             {
                 MoveGenerator::generateLegalMoves(__move, __moves);
+            }
+
+            void storeBestMove(G &__position, G &__bestMove, int __depth)
+            {
+                __position.copyBestMove(__bestMove);
+                __position.storeBestMove(__bestMove, _maxDepth - __depth);
             }
 
             void storeKillerMove(G &__t, int __depth)
@@ -192,7 +202,7 @@ namespace AI
             void reset()
             {
                 resetStats();
-                resetTranspositionTable();
+                // resetTranspositionTable();
                 _heuristic.resetKillerMoves();
             }
 
@@ -201,6 +211,7 @@ namespace AI
                 _totalMoves = 0;
                 _qTotalMoves = 0;
                 _resetCutoffs();
+                _transpositionTable.resetStat();
             }
         };
 

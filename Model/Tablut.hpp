@@ -11,11 +11,15 @@
 #include <vector>
 #include <deque>
 #include <Json/json.hpp>
+#include <string>
+#include <tuple>
 
 using json = nlohmann::json;
 
 typedef int16_t Pos;
 typedef uint64_t ZobristKey;
+
+typedef std::tuple<int, int, int, int> Move;
 
 // Table dimensions -> always 9
 const Pos DIM(9);
@@ -24,12 +28,10 @@ const Pos LAST_COL(DIM - 2);
 const Pos FIRST_ROW(1);
 const Pos FIRST_COL(1);
 
-// Dead king position value
-const Pos KDEADPOSITION(20);
-// Max _hash log extensions, used to check if position is draw(game state position reached twice)
-const int MAX_DRAW_LOG(250);
-// Max position log used to check where checkers are ( no king )
-const int MAX_POS_LOG(24);
+const Pos KDEADPOSITION(20); // Dead king position value
+const int MAX_DRAW_LOG(250); // Max _hash log extensions, used to check if position is draw(game state position reached twice)
+const int MAX_POS_LOG(24);   // Max positions log used to check where checkers are
+const int MAX_BEST_MOVES_ARRAY_LENGTH(20);
 
 // Enum for Checker values
 enum C : int16_t
@@ -131,6 +133,9 @@ public:
     std::array<std::pair<Pos, Pos>, MAX_POS_LOG> _checkerPositions;
     int _checkerPositionIndex;
 
+    std::array<Move, MAX_BEST_MOVES_ARRAY_LENGTH> _bestMoves;
+    int _bestMovesIndex;
+
     // Current Tablut score
     int _score;
 
@@ -206,6 +211,9 @@ public:
         t._pastHashes = {};
         t._pastHashesIndex = 0;
 
+        t._bestMoves = {};
+        t._bestMovesIndex = 0;
+
         for (auto &row : jsonValue["board"])
         {
             for (std::string cell : row)
@@ -278,13 +286,17 @@ public:
 
         t._gameState = GAME_STATE::NONE;
 
-        t._hash = 0;
-        t._pastHashesIndex = 0;
-
         t._kingMovements = 0;
         t._turn = 0;
 
         t._score = 0;
+
+        t._hash = 0;
+        t._pastHashes = {};
+        t._pastHashesIndex = 0;
+
+        t._bestMoves = {};
+        t._bestMovesIndex = 0;
 
         // Setting all black defenders
         t._board[0][3] = C::BLACK;
@@ -541,7 +553,64 @@ public:
         return {_oldX, _oldY, _x, _y};
     }
 
-    static std::string toStandardMove(std::tuple<int, int, int, int> __move, bool isWhite)
+    std::string getStandardMove()
+    {
+        return Tablut::toStandardMove(this->getMove());
+    }
+
+    void copyBestMove(Tablut &__other)
+    {
+        _bestMovesIndex = __other._bestMovesIndex;
+        for (int i = 0; i < _bestMovesIndex; i++)
+        {
+            _bestMoves[i] = __other._bestMoves[i];
+        }
+    }
+
+    void storeBestMove(Tablut &__bestMove, int __depth)
+    {
+        _bestMoves[__depth] = __bestMove.getMove();
+        _bestMovesIndex = std::max(_bestMovesIndex, __depth);
+    }
+
+    void resetBestMoves()
+    {
+        _bestMoves = {};
+    }
+
+    static std::string toVisualMove(Move __move)
+    {
+        std::string result = "";
+
+        result += char(std::get<1>(__move) + 97);
+        result += char(std::get<0>(__move) + 49);
+
+        result += "->";
+
+        result += char(std::get<3>(__move) + 97);
+        result += char(std::get<2>(__move) + 49);
+        
+        return result;
+    }
+
+    static std::string toStandardMove(Move __move)
+    {
+        std::string from = "", to = "";
+
+        from += char(std::get<1>(__move) + 97);
+        from += char(std::get<0>(__move) + 49);
+
+        to += char(std::get<3>(__move) + 97);
+        to += char(std::get<2>(__move) + 49);
+
+        json JSON = {
+            {"from", from},
+            {"to", to}};
+
+        return JSON.dump();
+    }
+
+    static std::string toStandardMove(Move __move, bool isWhite)
     {
         std::string from = "", to = "";
 
@@ -872,10 +941,21 @@ public:
         out << "blackCheckers: " << unsigned(__tablut._blackCount) << std::endl;
         out << "kingPosition: " << int(__tablut._kingX) << "-" << int(__tablut._kingY) << std::endl;
         out << "kills: " << __tablut._kills << std::endl;
+
         if (int(__tablut._x) >= 0)
         {
             out << "checkerMovedTo: " << int(__tablut._x) << "-" << int(__tablut._y) << std::endl;
             out << "checkerMovedFrom: " << int(__tablut._oldX) << "-" << int(__tablut._oldY) << std::endl;
+        }
+
+        if (__tablut._bestMovesIndex > 0)
+        {
+            out << "BEST NEXT MOVES: ";
+            for (int i = 0; i < __tablut._bestMovesIndex; i++)
+            {
+                out << Tablut::toVisualMove(__tablut._bestMoves[i]) << ",";
+            }
+            out << std::endl;
         }
 
         return out;

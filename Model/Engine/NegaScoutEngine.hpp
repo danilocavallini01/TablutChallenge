@@ -9,12 +9,15 @@
 
 using namespace AI::Abstract;
 using namespace AI::Abstract::Engine;
+using namespace AI::Abstract::Define;
 using namespace AI::Interface::Engine;
 
 namespace AI
 {
     namespace Engine
     {
+        std::atomic<int> _alpha;
+
         class NegaScoutEngine : public AbstractNegaScoutEngine<Tablut, Heuristic, Zobrist, TranspositionTable<Entry>>
         {
         public:
@@ -25,7 +28,7 @@ namespace AI
 
             ~NegaScoutEngine(){};
 
-            constexpr NegaScoutEngine &operator=(const NegaScoutEngine &__other) 
+            constexpr NegaScoutEngine &operator=(const NegaScoutEngine &__other)
             {
                 std::memcpy(this, &__other, sizeof(NegaScoutEngine));
                 return *this;
@@ -35,6 +38,7 @@ namespace AI
             Tablut Search(Tablut &__startingPosition) override
             {
                 reset();
+                __startingPosition.resetBestMoves();
                 resetTranspositionTable();
 
                 NegaScout(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
@@ -45,6 +49,7 @@ namespace AI
             Tablut ParallelSearch(Tablut &__startingPosition, int __threads = MAX_THREADS) override
             {
                 reset();
+                __startingPosition.resetBestMoves();
                 resetTranspositionTable();
 
                 std::vector<Tablut> moves;
@@ -86,8 +91,10 @@ namespace AI
 
                         if (v > _bestScore || t + i == 0)
                         {
+
                             _bestMove = moves[i + t];
                             _bestScore = v;
+                            storeBestMove(__startingPosition, _bestMove, _maxDepth);
                         }
 
                         alpha = std::max(alpha, v);
@@ -104,12 +111,110 @@ namespace AI
             Tablut TimeLimitedSearch(Tablut &__startingPosition, StopWatch &__globalTimer, int __threads = MAX_THREADS) override
             {
                 reset();
+                __startingPosition.resetBestMoves();
 
                 _stopWatch = __globalTimer;
 
                 NegaScoutTimeLimited(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
 
                 return _bestMove;
+            }
+
+            Tablut TimeLimitedSlicedSearch(Tablut &__startingPosition, StopWatch &__globalTimer, int __threads = MAX_THREADS)
+            {
+                reset();
+                __startingPosition.resetBestMoves();
+
+                _stopWatch = __globalTimer;
+
+                std::vector<std::future<std::pair<int, Tablut>>> results;
+                std::vector<Tablut> moves;
+                Tablut move;
+
+                _bestScore = BOTTOM_SCORE;
+
+                const bool color = __startingPosition._isWhiteTurn;
+
+                // GET ALL LEGAL MOVES
+                getMoves(__startingPosition, moves);
+
+                // ADD HASH TO CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
+                addHashToMoves(moves);
+
+                // SORT MOVES
+                sortMoves(moves, _maxDepth, color);
+
+                _alpha = BOTTOM_SCORE;
+
+                int sliceSize = moves.size() / __threads;
+                int i;
+
+                for (i = 0; i < moves.size() - 1 - sliceSize; i += sliceSize + 1)
+                {
+                    results.push_back(std::async(std::launch::async, &NegaScoutEngine::TimeLimitedSliceSearch, this, std::ref(moves), i, i + sliceSize, _maxDepth, color));
+                }
+
+                results.push_back(std::async(std::launch::async, &NegaScoutEngine::TimeLimitedSliceSearch, this, std::ref(moves), i, moves.size() - 1, _maxDepth, color));
+
+                for (auto &result : results)
+                {
+                    std::pair<int, Tablut> res = result.get();
+
+                    if (res.first > _bestScore)
+                    {
+                        _bestScore = res.first;
+                        _bestMove = res.second;
+
+                        storeBestMove(_bestMove, _bestMove, _maxDepth);
+                    }
+                }
+
+                return _bestMove;
+            }
+
+            std::pair<int, Tablut> TimeLimitedSliceSearch(std::vector<Tablut> &__moves, int __startIndex, int __endIndex, int __depth, bool __color)
+            {
+                _totalMoves++;
+
+                int score = BOTTOM_SCORE;
+                int beta = TOP_SCORE;
+                int b = beta;
+                int v;
+
+                Tablut move;
+                Tablut bestMove;
+
+                // NEGASCOUT CORE ENGINE
+                for (int i = __startIndex; i < __endIndex; i++)
+                {
+                    move = __moves[i];
+
+                    v = -NegaScoutTimeLimited(move, __depth - 1, -b, -_alpha, !__color);
+
+                    if (v > _alpha && v < beta && i > 0)
+                    {
+                        v = -NegaScoutTimeLimited(move, __depth - 1, -beta, -_alpha, !__color);
+                    }
+
+                    if (v > score)
+                    {
+                        bestMove = move;
+                        score = v;
+                    }
+
+                    _alpha = std::max(_alpha.load(), v);
+
+                    if (_alpha >= beta)
+                    {
+                        storeKillerMove(move, __depth);
+                        _cutOffs[__depth]++;
+                        break;
+                    }
+
+                    b = _alpha + 1;
+                }
+
+                return {score, bestMove};
             }
 
             int Quiesce(Tablut &__currentMove, int __qDepth, int __alpha, int __beta, int __color) override
@@ -303,6 +408,8 @@ namespace AI
                             _bestScore = v;
                             _bestMove = move;
                         }
+
+                        storeBestMove(__currentMove, move, __depth);
                         score = v;
                     }
 
@@ -427,6 +534,8 @@ namespace AI
                             _bestScore = v;
                             _bestMove = move;
                         }
+
+                        storeBestMove(__currentMove, move, __depth);
                         score = v;
                     }
 
@@ -527,6 +636,8 @@ namespace AI
                             _bestScore = v;
                             _bestMove = move;
                         }
+
+                        storeBestMove(__currentMove, move, __depth);
                         score = v;
                     }
 
