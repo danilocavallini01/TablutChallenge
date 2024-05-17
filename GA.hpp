@@ -1,7 +1,7 @@
 #ifndef GALG
 #define GALG
 
-#include "Heuristic.hpp"
+#include "Model/Heuristic.hpp"
 #include "Fitness.hpp"
 
 #include <vector>

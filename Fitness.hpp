@@ -1,11 +1,10 @@
 #ifndef FITNESS
 #define FITNESS
 
-#include "Tablut.hpp"
-#include "MoveGenerator.hpp"
-#include "Heuristic.hpp"
-#include "NegaScoutEngine.hpp"
-#include "AlphaBetaEngine.hpp"
+#include "Model/Tablut.hpp"
+#include "Model/MoveGenerator.hpp"
+#include "Model/Heuristic.hpp"
+#include "Model/Engine/NegaScoutEngine.hpp"
 
 #include <vector>
 #include <chrono>
@@ -14,6 +13,8 @@
 
 const int DEFAULT_MAX_DEPTH = 7;
 const int DEFAULT_MAX_QDEPTH = 2;
+
+using namespace AI::Engine;
 
 class Fitness
 {

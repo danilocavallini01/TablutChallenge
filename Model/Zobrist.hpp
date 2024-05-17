@@ -1,7 +1,7 @@
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
 
-#include "Interfaces/IZobrist.hpp"
+#include "../Interfaces/IZobrist.hpp"
 #include "Tablut.hpp"
 
 #include <cstdint>

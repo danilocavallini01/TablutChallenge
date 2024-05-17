@@ -1,7 +1,7 @@
 
 #include "GA.hpp"
 #include "Connectors/Player.hpp"
-#include "ResourceAllocator.hpp"
+#include "Model/ResourceAllocator.hpp"
 
 #include <vector>
 #include <chrono>

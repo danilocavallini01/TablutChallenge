@@ -5,15 +5,19 @@
 
 #include "Connection.hpp"
 
-#include "../NegaScoutEngine.hpp"
+#include "../Model/Engine/NegaScoutEngine.hpp"
 
-#include "../Tablut.hpp"
-#include "../Heuristic.hpp"
-#include "../Zobrist.hpp"
-#include "../Heuristic.hpp"
+#include "../Model/Tablut.hpp"
+#include "../Model/Heuristic.hpp"
+#include "../Model/Zobrist.hpp"
 
 // Forward Declaration
 class Connection;
+class Tablut;
+class Heuristic;
+class Zobrist;
+
+using namespace AI::Engine;
 
 namespace Connectors
 {

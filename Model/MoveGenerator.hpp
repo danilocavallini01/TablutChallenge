@@ -2,7 +2,7 @@
 #define MOVEGENERATOR_H
 
 #include "Tablut.hpp"
-#include "Interfaces/IMoveGenerator.hpp"
+#include "../Interfaces/IMoveGenerator.hpp"
 
 #include <vector>
 #include <cstdlib>

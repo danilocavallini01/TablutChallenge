@@ -12,7 +12,13 @@ namespace AI
 {
     namespace Interface
     {
-        template <typename GameState>
+        /**
+         * @brief Engine Interface Typed parameters
+         * 
+         * @tparam G 
+         */
+        template <typename G>
+
         class IEngine
         {
         protected:
@@ -31,9 +37,9 @@ namespace AI
              * @param __startingPosition where to start searching throught the state spaces
              * @return GameState the best solution found
              */
-            virtual GameState Search(GameState &__startingPosition) = 0;
-            virtual GameState ParallelSearch(GameState &__startingPosition, int __threads) = 0;
-            virtual GameState TimeLimitedSearch(GameState &__startingPosition, StopWatch &_globalTimer, int __threads) = 0;
+            virtual G Search(G &__startingPosition) = 0;
+            virtual G ParallelSearch(G &__startingPosition, int __threads) = 0;
+            virtual G TimeLimitedSearch(G &__startingPosition, StopWatch &_globalTimer, int __threads) = 0;
 
             // Q SEARCH
 
@@ -48,18 +54,18 @@ namespace AI
              * @param __color current game state color
              * @return int
              */
-            virtual int Quiesce(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
-            virtual int QuiesceTimeLimited(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
+            virtual int Quiesce(G &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
+            virtual int QuiesceTimeLimited(G &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
 
             // KILLER MOVES
 
-            virtual void getMoves(GameState &__move, std::vector<GameState> &__moves) = 0;
-            virtual void storeKillerMove(GameState &__t, int __depth) = 0;
+            virtual void getMoves(G &__move, std::vector<G> &__moves) = 0;
+            virtual void storeKillerMove(G &__t, int __depth) = 0;
 
             // USED IN SEARCH ALGORITHM
-            virtual void sortMoves(std::vector<GameState> &__moves, int __depth, bool __color) = 0;
-            virtual int evaluate(GameState &__move, int __depth, bool __color) = 0;
-            virtual void addHashToMoves(std::vector<GameState> &__moves) = 0;
+            virtual void sortMoves(std::vector<G> &__moves, int __depth, bool __color) = 0;
+            virtual int evaluate(G &__move, int __depth, bool __color) = 0;
+            virtual void addHashToMoves(std::vector<G> &__moves) = 0;
 
             // UTILITIES
             virtual void print() = 0;

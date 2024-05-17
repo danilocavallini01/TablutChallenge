@@ -6,7 +6,7 @@
 #include "../Interfaces/IZobrist.hpp"
 #include "../Abstract/TranspositionTable.hpp"
 
-#include "../MoveGenerator.hpp"
+#include "../Model/MoveGenerator.hpp"
 
 #include <thread>
 #include <iostream>
@@ -41,13 +41,23 @@ namespace AI
         // Total cutoff made by alpha beta prunings
         std::atomic<int> _cutOffs[20];
 
-        template <typename GameState, typename Move = StandardMove, typename TTEntry = Entry>
-        class AbstractSearchEngine : public IEngine<GameState>
+        /**
+         * @brief Typed params for Abstract engine definition
+         *
+         * @tparam G - GameState type
+         * @tparam H - Heuristic Fn type
+         * @tparam Z - Zobrist Fn type
+         * @tparam TT - Transposition Table type
+         * @tparam M - Move type
+         */
+        template <typename G, typename H, typename Z, typename TT, typename M = StandardMove>
+
+        class AbstractSearchEngine : public IEngine<G>
         {
         protected:
-            IHeuristic<GameState> &_heuristic;
-            TranspositionTable<TTEntry> &_transpositionTable;
-            IZobrist<GameState, ZobristKey> &_zobrist;
+            H _heuristic;
+            TT _transpositionTable;
+            Z _zobrist;
 
             StopWatch _stopWatch;
             StopWatch _globalRemainingTime;
@@ -56,7 +66,7 @@ namespace AI
             int _quiesceMaxDepth;
 
             int _bestScore;
-            GameState _bestMove;
+            G _bestMove;
 
             bool _colored;
 
@@ -78,9 +88,9 @@ namespace AI
             explicit AbstractSearchEngine(int __maxDepth,
                                           int __quiesceMaxDepth,
                                           bool __colored,
-                                          IHeuristic<GameState> &__heuristic,
-                                          IZobrist<GameState, ZobristKey> &__zobrist,
-                                          TranspositionTable<TTEntry> &__transpositionTable)
+                                          H __heuristic,
+                                          Z __zobrist,
+                                          TT __transpositionTable)
                 : _maxDepth(__maxDepth),
                   _quiesceMaxDepth(-__quiesceMaxDepth),
                   _colored(__colored),
@@ -93,18 +103,12 @@ namespace AI
 
             virtual ~AbstractSearchEngine(){};
 
-            virtual GameState Search(GameState &__startingPosition) = 0;
-            virtual GameState ParallelSearch(GameState &__startingPosition, int __threads = MAX_THREADS) = 0;
-            virtual GameState TimeLimitedSearch(GameState &__startingPosition, StopWatch &__globalTimer, int __threads = MAX_THREADS) = 0;
-
-            virtual int Quiesce(GameState &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
-
-            int evaluate(GameState &__move, int __depth, bool __color)
+            int evaluate(G &__move, int __depth, bool __color)
             {
                 return _heuristic.evaluate(__move, __depth, __color, _colored);
             }
 
-            void addHashToMoves(std::vector<GameState> &__moves)
+            void addHashToMoves(std::vector<G> &__moves)
             {
                 for (auto &nextGameState : __moves)
                 {
@@ -112,19 +116,19 @@ namespace AI
                 }
             }
 
-            void sortMoves(std::vector<GameState> &__moves, int __depth, bool __color)
+            void sortMoves(std::vector<G> &__moves, int __depth, bool __color)
             {
                 _heuristic.sortMoves(__moves, __depth, __color, _colored);
             }
 
-            void getMoves(GameState &__move, std::vector<GameState> &__moves)
+            void getMoves(G &__move, std::vector<G> &__moves)
             {
                 MoveGenerator::generateLegalMoves(__move, __moves);
             }
 
-            void storeKillerMove(GameState &__t, int __depth)
+            void storeKillerMove(G &__t, int __depth)
             {
-                Move move = __t.getMove();
+                M move = __t.getMove();
                 _heuristic.storeKillerMove(move, __depth);
             }
 

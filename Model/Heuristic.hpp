@@ -1,7 +1,7 @@
 #ifndef HEURISTIC
 #define HEURISTIC
 
-#include "Interfaces/IHeuristic.hpp"
+#include "../Interfaces/IHeuristic.hpp"
 #include "Tablut.hpp"
 #include "MoveGenerator.hpp"
 
