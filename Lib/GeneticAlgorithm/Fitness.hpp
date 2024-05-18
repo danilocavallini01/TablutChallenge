@@ -1,10 +1,10 @@
 #ifndef FITNESS
 #define FITNESS
 
-#include "../Model/Tablut.hpp"
-#include "../Model/MoveGenerator.hpp"
-#include "../Model/Heuristic.hpp"
-#include "../Model/Engine/NegaScoutEngine.hpp"
+#include "Lib/Tablut/Tablut.hpp"
+#include "Lib/Tablut/MoveGenerator.hpp"
+#include "Lib/Tablut/Heuristic.hpp"
+#include "Lib/Tablut/TablutNegaScoutEngine.hpp"
 
 #include <vector>
 #include <chrono>
@@ -33,7 +33,7 @@ public:
     ~Fitness(){};
 
 private:
-    void static printStats(NegaScoutEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
+    void static printStats(TNegaScoutEngine &__engine, std::chrono::steady_clock::time_point &__timeBegin, std::chrono::steady_clock::time_point &__timeEnd, int __totalTime, int __cicles)
     {
         __engine.print();
 
@@ -49,8 +49,8 @@ private:
         Zobrist hasher = Zobrist();
 
         // Setup new search engine with the given weights heuristic
-        NegaScoutEngine searchEngineWhite = NegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__white), hasher);
-        NegaScoutEngine searchEngineBlack = NegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__black), hasher);
+        TNegaScoutEngine searchEngineWhite = TNegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__white), hasher);
+        TNegaScoutEngine searchEngineBlack = TNegaScoutEngine(_maxDepth, _maxQDepth, Heuristic(__black), hasher);
 
         for (int n : __white)
             std::cout << n << ' ';
@@ -179,7 +179,7 @@ private:
                 - LOSE: fitness returned with negative sign
                 - DRAW: fitness returned halved
     */
-    double _computeFitness(NegaScoutEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
+    double _computeFitness(TNegaScoutEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
         double avgTimeWeight = 10.0;

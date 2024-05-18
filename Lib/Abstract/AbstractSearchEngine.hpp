@@ -1,12 +1,11 @@
 #ifndef ABSTRACT_SEARCH_ENGINE
 #define ABSTRACT_SEARCH_ENGINE
 
-#include "../Interfaces/IEngine.hpp"
-#include "../Interfaces/IHeuristic.hpp"
-#include "../Interfaces/IZobrist.hpp"
-#include "TranspositionTable.hpp"
+#include "Lib/Interfaces/IEngine.hpp"
+#include "Lib/Interfaces/IHeuristic.hpp"
+#include "Lib/Interfaces/IZobrist.hpp"
 
-#include "../Model/MoveGenerator.hpp"
+#include "TranspositionTable.hpp"
 
 #include <thread>
 #include <iostream>
@@ -14,8 +13,6 @@
 #include <future>
 #include <atomic>
 
-// Forward Declaration
-class MoveGenerator;
 
 using namespace AI::Define;
 using namespace AI::Interface;
@@ -50,11 +47,12 @@ namespace AI
          *
          * @tparam G - GameState type
          * @tparam H - Heuristic Fn type
+         * @tparam MG - Move Generator type
          * @tparam Z - Zobrist Fn type
          * @tparam TT - Transposition Table type
          * @tparam M - Move type
          */
-        template <typename G, typename H, typename Z, typename TT, typename M = StandardMove>
+        template <typename G, typename H, typename MG, typename Z, typename TT, typename M = StandardMove>
 
         class AbstractSearchEngine : public IEngine<G>
         {
@@ -74,7 +72,7 @@ namespace AI
 
             bool _colored;
 
-            void _resetCutoffs()
+            void _resetCutoffs() override
             {
                 for (int i = 0; i < _maxDepth; i++)
                 {
@@ -82,7 +80,16 @@ namespace AI
                 }
             }
 
-            void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads)
+            /**
+             * @brief Utility function, given a @see globalTimer slice wisely the time so that the parallel search go in timoeout exactly at the specified time
+             * EX. if there is a 60s timer and there are 4 total moves and 2 threads, this will set the @see __mustSetTimer first with 30s - MAX_TIME_ERROR% 
+             * 
+             * @param __globalTimer - timer given by an external source
+             * @param __mustSetTimer - timer that needs the sliced time
+             * @param __remainingMoves - total remaining moves
+             * @param __threads - total threads used
+             */
+            void _computeSliceTimeLimit(StopWatch &__globalTimer, StopWatch &__mustSetTimer, int __remainingMoves, int __threads) override
             {
                 int slicedTimeLimit = int(float(__globalTimer.getRemainingTime()) / std::ceil(float(__remainingMoves) / float(__threads)) * (100.0 - Define::MAX_TIME_ERROR) / 100.0);
                 __mustSetTimer.setTimeLimit(slicedTimeLimit);
@@ -107,12 +114,27 @@ namespace AI
 
             virtual ~AbstractSearchEngine(){};
 
-            int evaluate(G &__move, int __depth, bool __color)
+            /**
+             * @brief evaluate a position at a given depth by passing the state to the heuristic function
+             * 
+             * @param __move - the game to evaluate
+             * @param __depth - current depth of evaluation
+             * @param __color - evaluation side
+             * @return int - score
+             */
+            int evaluate(G &__move, int __depth, bool __color) override
             {
                 return _heuristic.evaluate(__move, __depth, __color, _colored);
             }
 
-            void addHashToMoves(std::vector<G> &__moves)
+            /**
+             * @brief compute hash function of all given moves by using the given hash function and add
+             * the hash to the state
+             * @see IZobrist
+             * 
+             * @param __moves - moves that needs hash
+             */
+            void addHashToMoves(std::vector<G> &__moves) override
             {
                 for (auto &nextGameState : __moves)
                 {
@@ -120,23 +142,52 @@ namespace AI
                 }
             }
 
-            void sortMoves(std::vector<G> &__moves, int __depth, bool __color)
+            /**
+             * @brief sort moves by score and killer moves possibly, by using the heuristic function sort methods
+             * @see IHeuristic
+             * 
+             * @param __moves - moves to be sorted
+             * @param __depth - current depth of evaluation
+             * @param __color - evaluation side
+             */
+            void sortMoves(std::vector<G> &__moves, int __depth, bool __color) override
             {
                 _heuristic.sortMoves(__moves, __depth, __color, _colored);
             }
 
-            void getMoves(G &__move, std::vector<G> &__moves)
+            /**
+             * @brief get next moves possible starting from the @param __move game state
+             * 
+             * @param __move - starting position
+             * @param __moves - ending positions
+             */
+            void getMoves(G &__move, std::vector<G> &__moves) override
             {
-                MoveGenerator::generateLegalMoves(__move, __moves);
+                MG::generateLegalMoves(__move, __moves);
             }
 
+            /**
+             * @brief function used to store the next best moves at a given depth,
+             * start by coppying the best moves from the next game state and add the best next moves
+             * at the end of alla evaluation the array will contain the list of the next best mves
+             * 
+             * @param __position 
+             * @param __bestMove 
+             * @param __depth 
+             */
             void storeBestMove(G &__position, G &__bestMove, int __depth)
             {
                 __position.copyBestMove(__bestMove);
                 __position.storeBestMove(__bestMove, _maxDepth - __depth);
             }
 
-            void storeKillerMove(G &__t, int __depth)
+            /**
+             * @brief store the killer moves at a specified depth
+             * 
+             * @param __t 
+             * @param __depth 
+             */
+            void storeKillerMove(G &__t, int __depth) override
             {
                 M move = __t.getMove();
                 _heuristic.storeKillerMove(move, __depth);
@@ -199,14 +250,18 @@ namespace AI
                 _transpositionTable.clear();
             }
 
-            void reset()
+            /**
+             * @brief reset all possible stats, values from tt table and killer moves
+             * 
+             */
+            void reset() override
             {
                 resetStats();
-                // resetTranspositionTable();
+                //resetTranspositionTable();
                 _heuristic.resetKillerMoves();
             }
 
-            void resetStats()
+            void resetStats() override
             {
                 _totalMoves = 0;
                 _qTotalMoves = 0;

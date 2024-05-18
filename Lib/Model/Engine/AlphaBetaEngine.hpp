@@ -1,12 +1,9 @@
 #ifndef ALPHABETA_SEARCH_ENGINE
 #define ALPHABETA_SEARCH_ENGINE
 
+#include "Lib/Abstract/Engine/AbstractAlphaBetaEngine.hpp"
 
-#include "../../Abstract/Engine/AbstractAlphaBetaEngine.hpp"
-
-#include "../../Abstract/TranspositionTable.hpp"
-#include "../Heuristic.hpp"
-#include "../Zobrist.hpp"
+#include "Lib/Abstract/TranspositionTable.hpp"
 
 using namespace AI::Abstract;
 using namespace AI::Abstract::Engine;
@@ -17,11 +14,12 @@ namespace AI
 {
     namespace Engine
     {
-        class AlphaBetaEngine : public AbstractAlphaBetaEngine<Tablut, Heuristic, Zobrist, TranspositionTable<Entry>>
+        template <typename G, typename H, typename MG, typename Z, typename TT = TranspositionTable<Entry>>
+        class AlphaBetaEngine : public AbstractAlphaBetaEngine<G, H, MG, Z, TT>
         {
         public:
-            AlphaBetaEngine(int __maxDepth, int __quiescenceMaxDepth, Heuristic __heuristic, Zobrist __zobrist, TranspositionTable<Entry> __table = TranspositionTable<Entry>())
-                : AbstractAlphaBetaEngine(__maxDepth, __quiescenceMaxDepth, __heuristic, __zobrist, __table)
+            AlphaBetaEngine(int __maxDepth, int __quiescenceMaxDepth, H __heuristic, Z __zobrist, TT __table = TT())
+                : AbstractAlphaBetaEngine<G, H, MG, Z, TT>(__maxDepth, __quiescenceMaxDepth, __heuristic, __zobrist, __table)
             {
             }
 
@@ -35,34 +33,34 @@ namespace AI
 
             // ALPHABETA __________________________________________
 
-            Tablut Search(Tablut &__startingPosition) override
+            G Search(G &__startingPosition) override
             {
-                reset();
-                resetTranspositionTable();
+                this->reset();
+                this->resetTranspositionTable();
 
                 AlphaBeta(__startingPosition, _maxDepth, BOTTOM_SCORE, TOP_SCORE, __startingPosition._isWhiteTurn);
 
                 return _bestMove;
             }
 
-            int AlphaBeta(Tablut &__currentMove, const int __depth, int __alpha, int __beta, bool __color)
+            int AlphaBeta(G &__currentMove, const int __depth, int __alpha, int __beta, bool __color)
             {
                 _totalMoves++;
 
                 int score;
 
-                std::vector<Tablut> moves;
-                Tablut move;
+                std::vector<G> moves;
+                G move;
 
                 if (__currentMove.isGameOver() || __depth == 0)
                 {
                     return Quiesce(__currentMove, __depth, __alpha, __beta, __color);
                 }
 
-                getMoves(__currentMove, moves);
+                this->getMoves(__currentMove, moves);
 
                 // ADD HASH TO CHECK IF MOVE ALREADY DONE(DRAW) AND IF GAME IS IN A WIN OR LOSE POSITION
-                addHashToMoves(moves);
+                this->addHashToMoves(moves);
 
                 // LOSE BY NO MOVE LEFT
                 if (moves.size() == 0)
@@ -80,7 +78,7 @@ namespace AI
                 }
 
                 // SORT MOVES
-                sortMoves(moves, __depth, __color);
+                this->sortMoves(moves, __depth, __color);
 
                 // ALPHA BETA ENGINE CORE
                 if (__color)

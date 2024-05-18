@@ -1,8 +1,8 @@
 #ifndef BASE_TRANSPOSITION_TABLE
 #define BASE_TRANSPOSITION_TABLE
 
-#include "../Interfaces/ITranspositionTable.hpp"
-#include "../Model/Zobrist.hpp"
+#include "Lib/Interfaces/ITranspositionTable.hpp"
+#include "Lib/Tablut/Zobrist.hpp"
 
 #include <unordered_map>
 #include <mutex>

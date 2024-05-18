@@ -5,17 +5,10 @@
 
 #include "Connection.hpp"
 
-#include "../Model/Engine/NegaScoutEngine.hpp"
-
-#include "../Model/Tablut.hpp"
-#include "../Model/Heuristic.hpp"
-#include "../Model/Zobrist.hpp"
+#include "Lib/Tablut/TablutNegaScoutEngine.hpp"
 
 // Forward Declaration
 class Connection;
-class Tablut;
-class Heuristic;
-class Zobrist;
 
 using namespace AI::Engine;
 
@@ -48,7 +41,7 @@ namespace Connectors
         Connection _socket;
         COLOR _color;
 
-        NegaScoutEngine _engine;
+        TNegaScoutEngine _engine;
         Zobrist _hasher;
 
         int _timeout;
@@ -58,7 +51,7 @@ namespace Connectors
                                                                                       _color(__color),
                                                                                       _hasher(__hasher),
                                                                                       _timeout(__timeout),
-                                                                                      _engine(_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher) : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher))
+                                                                                      _engine(_color == COLOR::WHITE ? TNegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher) : TNegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher))
         {
             std::cout << std::endl
                       << "LOADED " << (__color == COLOR::WHITE ? "WHITE" : "BLACK") << " HEURISTIC " << std::endl;
@@ -177,8 +170,8 @@ namespace Connectors
         {
             StopWatch timer = StopWatch(_timeout);
 
-            _engine = {_color == COLOR::WHITE ? NegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher)
-                                              : NegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher)};
+            _engine = {_color == COLOR::WHITE ? TNegaScoutEngine(_maxWDepth, _qWDepth, Heuristic(_whiteH), _hasher)
+                                              : TNegaScoutEngine(_maxBDepth, _qBDepth, Heuristic(_blackH), _hasher)};
 
             // BEST MOVE SEARCH
             timer.start();

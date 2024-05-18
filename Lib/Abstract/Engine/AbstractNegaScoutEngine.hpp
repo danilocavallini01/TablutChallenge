@@ -13,12 +13,12 @@ namespace AI
     {
         namespace Engine
         {
-            template <typename G, typename H, typename Z, typename TT, typename M = StandardMove>
-            class AbstractNegaScoutEngine : public AbstractSearchEngine<G, H, Z, TT, M>, public INegaScoutEngine<G>
+            template <typename G, typename H, typename MG, typename Z, typename TT, typename M = StandardMove>
+            class AbstractNegaScoutEngine : public AbstractSearchEngine<G, H, MG, Z, TT, M>, public INegaScoutEngine<G>
             {
             public:
                 AbstractNegaScoutEngine(int __maxDepth, int __quiescenceMaxDepth, H __heuristic, Z __zobrist, TT __table)
-                    : AbstractSearchEngine<G, H, Z, TT, M>(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist, __table){};
+                    : AbstractSearchEngine<G, H, MG, Z, TT, M>(__maxDepth, __quiescenceMaxDepth, true, __heuristic, __zobrist, __table){};
 
                 virtual ~AbstractNegaScoutEngine(){};
             };
