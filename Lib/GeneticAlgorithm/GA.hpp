@@ -1,7 +1,7 @@
 #ifndef GALG
 #define GALG
 
-#include "Model/Heuristic.hpp"
+#include "../Model/Heuristic.hpp"
 #include "Fitness.hpp"
 
 #include <vector>
@@ -118,12 +118,12 @@ private:
 
     std::string _computeFitnessFileName(std::string &__fileName)
     {
-        return std::filesystem::current_path().string() + separator() + _fitnessBackupDir + separator() + __fileName;
+        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _fitnessBackupDir + separator() + __fileName;
     }
 
     std::string _computeFileName(std::string &__fileName)
     {
-        return std::filesystem::current_path().string() + separator() + _backupDir + separator() + __fileName;
+        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _backupDir + separator() + __fileName;
     }
 
     void _backupPopulation()

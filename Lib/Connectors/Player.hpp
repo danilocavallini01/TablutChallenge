@@ -182,7 +182,7 @@ namespace Connectors
 
             // BEST MOVE SEARCH
             timer.start();
-            Tablut bestMove = _engine.TimeLimitedSlicedSearch(__board, timer, 7);
+            Tablut bestMove = _engine.TimeLimitedSlicedSearch(__board, timer);
 
             std::cout << "------------------------" << std::endl;
             std::cout << "TIME TAKEN: " << _timeout - timer.getRemainingTime() << std::endl;

@@ -1,7 +1,7 @@
 
-#include "GA.hpp"
-#include "Connectors/Player.hpp"
-#include "Model/ResourceAllocator.hpp"
+#include "Lib/GeneticAlgorithm/GA.hpp"
+#include "Lib/Connectors/Player.hpp"
+#include "Lib/Model/ResourceAllocator.hpp"
 
 #include <vector>
 #include <chrono>

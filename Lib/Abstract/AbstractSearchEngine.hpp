@@ -4,7 +4,7 @@
 #include "../Interfaces/IEngine.hpp"
 #include "../Interfaces/IHeuristic.hpp"
 #include "../Interfaces/IZobrist.hpp"
-#include "../Abstract/TranspositionTable.hpp"
+#include "TranspositionTable.hpp"
 
 #include "../Model/MoveGenerator.hpp"
 
@@ -34,7 +34,7 @@ namespace AI
             const float MAX_TIME_ERROR = 12.0;
 
             // Default thread parameter
-            const int MAX_THREADS = int(std::thread::hardware_concurrency());
+            const int MAX_THREADS = int(std::thread::hardware_concurrency()) - 1;
 
         }
 

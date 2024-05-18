@@ -1,33 +1,10 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
-project(tablutChallange)
 
-find_package(Torch REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+project(tablutAiChallange VERSION 1.0)
 
-set(Boost_USE_STATIC_LIBS OFF) 
-set(Boost_USE_MULTITHREADED ON)  
-set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.84.0) 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS}) 
-    target_link_libraries(progname ${Boost_LIBRARIES})
-endif()
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-find_package(Boost 1.45.0 COMPONENTS unordered regex)
-
-add_executable(tablutChallange main.cpp)
-target_link_libraries(tablutChallange "${TORCH_LIBRARIES}")
-set_property(TARGET tablutChallange PROPERTY CXX_STANDARD 17)
-
-# The following code block is suggested to be used on Windows.
-# According to https://github.com/pytorch/pytorch/issues/25457,
-# the DLLs need to be copied to avoid memory errors.
-if (MSVC)
-  file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
-  add_custom_command(TARGET tablutChallange
-                     POST_BUILD
-                     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                     ${TORCH_DLLS}
-                     $<TARGET_FILE_DIR:tablutChallange>)
-endif (MSVC)
+add_executable(ai main.cpp)

@@ -1,10 +1,10 @@
 #ifndef FITNESS
 #define FITNESS
 
-#include "Model/Tablut.hpp"
-#include "Model/MoveGenerator.hpp"
-#include "Model/Heuristic.hpp"
-#include "Model/Engine/NegaScoutEngine.hpp"
+#include "../Model/Tablut.hpp"
+#include "../Model/MoveGenerator.hpp"
+#include "../Model/Heuristic.hpp"
+#include "../Model/Engine/NegaScoutEngine.hpp"
 
 #include <vector>
 #include <chrono>

@@ -1,7 +1,7 @@
 #ifndef I_ENGINE
 #define I_ENGINE
 
-#include "../StopWatch.hpp"
+#include "../Model/StopWatch.hpp"
 
 #include <vector>
 

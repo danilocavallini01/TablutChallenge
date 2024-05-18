@@ -1,6 +1,8 @@
 #ifndef TABLUT_H
 #define TABLUT_H
 
+#include "../Json/json.hpp"
+
 #include <iostream>
 #include <cstdint>
 #include <array>
@@ -10,7 +12,6 @@
 #include <chrono>
 #include <vector>
 #include <deque>
-#include <Json/json.hpp>
 #include <string>
 #include <tuple>
 
