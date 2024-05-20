@@ -58,7 +58,6 @@ namespace AI
             virtual int QuiesceTimeLimited(G &__currentMove, int __qDepth, int __alpha, int __beta, int __color) = 0;
 
             // KILLER MOVES
-
             virtual void getMoves(G &__move, std::vector<G> &__moves) = 0;
             virtual void storeKillerMove(G &__t, int __depth) = 0;
 
@@ -73,7 +72,6 @@ namespace AI
             virtual int getBestScore() const = 0;
             virtual int getTotalMoves() const = 0;
             virtual int getQTotalMoves() const = 0;
-            virtual int getCutOffs(int __index) const = 0;
             virtual void resetTranspositionTable() = 0;
 
             virtual void reset() = 0;

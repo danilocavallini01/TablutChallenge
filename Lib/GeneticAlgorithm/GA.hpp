@@ -57,6 +57,13 @@ private:
         return tokenized;
     }
 
+    /**
+     * @brief read Weights from file specififed with @param __fileModel and load the Weights in current
+     * white and black population, if not enought genes are found within a line than random genes will be generated
+     * to fill the Weights vector
+     *
+     * @param __fileModel
+     */
     void _readModelFromFile(std::ifstream &__fileModel)
     {
         Weights add;
@@ -116,6 +123,7 @@ private:
         _writePopulationToFile(fileName);
     }
 
+    // FILE NAME UTILITIES FUNCTION
     std::string _computeFitnessFileName(std::string &__fileName)
     {
         return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _fitnessBackupDir + separator() + __fileName;
@@ -126,6 +134,10 @@ private:
         return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _backupDir + separator() + __fileName;
     }
 
+    /**
+     * @brief backup current white and black population Weight values by writing weights to the /backup directory
+     *
+     */
     void _backupPopulation()
     {
         std::cout << "BACKUPPING POPULATION" << std::endl;
@@ -144,6 +156,12 @@ private:
         _writePopulationToFile(fileName);
     }
 
+    /**
+     * @brief backup fitnesses resulting from matches done between white and black populations
+     *
+     * @param __whiteResults - white fitnesses
+     * @param __blackResults - black fitnesses
+     */
     void _backupFitnesses(std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
     {
         std::cout << "BACKUPPING FITNESSES" << std::endl;
@@ -162,6 +180,11 @@ private:
         _writeFitnessesToFile(fileName, __whiteResults, __blackResults);
     }
 
+    /**
+     * @brief write populations weights to file at the end of all generations
+     *
+     * @param __fileName
+     */
     void _writePopulationToFile(std::string &__fileName)
     {
         std::ofstream fileModel(__fileName, std::ios::trunc);
@@ -248,6 +271,13 @@ private:
         return std::filesystem::path::preferred_separator;
     }
 
+    /**
+     * @brief Initialize population by first checking if a .model containings Weights is found within the directory,
+     * if not then create random genes by using a @class std::random_device initialized with /dev/urandom
+     *
+     * @todo WINDOWS RANDOMNESS NOT IMPLEMENTED, MUST IMPLEMENT
+     *
+     */
     void _initalizePopulation()
     {
 
@@ -294,9 +324,13 @@ private:
         }
     }
 
-    /*
-        Generate a random gene for a specified index within is associated bound
-    */
+    /**
+     * @brief Generate a random genes for the specified index of Weights, the random
+     * value generated will always be between the bounds given by the Heuristic function for that specified index
+     *
+     * @param __index
+     * @return int - the random genes value
+     */
     int _randomGenerateGenes(int __index)
     {
         WeightBounds bound = Heuristic::getWeightBounds(__index);
@@ -304,17 +338,22 @@ private:
         return distribution(_rd);
     }
 
-    /*
-        Use tournament selection algorithm to find the two parents needed for crossover
-    */
+    /**
+     * @brief function used to select the 2 parents used to breed the new offsprings, Tournament Selection
+     * algorithm is used for selecting the parents
+     *
+     * @param __whiteParents - resulting white parents
+     * @param __blackParents - resulting black parents
+     * @param __fitnesses - fitnesses from matches between white and black population
+     */
     void _tournamentSelection(std::pair<Weights, Weights> &__whiteParents, std::pair<Weights, Weights> &__blackParents, std::vector<std::pair<double, double>> &__fitnesses)
     {
         _singleTournamentSelection(__whiteParents.first, __blackParents.first, __fitnesses);
         _singleTournamentSelection(__whiteParents.second, __blackParents.second, __fitnesses);
     }
 
-    /*
-        Select next-generation parents after a generation that already player
+    /**
+     * @brief Select next-generation parents after a generation that already player
         Using the tournamentSelection Algorithm ( described below )
         //
             choose k (the tournament size) individuals from the population at random
@@ -323,7 +362,11 @@ private:
             choose the third best individual with probability p*((1-p)^2)
             and so on
         //
-    */
+     *
+     * @param __whiteParent - white parents resulted from this algorithm
+     * @param __blackParent - white parents resulted from this algorithm
+     * @param __fitnesses
+     */
     void _singleTournamentSelection(Weights &__whiteParent, Weights &__blackParent, std::vector<std::pair<double, double>> &__fitnesses)
     {
         std::uniform_int_distribution<int> distribution(0, _N - 1);
@@ -360,11 +403,13 @@ private:
         __blackParent = bestBlackPlayer;
     }
 
-    /*
-        In uniform crossover, each bit is chosen from either parent with equal probability.
-        In this, we essentially flip a coin for each chromosome to decide whether or not it will be included in the off-spring.
-    */
-
+    /**
+     * @brief In uniform crossover, each bit is chosen from either parent with equal probability.
+        In this, we essentially flip a coin for each gene and decide whether or not it will be included in the off-spring.
+     * 
+     * @param __parents - two parents used to create the new offspring
+     * @param __offspring1,__offspring2 - the two resulting childrens 
+     */
     void _uniformCrossover(std::pair<Weights, Weights> &__parents, Weights &__offspring1, Weights &__offspring2)
     {
         std::uniform_int_distribution<int> coinToss(0, 1);
@@ -387,8 +432,14 @@ private:
     }
 
     /*
-        Mutate some gene of the offspring with probability -> _mutationProb
-        Mutation change the value of the selected gene by max +- _mutationFactor / 2
+        
+    */
+
+   /**
+    * @brief Mutate some gene of the offspring with probability @private _mutationProb
+        Mutation change the value of the selected gene by max +- (Weight Bound) / @private _mutationFactor
+    * 
+    * @param __offspring 
     */
     void _mutate(Weights &__offspring)
     {
@@ -403,10 +454,14 @@ private:
         }
     }
 
-    /*
-        Mutate a single gene of offspring by checking the bound of the specified Weight and by changing it
-        by max +-10% of its bound
-    */
+    /**
+     * @brief Mutate a single gene of offspring by checking the bound of the specified Weight and by changing it
+        by max +- Weight bounds / @private _mutationFactor
+     * 
+     * @param __gene - gene to mutate
+     * @param __index - index of the gene
+     * @return int - the mutated gene
+     */
     int _mutateOffspring(int __gene, int __index)
     {
         WeightBounds bound = Heuristic::getWeightBounds(__index);
@@ -428,7 +483,14 @@ private:
     }
 
     /*
-        Select the best half of new population and best half of the old population to create the new generation
+        
+    */
+
+   /**
+    * @brief Select the best half of new population and best half of the old population to create the new generation
+    * 
+    * @param __newWhitePopulation, __newBlackPopulation - new population to fill
+    * @param __whiteResults, __blackResults - fitnesses of population used to sort the best subjects
     */
     void _truncationSelection(std::vector<Weights> &__newWhitePopulation, std::vector<Weights> &__newBlackPopulation, std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
     {

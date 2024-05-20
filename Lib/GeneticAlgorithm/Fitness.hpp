@@ -40,7 +40,16 @@ private:
         std::cout << "PERFORMANCE TIME-> difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(__timeEnd - __timeBegin).count() << "[ms]" << std::endl;
         std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(__totalTime) / (__cicles + 1) << "[ms]" << std::endl;
     }
-    // Do a single match and register both fitness results in a pair <WHITE,BLACK> fitnesses
+
+    /**
+     * @brief do a single match between a white player described by @param __white Weights and a black one described by @param __black Weights
+     * at the end of the match call @fn _computeFitness by passing various stats stored during the game to it
+     * 
+     * @param __white - white player Weights 
+     * @param __black - black player Weights
+     * @param __threadId - thread id for debugging purpose, if id is -1 then match is not running on a separate thread
+     * @return std::pair<double, double> - white and black fitness
+     */
     std::pair<double, double> _match(Weights &__white, Weights &__black, int __threadId = -1)
     {
         Tablut gameBoard = Tablut::getStartingPosition();
@@ -84,7 +93,6 @@ private:
             timerWhite.start();
             timeBegin = std::chrono::steady_clock::now();
             gameBoard = searchEngineWhite.Search(gameBoard);
-            // gameBoard = searchEngineWhite.TimeLimitedSearch(gameBoard, timerWhite);
             timeEnd = std::chrono::steady_clock::now();
             timerWhite.reset();
 
@@ -111,7 +119,6 @@ private:
             timerBlack.start();
             timeBegin = std::chrono::steady_clock::now();
             gameBoard = searchEngineBlack.Search(gameBoard);
-            // gameBoard = searchEngineBlack.TimeLimitedSearch(gameBoard, timerBlack);
             timeEnd = std::chrono::steady_clock::now();
             timerBlack.reset();
 
@@ -138,26 +145,7 @@ private:
                 std::cout << "-----------------------------------" << std::endl;
             }
 
-            /*
-             // USER DEFINED PLAY ---------
-            Pos fromX, fromY, toX, toY;
 
-            std::cout << "Insert [from X] [from Y] [to X] [to Y]: ";
-            std::cin >> fromX;
-            std::cin >> fromY;
-            std::cin >> toX;
-            std::cin >> toY;
-
-            gameBoard = gameBoard.next(fromX, fromY, toX, toY);
-
-            // GAME CICLE
-            gameBoard.print();
-
-            // CHECK GAME_STATE
-            if (_checkWin(gameBoard))
-                break;
-
-            */
         }
 
         int gameCicles = i + 1;
@@ -168,17 +156,27 @@ private:
         return std::make_pair(whiteFitness, blackFitness);
     }
 
-    /*
-        Compute fitness for a specific game for both black and white player
-        I compute fitness by this parameters of a player:
-            - total moves checked ( less is better )
-            - avg moves score by player ( more is better )
-            - avg time elapsed to play a move ( less is better )
-            - if as won or not:
-                - WIN: fitness returned without changes
-                - LOSE: fitness returned with negative sign
-                - DRAW: fitness returned halved
-    */
+    
+    /**
+     * @brief Compute fitness for a specific game for both black and white player
+            I compute fitness by this parameters of a player:
+                - avg time elapsed to compute a single moves ( less is better )
+                - total turn taken to reach the end of game ( less is better )
+                - total allied - enemy cells remaining at the end of the game ( higher is better )
+
+                - if as won or not:
+                    - WIN: fitness returned without changes
+                    - LOSE: fitness returned - 200000 points
+                    - DRAW: fitness returned - 100000 points
+     * 
+     * @param __engine - search engine used to evaluate the game
+     * @param __avgScore - avg player score
+     * @param __avgTimeElapsed - avg time used to compute a move
+     * @param __gameBoard - ending board
+     * @param gameCicles - total number of turn
+     * @param __isWhite - is white player or not
+     * @return double - FITNESS
+     */
     double _computeFitness(TNegaScoutEngine &__engine, double __avgScore, double __avgTimeElapsed, Tablut __gameBoard, int gameCicles, bool __isWhite)
     {
         double scoreWeight = 0.1;
@@ -250,6 +248,15 @@ private:
     }
 
 public:
+    /**
+     * @brief train one generation of an ai by doing @param __totalMatches matches (@see fn _match()) between white and black population, every single match is done in 
+     * a separate thread to speed up training process
+     *
+     * @param __whitePopulation - white population to train, vector of Weights used in Heuristic score evaluation
+     * @param __blackPopulation - black population ot train, vector of Weights used in Heuristic score evaluation
+     * @param __totalMatches - number of matches
+     * @return std::vector<std::pair<double, double>> a vector containing respectively (white,black) the computed fitnesses for every match done
+     */
     std::vector<std::pair<double, double>> train(std::vector<Weights> &__whitePopulation, std::vector<Weights> &__blackPopulation, int __totalMatches)
     {
         std::vector<std::pair<double, double>> results{};
