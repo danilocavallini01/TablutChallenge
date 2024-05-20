@@ -50,18 +50,18 @@ There are two ways of compiling this library code but both ways NEEDS
 ### Compile with bash
 U can compile the whole library by launching the *./start.sh* bash file under the root directory, the bash script use g++ to compiler to compile the mainfile
 so u can either
-``./start.sh``
+```./start.sh```
 or do it manually
-``g++ -Ofast -std=c++17 -I $HOME/boost_1_84_0/ -pthread -g ./main.cpp -o main``
+```g++ -Ofast -std=c++17 -I $HOME/boost_1_84_0/ -pthread -g ./main.cpp -o main```
 then launch the program with
-``./main``
+```./main```
 
 
 ### Compile with CMAKE
 U can compile the library by using Cmake tool by launching
-``cmake CMakeLists.txt``
-``make -j 4``
+```cmake CMakeLists.txt```
+```make -j 4```
 then launch the program with
-``./main``
+```./main```
 
 Remember to have the enviroment variable *BOOST_DIR* set to the location of the boost library example BOOST_DIR="/usr/x/boost_1_84_0")
