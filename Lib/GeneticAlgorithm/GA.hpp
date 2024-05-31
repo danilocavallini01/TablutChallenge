@@ -126,12 +126,12 @@ private:
     // FILE NAME UTILITIES FUNCTION
     std::string _computeFitnessFileName(std::string &__fileName)
     {
-        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _fitnessBackupDir + separator() + __fileName;
+        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorithm" + separator() + _fitnessBackupDir + separator() + __fileName;
     }
 
     std::string _computeFileName(std::string &__fileName)
     {
-        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorthm" + separator() + _backupDir + separator() + __fileName;
+        return std::filesystem::current_path().string() + separator() + "Lib" + separator() + "GeneticAlgorithm" + separator() + _backupDir + separator() + __fileName;
     }
 
     /**
@@ -406,9 +406,9 @@ private:
     /**
      * @brief In uniform crossover, each bit is chosen from either parent with equal probability.
         In this, we essentially flip a coin for each gene and decide whether or not it will be included in the off-spring.
-     * 
+     *
      * @param __parents - two parents used to create the new offspring
-     * @param __offspring1,__offspring2 - the two resulting childrens 
+     * @param __offspring1,__offspring2 - the two resulting childrens
      */
     void _uniformCrossover(std::pair<Weights, Weights> &__parents, Weights &__offspring1, Weights &__offspring2)
     {
@@ -432,15 +432,15 @@ private:
     }
 
     /*
-        
+
     */
 
-   /**
-    * @brief Mutate some gene of the offspring with probability @private _mutationProb
-        Mutation change the value of the selected gene by max +- (Weight Bound) / @private _mutationFactor
-    * 
-    * @param __offspring 
-    */
+    /**
+     * @brief Mutate some gene of the offspring with probability @private _mutationProb
+         Mutation change the value of the selected gene by max +- (Weight Bound) / @private _mutationFactor
+     *
+     * @param __offspring
+     */
     void _mutate(Weights &__offspring)
     {
         std::uniform_real_distribution<double> mutationProbDistribution(0, 1.0);
@@ -457,7 +457,7 @@ private:
     /**
      * @brief Mutate a single gene of offspring by checking the bound of the specified Weight and by changing it
         by max +- Weight bounds / @private _mutationFactor
-     * 
+     *
      * @param __gene - gene to mutate
      * @param __index - index of the gene
      * @return int - the mutated gene
@@ -483,15 +483,15 @@ private:
     }
 
     /*
-        
+
     */
 
-   /**
-    * @brief Select the best half of new population and best half of the old population to create the new generation
-    * 
-    * @param __newWhitePopulation, __newBlackPopulation - new population to fill
-    * @param __whiteResults, __blackResults - fitnesses of population used to sort the best subjects
-    */
+    /**
+     * @brief Select the best half of new population and best half of the old population to create the new generation
+     *
+     * @param __newWhitePopulation, __newBlackPopulation - new population to fill
+     * @param __whiteResults, __blackResults - fitnesses of population used to sort the best subjects
+     */
     void _truncationSelection(std::vector<Weights> &__newWhitePopulation, std::vector<Weights> &__newBlackPopulation, std::vector<std::pair<Weights, double>> &__whiteResults, std::vector<std::pair<Weights, double>> &__blackResults)
     {
         // sort by fitness
@@ -564,7 +564,7 @@ public:
                                                                                _tournSize(__tournSize),
                                                                                _maxGeneration(__generation),
                                                                                _totalWeights(TOTAL_WEIGHTS),
-                                                                               _fitnessFn(Fitness(__maxDepth, 250, __verbose)),
+                                                                               _fitnessFn(Fitness(__maxDepth, DEFAULT_MAX_QDEPTH, 250, __verbose)),
                                                                                _fileModelName("tablutGaModel.model"),
                                                                                _backupDir("backup"),
                                                                                _fitnessBackupDir("fitness")
