@@ -119,6 +119,27 @@ namespace AI
                 return this->_bestMove;
             }
 
+            G IterativeDeepening(G &__startingPosition, StopWatch &__globalTimer, int __startingDepth = 4, int __threads = MAX_THREADS)
+            {
+                G bestPosition = __startingPosition;
+                int currentDepth = __startingDepth;
+
+                this->_maxDepth = currentDepth;
+
+                while (!__globalTimer.isTimeouted())
+                {
+                    G currentBestMove = TimeLimitedSlicedSearch(__startingPosition, __globalTimer, __threads);
+                    if (!__globalTimer.isTimeouted())
+                    {
+                        bestPosition = currentBestMove;
+                        currentDepth++;
+                        this->_maxDepth = currentDepth;
+                    }
+                }
+
+                return bestPosition;
+            }
+
             G TimeLimitedSlicedSearch(G &__startingPosition, StopWatch &__globalTimer, int __threads = MAX_THREADS)
             {
                 this->reset();
