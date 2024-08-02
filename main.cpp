@@ -17,7 +17,6 @@
 
 using namespace Connectors;
 
-
 const Weights _white = {247, -297, 114, -160, 260, 116, 21, 115, 64, 102, 67, -15, 116, 26, 44, 7, -6, 27, -27, -84, -39, 38, 18, -44, -23, -17, -24, 34, 62, 48, -29, 53, -69, -19, -14, -14, -27, 63, -15, 5};
 const Weights _black = {299, -160, 191, -213, 260, 61, 57, 38, 53, -82, 38, 27, 12, 71, -31, -46, 19, -52, 57, -79, 26, -2, 1, 43, 22, -54, -38, 24, 69, 85, 7, -41, -24, -18, 18, -68, -83, -81, -1, 25};
 
@@ -43,12 +42,23 @@ void printStats(TNegaScoutEngine &__engine, std::chrono::steady_clock::time_poin
     std::cout << "PERFORMANCE TIME MEDIUM-> avg = " << float(__totalTime) / (__cicles + 1) << "[ms]" << std::endl;
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char **argv)
+{
     return 0;
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void computeMove() {
+EXTERN EMSCRIPTEN_KEEPALIVE void computeMove()
+{
     printf("ciao\n");
+}
+
+extern "C"
+{
+    void calculateMove(const int *__board)
+    {
+        Tablut current = Tablut::fromIntArray(__board);
+        current.print();
+    }
 }
 
 /*
@@ -101,7 +111,7 @@ int main(int argc, char *argv[])
 /*
 int main(int argc, char *argv[])
 {
-    
+
     int _maxDepth = 7;
     int _maxQDepth = 2;
     int _maxIterations = 200;

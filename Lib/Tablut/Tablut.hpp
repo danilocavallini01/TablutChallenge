@@ -255,6 +255,79 @@ public:
     }
 
     /*
+        Load a Tablut from the given Json string
+    */
+    static Tablut fromIntArray(const int *__board)
+    {
+        Tablut t = Tablut();
+
+        // -- TURN READ -------------- END
+        // -- BOARD READ -------------
+
+        Pos rowIndex = 0;
+        Pos colIndex = 0;
+
+        t._whiteCount = 0;
+        t._blackCount = 0;
+
+        t._x = -1;
+        t._y = -1;
+
+        t._oldX = -1;
+        t._oldY = -1;
+
+        t._kills = 0;
+
+        t._gameState = GAME_STATE::NONE;
+
+        t._kingMovements = 0;
+        t._turn = 0;
+
+        t._score = 0;
+
+        t._checkerPositions = {};
+        t._checkerPositionIndex = 0;
+
+        t._hash = 0;
+        t._pastHashes = {};
+        t._pastHashesIndex = 0;
+
+        t._bestMoves = {};
+        t._bestMovesIndex = 0;
+
+        for (int x = 0; x < 9; x++)
+        {
+            for (int y = 0; y < 9; y++)
+            {
+                if (__board[x*9+y] == 2)
+                {
+                    t._whiteCount++;
+                    t._checkerPositions[t._checkerPositionIndex++] = {x, y};
+                    t._board[x][y] = C::WHITE;
+                }
+                else if (__board[x*9+y] == 1)
+                {
+                    t._blackCount++;
+                    t._checkerPositions[t._checkerPositionIndex++] = {x, y};
+                    t._board[x][y] = C::BLACK;
+                }
+                else if (__board[x*9+y] == 3)
+                {
+                    t._kingX = x;
+                    t._kingY = y;
+                    t._board[x][y] = C::KING;
+                }
+                else
+                {
+                    t._board[x][y] = C::EMPTY;
+                }
+            }
+        }
+
+        return t;
+    }
+
+    /*
         Get a Tablut which has the default board setup
     */
     static Tablut getStartingPosition()
